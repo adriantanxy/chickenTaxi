@@ -36,6 +36,7 @@
       </div>
     </section>
 
+    <!-- Compose Modal -->
     <ModalShell v-if="showCompose" kicker="Letter compose" title="Write a letter" @close="showCompose = false">
       <form class="modal-form letter-form" @submit.prevent="submitLetter">
         <label>
@@ -66,6 +67,33 @@
         <button class="primary-button" type="submit">Seal letter</button>
       </form>
     </ModalShell>
+
+    <!-- Letter Detail Modal -->
+    <ModalShell v-if="selectedLetter" kicker="Letter" :title="selectedLetter.subject" @close="selectedLetter = null">
+      <div class="letter-detail">
+        <div class="letter-meta">
+          <div class="letter-meta-row">
+            <span class="meta-label">From: </span>
+            <span class="meta-value">{{ selectedLetter.from || 'You' }}</span>
+          </div>
+          <div class="letter-meta-row">
+            <span class="meta-label">To: </span>
+            <span class="meta-value">{{ selectedLetter.to || selectedLetter.category || 'Yourself' }}</span>
+          </div>
+        </div>
+        <div class="letter-body lined-paper">
+          {{ selectedLetter.body }}
+        </div>
+        <div class="letter-meta-row-1">
+          <span class="meta-label">Written: </span>
+          <span class="meta-value">{{ formatDate(selectedLetter.createdAt) }}</span>
+        </div>
+        <div class="letter-meta-row-1" v-if="selectedLetter.unlockDate && selectedLetter.unlockDate !== 'now'">
+          <span class="meta-label">Unlocked: </span>
+          <span class="meta-value">{{ formatDate(selectedLetter.unlockDate) }}</span>
+        </div>
+      </div>
+    </ModalShell>
   </section>
 </template>
 
@@ -78,6 +106,8 @@ import ModalShell from '../components/ModalShell.vue'
 
 const store = useSagaStore()
 const showCompose = ref(false)
+const selectedLetter = ref(null)
+
 const composeForm = reactive({
   category: 'yourself',
   unlockDate: 'now',
@@ -86,6 +116,11 @@ const composeForm = reactive({
 })
 
 const currentLetters = computed(() => (store.activeLetterTab === 'Inbox' ? store.letters.inbox : store.letters.sent))
+
+const formatDate = (date) => {
+  if (!date || date === 'now') return dayjs().format('D MMM YYYY, h:mm A')
+  return dayjs(date).format('D MMM YYYY, h:mm A')
+}
 
 const openLetter = (letter) => {
   if (letter.sealed) {
@@ -96,10 +131,11 @@ const openLetter = (letter) => {
 
   store.selectAchievement('ach-1')
   store.addToast('LETTER OPENED', letter.subject)
+  selectedLetter.value = letter
 }
 
 const submitLetter = () => {
-  store.sendLetter(composeForm)
+  store.sendLetter({ ...composeForm, createdAt: new Date().toISOString() })
   showCompose.value = false
 }
 </script>

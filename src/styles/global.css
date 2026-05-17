@@ -672,10 +672,11 @@ button {
   position: fixed;
   inset: 0;
   z-index: 40;
-  display: grid;
-  place-items: end center;
   padding: 20px;
   background: rgba(12, 15, 11, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .modal-shell {
@@ -1151,4 +1152,10 @@ button {
   .latest-memory-card {
     border-radius: 22px;
   }
+}
+
+.letter-meta-row-1 {
+  font-style: italic;
+  color: #9aa094;
+  font-size: 0.88rem;
 }
