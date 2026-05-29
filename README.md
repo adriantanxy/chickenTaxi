@@ -43,17 +43,8 @@ npm run dev
 Then open the local URL printed by Vite, usually:
 
 ```txt
-http://127.0.0.1:5173/
+http://localhost:5173/
 ```
-
-## Useful Commands
-
-```cmd
-npm run build
-npm audit
-```
-
-`npm run build` checks that the app compiles for production. `npm audit` checks dependency vulnerabilities.
 
 ## Project Map
 
