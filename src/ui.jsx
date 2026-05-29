@@ -8,18 +8,20 @@ import {
   ChevronLeft,
   ChevronRight,
   Dumbbell,
+  Star,
   User,
   Users,
 } from "lucide-react";
 
 const SIDEBAR_STORAGE_KEY = "wgt-sidebar-collapsed";
+const READY_IMAGES = new Set();
 
 const NAV = [
-  { route: ROUTES.TRAINING, label: "TRAINING", icon: <Dumbbell size={20} /> },
-  { route: ROUTES.CALENDAR, label: "CALENDAR", icon: <CalIcon size={20} /> },
-  { route: ROUTES.JOURNAL, label: "JOURNAL", icon: <BookOpen size={20} /> },
-  { route: ROUTES.SQUAD, label: "SQUAD", icon: <Users size={20} /> },
-  { route: ROUTES.PROFILE, label: "PROFILE", icon: <User size={20} /> },
+  { route: ROUTES.TRAINING, assetKey: "training", label: "TRAINING", icon: <Dumbbell size={20} /> },
+  { route: ROUTES.CALENDAR, assetKey: "calendar", label: "CALENDAR", icon: <CalIcon size={20} /> },
+  { route: ROUTES.JOURNAL, assetKey: "journal", label: "JOURNAL", icon: <BookOpen size={20} /> },
+  { route: ROUTES.SQUAD, assetKey: "squad", label: "SQUAD", icon: <Users size={20} /> },
+  { route: ROUTES.PROFILE, assetKey: "profile", label: "PROFILE", icon: <User size={20} /> },
 ];
 
 function getInitialSidebarState() {
@@ -28,6 +30,63 @@ function getInitialSidebarState() {
   } catch {
     return false;
   }
+}
+
+function useImageReady(src) {
+  const [ready, setReady] = useState(() => Boolean(src && READY_IMAGES.has(src)));
+
+  useEffect(() => {
+    if (!src) {
+      setReady(false);
+      return undefined;
+    }
+
+    if (READY_IMAGES.has(src)) {
+      setReady(true);
+      return undefined;
+    }
+
+    let cancelled = false;
+    const img = new Image();
+    img.onload = () => {
+      READY_IMAGES.add(src);
+      if (!cancelled) setReady(true);
+    };
+    img.onerror = () => {
+      if (!cancelled) setReady(false);
+    };
+    img.src = src;
+
+    return () => {
+      cancelled = true;
+    };
+  }, [src]);
+
+  return ready;
+}
+
+function getSidebarTabArt(itemKey, active, collapsed) {
+  const sheet = collapsed ? ASSETS.sidebar?.navTabsClosed : ASSETS.sidebar?.navTabs;
+  const item = sheet?.items?.[itemKey];
+  if (!sheet || !item) return null;
+
+  const scale = sheet.displayWidth / sheet.tabWidth;
+  const defaultPosition = `${-sheet.defaultX * scale}px ${-item.y * scale}px`;
+  const selectedPosition = `${-sheet.selectedX * scale}px ${-item.y * scale}px`;
+
+  return {
+    width: sheet.displayWidth,
+    height: sheet.tabHeight * scale,
+    style: {
+      "--sidebar-tab-default-position": defaultPosition,
+      "--sidebar-tab-selected-position": selectedPosition,
+      "--sidebar-tab-current-position": active ? selectedPosition : defaultPosition,
+      backgroundImage: `url(${sheet.src})`,
+      backgroundRepeat: "no-repeat",
+      backgroundSize: `${sheet.sheetWidth * scale}px ${sheet.sheetHeight * scale}px`,
+      imageRendering: "pixelated",
+    },
+  };
 }
 
 export function Frame({ frame = "card", className = "", style = {}, children }) {
@@ -111,7 +170,24 @@ export function ActionButton({ icon, children, onClick }) {
   );
 }
 
-function NavItem({ icon, label, active, collapsed, onClick }) {
+function NavItem({ icon, label, itemKey, active, collapsed, useArt, onClick }) {
+  const tabArt = getSidebarTabArt(itemKey, active, collapsed);
+  const art = useArt ? tabArt : null;
+
+  if (art) {
+    return (
+      <button
+        aria-label={label}
+        title={collapsed ? label : undefined}
+        onClick={onClick}
+        className="wgt-sidebar-tab relative w-full overflow-hidden rounded-lg"
+        style={{ width: art.width, height: art.height }}
+      >
+        <span className="wgt-sidebar-tab-art absolute inset-0" style={art.style} />
+      </button>
+    );
+  }
+
   return (
     <button
       aria-label={label}
@@ -120,7 +196,10 @@ function NavItem({ icon, label, active, collapsed, onClick }) {
       className={`group flex h-11 w-full items-center rounded-lg transition-colors duration-150 ${
         collapsed ? "justify-center px-0" : "gap-3 px-4 text-left"
       }`}
-      style={active ? { background: C.green, color: C.textGold } : { color: C.textMuted }}
+      style={{
+        ...(active ? { background: C.green, color: C.textGold } : { color: C.textMuted }),
+        ...(tabArt ? { height: tabArt.height } : null),
+      }}
     >
       <span
         className="shrink-0 transition-transform duration-150 group-hover:scale-110"
@@ -129,9 +208,14 @@ function NavItem({ icon, label, active, collapsed, onClick }) {
         {icon}
       </span>
       {!collapsed && (
-        <span style={pixel} className="text-[18px] tracking-wide">
-          {label}
-        </span>
+        <>
+          <span style={pixel} className="text-[18px] tracking-wide">
+            {label}
+          </span>
+          {active && (
+            <Star size={15} className="ml-auto fill-current" style={{ color: C.gold }} />
+          )}
+        </>
       )}
     </button>
   );
@@ -165,6 +249,10 @@ function BrandMark({ collapsed }) {
 
 export function Sidebar({ active, onNavigate = () => {}, user }) {
   const [collapsed, setCollapsed] = useState(getInitialSidebarState);
+  const navSheet = ASSETS.sidebar?.navTabs;
+  const closedNavSheet = ASSETS.sidebar?.navTabsClosed;
+  const navArtReady = useImageReady(navSheet?.src);
+  const closedNavArtReady = useImageReady(closedNavSheet?.src);
 
   useEffect(() => {
     try {
@@ -176,8 +264,8 @@ export function Sidebar({ active, onNavigate = () => {}, user }) {
 
   return (
     <aside
-      className={`relative flex h-full shrink-0 flex-col overflow-hidden p-3 transition-[width] duration-300 ease-in-out ${
-        collapsed ? "w-[84px]" : "w-[224px]"
+      className={`relative flex h-full shrink-0 flex-col overflow-hidden p-3 transition-[width] duration-200 ease-out ${
+        collapsed ? "w-[76px]" : "w-[224px]"
       }`}
       style={{ background: C.sidebar, borderRight: `1px solid ${C.line}33` }}
     >
@@ -189,27 +277,27 @@ export function Sidebar({ active, onNavigate = () => {}, user }) {
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         onClick={() => setCollapsed((v) => !v)}
-        className="group my-3 flex items-center gap-2"
+        className="group my-3 flex w-full items-center gap-2"
       >
         <span className="h-px flex-1" style={{ background: C.line }} />
         <span
-          className="shrink-0 transition-all duration-200 group-hover:scale-125"
+          className="shrink-0 transition-colors duration-150"
           style={{ color: C.textGold }}
         >
           {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </span>
-        {!collapsed && (
-          <span className="h-px flex-1" style={{ background: C.line }} />
-        )}
+        <span className="h-px flex-1" style={{ background: C.line }} />
       </button>
 
-      <nav className="flex flex-col gap-1">
+      <nav className={`flex flex-col items-center ${collapsed ? "gap-2" : "gap-1.5"}`}>
         {NAV.map((n) => (
           <NavItem
-            key={n.label}
+            key={n.route}
             {...n}
+            itemKey={n.assetKey}
             active={active === n.route}
             collapsed={collapsed}
+            useArt={collapsed ? closedNavArtReady : navArtReady}
             onClick={() => onNavigate(n.route)}
           />
         ))}

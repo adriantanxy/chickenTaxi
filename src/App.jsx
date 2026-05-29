@@ -1,29 +1,17 @@
-import { lazy, startTransition, Suspense, useState } from "react";
+import { startTransition, useState } from "react";
 import TrainingDashboard from "./pages/TrainingDashboard";
+import CalendarPage from "./pages/CalendarPage";
+import JournalPage from "./pages/JournalPage";
+import SquadPage from "./pages/SquadPage";
+import ShopPage from "./pages/ShopPage";
+import ProfileMain from "./pages/ProfileMain";
+import ProfileCustomizer from "./pages/ProfileCustomizer";
 import { DEFAULT_ROUTE, ROUTES } from "./routes";
-
-const CalendarPage = lazy(() => import("./pages/CalendarPage"));
-const JournalPage = lazy(() => import("./pages/JournalPage"));
-const SquadPage = lazy(() => import("./pages/SquadPage"));
-const ShopPage = lazy(() => import("./pages/ShopPage"));
-const ProfileMain = lazy(() => import("./pages/ProfileMain"));
-const ProfileCustomizer = lazy(() => import("./pages/ProfileCustomizer"));
 
 const PROFILE_VIEWS = Object.freeze({
   MAIN: "main",
   CUSTOMIZE: "customize",
 });
-
-function LoadingScreen() {
-  return (
-    <div
-      className="grid h-screen place-items-center"
-      style={{ background: "#181911", color: "#ddc397", fontFamily: "'VT323', monospace" }}
-    >
-      <span className="text-[28px]">LOADING...</span>
-    </div>
-  );
-}
 
 export default function App() {
   const [page, setPage] = useState(DEFAULT_ROUTE);
@@ -62,5 +50,5 @@ export default function App() {
       ),
   };
 
-  return <Suspense fallback={<LoadingScreen />}>{pages[page] ?? pages[DEFAULT_ROUTE]}</Suspense>;
+  return pages[page] ?? pages[DEFAULT_ROUTE];
 }

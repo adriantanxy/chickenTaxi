@@ -21,6 +21,46 @@ export const ASSETS = {
     // dogtag: "/assets/icons/dogtag.png",
   },
 
+  // Sidebar sprite sheet matching the generated "default" and "selected"
+  // navigation-tab sheet. Put the PNG at this path, then adjust crop numbers
+  // here if the export differs.
+  sidebar: {
+    navTabs: {
+      src: "/assets/sidebar/sidebar-tabs.png",
+      sheetWidth: 1211,
+      sheetHeight: 825,
+      tabWidth: 534,
+      tabHeight: 129,
+      defaultX: 19,
+      selectedX: 656,
+      displayWidth: 185,
+      items: {
+        training: { y: 19 },
+        calendar: { y: 185 },
+        journal: { y: 351 },
+        squad: { y: 516 },
+        profile: { y: 682 },
+      },
+    },
+    navTabsClosed: {
+      src: "/assets/sidebar/sidebar-tabs-closed.png",
+      sheetWidth: 1448,
+      sheetHeight: 1086,
+      tabWidth: 229,
+      tabHeight: 194,
+      defaultX: 419,
+      selectedX: 799,
+      displayWidth: 52,
+      items: {
+        training: { y: 24 },
+        calendar: { y: 235 },
+        journal: { y: 444 },
+        squad: { y: 654 },
+        profile: { y: 864 },
+      },
+    },
+  },
+
   // Avatar paper-doll layers. Keep every PNG on the same canvas size.
   avatar: {
     // base: "/assets/avatar/base.png",

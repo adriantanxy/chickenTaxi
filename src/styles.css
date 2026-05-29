@@ -26,6 +26,16 @@ button {
 .wgt-press:hover { transform: translateY(-2px); filter: brightness(1.07); }
 .wgt-press:active { transform: translateY(0) scale(0.985); }
 
+/* Sidebar tabs are painted plates, so hover should feel like selection, not lift. */
+.wgt-sidebar-tab-art {
+  background-position: var(--sidebar-tab-current-position);
+}
+
+.wgt-sidebar-tab:hover .wgt-sidebar-tab-art,
+.wgt-sidebar-tab:focus-visible .wgt-sidebar-tab-art {
+  background-position: var(--sidebar-tab-selected-position);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wgt-press { transition: none; }
   .wgt-press:hover { transform: none; }
