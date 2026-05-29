@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #181911;
+}
+
+button {
+  font: inherit;
+}
+
+/* ---- Motion ----------------------------------------------------------------
+   Only hover/active micro-interactions — no page-load animation (it flickered
+   on navigation because the whole shell remounts per page).                  */
+
+/* Lift + glow shared by interactive cards and buttons. */
+.wgt-press { transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.18s ease; }
+.wgt-press:hover { transform: translateY(-2px); filter: brightness(1.07); }
+.wgt-press:active { transform: translateY(0) scale(0.985); }
+
+@media (prefers-reduced-motion: reduce) {
+  .wgt-press { transition: none; }
+  .wgt-press:hover { transform: none; }
+}

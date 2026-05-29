@@ -1,0 +1,10 @@
+export const ROUTES = Object.freeze({
+  TRAINING: "TRAINING",
+  CALENDAR: "CALENDAR",
+  JOURNAL: "JOURNAL",
+  SQUAD: "SQUAD",
+  SHOP: "SHOP",
+  PROFILE: "PROFILE",
+});
+
+export const DEFAULT_ROUTE = ROUTES.TRAINING;
