@@ -61,6 +61,22 @@ export const ASSETS = {
     },
   },
 
+  training: {
+    sessionCards: {
+      src: "/assets/training/session/training-session.png",
+      sheetWidth: 2170,
+      sheetHeight: 685,
+      displayHeight: 210,
+      items: {
+        formTraining: { x: 22, y: 32, w: 446, h: 663 },
+        pacer: { x: 487, y: 32, w: 407, h: 663 },
+        emom: { x: 913, y: 32, w: 409, h: 663 },
+        toFailure: { x: 1341, y: 32, w: 400, h: 663 },
+        targetMode: { x: 1760, y: 32, w: 390, h: 663 },
+      },
+    },
+  },
+
   // Avatar paper-doll layers. Keep every PNG on the same canvas size.
   avatar: {
     // base: "/assets/avatar/base.png",

@@ -36,7 +36,25 @@ button {
   background-position: var(--sidebar-tab-selected-position);
 }
 
+.wgt-session-card {
+  display: block;
+  cursor: pointer;
+  border: 0;
+  padding: 0;
+  background-color: transparent;
+}
+
+.wgt-session-card:focus-visible {
+  outline: 2px solid #cca661;
+  outline-offset: 2px;
+}
+
+.wgt-session-card:active {
+  transform: translateY(1px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wgt-press { transition: none; }
   .wgt-press:hover { transform: none; }
+  .wgt-session-card:active { transform: none; }
 }
