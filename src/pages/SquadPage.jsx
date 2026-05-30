@@ -43,21 +43,21 @@ export default function SquadPage({ onNavigate }) {
       icon={<Users size={36} />} title="SQUAD" subtitle="STRONGER TOGETHER. THROUGH EVERY MISSION."
       action={<ActionButton icon={<Plus size={20} />}>ADD BUDDY</ActionButton>}
     >
-      <div className="grid grid-cols-3 gap-4 p-6">
-        <div className="col-span-2 space-y-3">
+      <div className="mx-auto grid w-full max-w-[1500px] grid-cols-1 gap-4 p-3 sm:p-6 lg:grid-cols-3">
+        <div className="space-y-3 lg:col-span-2">
           {/* filter row */}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <div className="flex items-center gap-2 rounded-md px-3 py-2" style={{ background: C.cardInner }}>
               <span style={pixel} className="text-[15px]"><span style={{ color: C.textDark }}>ALL SECTIONS</span></span>
             </div>
-            <div className="flex flex-1 items-center gap-2 rounded-md px-3 py-2" style={{ background: C.cardInner }}>
+            <div className="flex min-w-[220px] flex-1 items-center gap-2 rounded-md px-3 py-2" style={{ background: C.cardInner }}>
               <Search size={16} style={{ color: "#6b5c3e" }} />
               <span style={pixel} className="text-[15px]"><span style={{ color: "#6b5c3e" }}>Search by name or role…</span></span>
             </div>
             <div className="flex items-center rounded-md px-3" style={{ background: C.cardInner }}><SlidersHorizontal size={16} style={{ color: C.textDark }} /></div>
           </div>
           {/* tabs */}
-          <div className="flex gap-1">
+          <div className="flex flex-wrap gap-1">
             {tabs.map((t) => (
               <button key={t} onClick={() => setTab(t)} style={pixel}
                 className="rounded-md px-4 py-1.5 text-[15px]"
@@ -68,7 +68,7 @@ export default function SquadPage({ onNavigate }) {
           </div>
           <Card>
             {/* commander */}
-            <div className="mb-3 flex items-center gap-3 rounded-lg p-3" style={{ background: C.cardInner }}>
+            <div className="mb-3 flex flex-wrap items-center gap-3 rounded-lg p-3" style={{ background: C.cardInner }}>
               <div className="flex h-16 w-16 items-center justify-center rounded" style={{ background: C.green }}><span className="text-3xl">🧑‍✈️</span></div>
               <div>
                 <p style={pixel} className="text-[20px]"><span style={{ color: C.textDark }}>LTC LIM</span></p>
@@ -79,7 +79,7 @@ export default function SquadPage({ onNavigate }) {
             {sections.map((s) => (
               <div key={s.name} className="mb-3">
                 <p style={pixel} className="mb-1 text-[14px]"><span style={{ color: C.textDark }}>— {s.name}</span></p>
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
                   {s.members.map((m) => (
                     <MemberCard key={m.name} m={m} active={sel?.name === m.name} onClick={() => setSel(m)} />
                   ))}

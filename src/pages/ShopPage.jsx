@@ -179,7 +179,7 @@ export default function ShopPage({ onNavigate }) {
         </div>
       }
     >
-      <div className="space-y-5 p-6">
+      <div className="mx-auto w-full max-w-[1700px] space-y-5 p-3 sm:p-6">
         {/* ---- shop ribbon + tabs ---- */}
         <div className="flex items-center gap-3 rounded-lg px-4 py-2" style={{ background: C.cardLight }}>
           <span className="text-2xl">🪖</span>
@@ -209,7 +209,7 @@ export default function ShopPage({ onNavigate }) {
         {/* ---- CRATES ---- */}
         <div>
           <h2 style={{ ...pixel, color: C.gold }} className="mb-2 text-[30px] leading-none">CRATES</h2>
-          <div className="grid grid-cols-7 gap-3">
+          <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-7">
             {crates.map((c) => <CrateCard key={c.key} c={c} time={c.timer === "daily" ? t.daily : t.limited} />)}
           </div>
         </div>
@@ -221,7 +221,7 @@ export default function ShopPage({ onNavigate }) {
             <span style={{ ...pixel, color: C.textMuted }} className="text-[15px]">{shown.length} shown · {filter}</span>
           </div>
           {shown.length ? (
-            <div className="grid grid-cols-6 gap-3">
+            <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6">
               {shown.map((it) => <ItemCard key={it.key} it={it} active={sel === it.key} onClick={() => setSel(it.key)} />)}
             </div>
           ) : (

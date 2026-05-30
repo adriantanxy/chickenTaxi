@@ -10,9 +10,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Dumbbell,
+  Menu,
   Star,
   User,
   Users,
+  X,
 } from "lucide-react";
 
 const SIDEBAR_STORAGE_KEY = "wgt-sidebar-collapsed";
@@ -163,11 +165,11 @@ export function ActionButton({ icon, children, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="wgt-press flex shrink-0 items-center gap-2 rounded-lg border-2 px-5 py-2"
+      className="wgt-press flex shrink-0 items-center justify-center gap-2 rounded-lg border-2 px-4 py-2 sm:px-5"
       style={{ borderColor: C.gold + "99", background: C.green, color: C.textGold }}
     >
       {icon}
-      <span style={pixel} className="text-[24px]">{children}</span>
+      <span style={pixel} className="text-[20px] sm:text-[24px]">{children}</span>
     </button>
   );
 }
@@ -195,8 +197,8 @@ function NavItem({ icon, label, itemKey, active, collapsed, useArt, onClick }) {
       aria-label={label}
       title={collapsed ? label : undefined}
       onClick={onClick}
-      className={`group flex h-11 w-full items-center rounded-lg transition-colors duration-150 ${
-        collapsed ? "justify-center px-0" : "gap-3 px-4 text-left"
+      className={`group flex h-11 items-center rounded-lg transition-colors duration-150 ${
+        collapsed ? "w-11 justify-center px-0 md:w-full" : "w-full gap-3 px-4 text-left"
       }`}
       style={{
         ...(active ? { background: C.green, color: C.textGold } : { color: C.textMuted }),
@@ -272,7 +274,7 @@ export function Sidebar({ active, onNavigate, user }) {
 
   return (
     <aside
-      className={`relative flex h-full shrink-0 flex-col overflow-hidden p-3 transition-[width] duration-200 ease-out ${
+      className={`relative hidden h-full shrink-0 flex-col overflow-hidden p-3 transition-[width] duration-200 ease-out md:flex ${
         collapsed ? "w-[76px]" : "w-[224px]"
       }`}
       style={{ background: C.sidebar, borderRight: `1px solid ${C.line}33` }}
@@ -341,6 +343,91 @@ export function Sidebar({ active, onNavigate, user }) {
   );
 }
 
+function MobileNavDrawer({ open, onClose, user }) {
+  const location = useLocation();
+  const navigate = useAppNavigate();
+  const activeRoute = pathToRoute(location.pathname);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const go = (route) => {
+    navigate(route);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Navigation menu">
+      <button
+        type="button"
+        aria-label="Close navigation menu"
+        className="absolute inset-0 h-full w-full cursor-default"
+        style={{ background: "#11100bcc" }}
+        onClick={onClose}
+      />
+      <aside
+        className="relative flex h-full w-[min(84vw,320px)] flex-col overflow-y-auto p-4"
+        style={{ background: C.sidebar, color: C.textGold, boxShadow: "18px 0 42px #00000066" }}
+      >
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <BrandMark collapsed={false} />
+          <button
+            type="button"
+            aria-label="Close navigation menu"
+            onClick={onClose}
+            className="wgt-press flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+            style={{ background: C.bgHeader, color: C.textGold }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <nav className="flex flex-col gap-2">
+          {NAV.map((item) => {
+            const active = activeRoute === item.route;
+            return (
+              <button
+                key={item.route}
+                type="button"
+                onClick={() => go(item.route)}
+                className="flex h-12 items-center gap-3 rounded-lg px-4 text-left"
+                style={{
+                  background: active ? C.green : C.bgHeader,
+                  color: active ? C.textGold : C.textMuted,
+                }}
+              >
+                <span className="shrink-0" style={{ color: active ? C.gold : undefined }}>
+                  {item.icon}
+                </span>
+                <span style={pixel} className="text-[20px] tracking-wide">
+                  {item.label}
+                </span>
+                {active && <Star size={15} className="ml-auto fill-current" style={{ color: C.gold }} />}
+              </button>
+            );
+          })}
+        </nav>
+
+        {user && (
+          <div className="mt-auto rounded-md p-3" style={{ background: C.bgHeader }}>
+            <p style={pixel} className="truncate text-[16px]">{user.name}</p>
+            <p style={{ ...pixel, color: C.textMuted }} className="truncate text-[12px]">{user.unit}</p>
+            <p style={{ ...pixel, color: C.gold }} className="text-[12px]">ORD {user.ordDays} DAYS</p>
+          </div>
+        )}
+      </aside>
+    </div>
+  );
+}
+
 // Subtle diagonal weave + vignette so the dark canvas has depth instead of a
 // flat fill. Pure CSS gradients — no image assets.
 const CANVAS_TEXTURE = {
@@ -354,29 +441,43 @@ const CANVAS_TEXTURE = {
 // scroll); the page's own content decides how to use it. Default keeps the
 // classic behaviour where the whole main area scrolls.
 export function AppShell({ active, onNavigate, user, icon, title, subtitle, action, children, fill = false }) {
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
   return (
-    <div className="flex h-screen w-full overflow-hidden" style={{ ...CANVAS_TEXTURE, color: C.textGold }}>
-      <Sidebar active={active} onNavigate={onNavigate} user={user} />
-      <main className={`flex min-w-0 flex-1 flex-col ${fill ? "overflow-hidden" : "overflow-y-auto"}`}>
-        <header
-          className={`${fill ? "" : "sticky top-0"} z-20 flex shrink-0 items-center justify-between gap-4 px-8 py-4`}
-          style={{ background: C.bgHeader, borderBottom: `1px solid ${C.line}33` }}
-        >
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="shrink-0" style={{ color: C.gold }}>
-              {icon}
-            </span>
-            <div className="min-w-0">
-              <h1 style={pixel} className="text-[44px] leading-none">{title}</h1>
-              <p style={{ ...pixel, color: C.textMuted }} className="text-[16px] tracking-wide">
-                {subtitle}
-              </p>
+    <>
+      <div className="flex min-h-screen w-full flex-col overflow-x-hidden md:h-screen md:flex-row md:overflow-hidden" style={{ ...CANVAS_TEXTURE, color: C.textGold }}>
+        <Sidebar active={active} onNavigate={onNavigate} user={user} />
+        <main className={`flex min-w-0 flex-1 flex-col ${fill ? "overflow-y-auto xl:overflow-hidden" : "overflow-y-auto"}`}>
+          <header
+            className={`${fill ? "" : "sticky top-0"} z-20 flex shrink-0 flex-col items-stretch justify-between gap-3 px-4 py-3 sm:flex-row sm:items-center md:px-8 md:py-4`}
+            style={{ background: C.bgHeader, borderBottom: `1px solid ${C.line}33` }}
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <button
+                type="button"
+                aria-label="Open navigation menu"
+                onClick={() => setMobileNavOpen(true)}
+                className="wgt-press flex h-10 w-10 shrink-0 items-center justify-center rounded-lg md:hidden"
+                style={{ background: C.green, color: C.textGold, border: `1px solid ${C.gold}66` }}
+              >
+                <Menu size={22} />
+              </button>
+              <span className="shrink-0" style={{ color: C.gold }}>
+                {icon}
+              </span>
+              <div className="min-w-0">
+                <h1 style={pixel} className="text-[34px] leading-none sm:text-[44px]">{title}</h1>
+                <p style={{ ...pixel, color: C.textMuted }} className="text-[13px] tracking-wide sm:text-[16px]">
+                  {subtitle}
+                </p>
+              </div>
             </div>
-          </div>
-          {action}
-        </header>
-        {fill ? <div className="min-h-0 flex-1">{children}</div> : children}
-      </main>
-    </div>
+            {action && <div className="flex shrink-0 flex-wrap gap-2">{action}</div>}
+          </header>
+          {fill ? <div className="min-h-0 flex-1">{children}</div> : children}
+        </main>
+      </div>
+      <MobileNavDrawer open={mobileNavOpen} onClose={() => setMobileNavOpen(false)} user={user} />
+    </>
   );
 }

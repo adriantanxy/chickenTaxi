@@ -89,7 +89,7 @@ export default function ProfileMain({ onNavigate, onInspect = () => {} }) {
       active={ROUTES.PROFILE} onNavigate={onNavigate} user={user}
       icon={<User size={36} />} title="PROFILE" subtitle="YOUR GROWTH, YOUR JOURNEY, YOUR STORY."
       action={
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <ActionButton icon={<ShoppingCart size={18} />} onClick={() => onNavigate(ROUTES.SHOP)}>
             SHOP
           </ActionButton>
@@ -97,13 +97,13 @@ export default function ProfileMain({ onNavigate, onInspect = () => {} }) {
         </div>
       }
     >
-      <div className="grid grid-cols-3 gap-4 p-6">
+      <div className="mx-auto grid w-full max-w-[1600px] grid-cols-1 gap-4 p-3 sm:p-6 lg:grid-cols-3">
         {/* ===================== LEFT / MAIN ===================== */}
-        <div className="col-span-2 space-y-4">
+        <div className="space-y-4 lg:col-span-2">
 
           {/* ---- HERO: polaroid + identity + ORD countdown ---- */}
           <Card>
-            <div className="flex gap-5 p-2">
+            <div className="flex flex-col gap-5 p-2 xl:flex-row">
               {/* polaroid photo */}
               <div className="shrink-0 -rotate-1 rounded-sm bg-white p-2 pb-6 shadow-md">
                 <div className="flex h-40 w-36 items-center justify-center" style={{ background: C.green }}>
@@ -115,7 +115,7 @@ export default function ProfileMain({ onNavigate, onInspect = () => {} }) {
               </div>
 
               {/* identity */}
-              <div className="flex-1">
+              <div className="min-w-0 flex-1">
                 <p style={{ ...pixel, ...D }} className="border-b-2 pb-1 text-[40px] leading-none" >{data.profile.displayName}</p>
                 <div className="mt-3 space-y-2">
                   <p style={{ ...pixel, ...D }} className="flex items-center gap-2 text-[20px]"><Shield size={18} style={M} />{data.profile.rank}</p>
@@ -125,7 +125,7 @@ export default function ProfileMain({ onNavigate, onInspect = () => {} }) {
               </div>
 
               {/* ORD countdown + thumbnail */}
-              <div className="flex w-40 shrink-0 flex-col gap-2">
+              <div className="flex w-full shrink-0 flex-col gap-2 sm:w-40">
                 <div className="rounded-md border-2 px-3 py-2 text-center" style={{ borderColor: "#7a8a52", background: "#cdd2ad" }}>
                   <p style={{ ...pixel, ...M }} className="text-[14px] leading-none">ORD COUNTDOWN</p>
                   <p style={{ ...pixel, color: "#2f3a1c" }} className="text-[44px] leading-none">{data.profile.ordDays}</p>
@@ -140,7 +140,7 @@ export default function ProfileMain({ onNavigate, onInspect = () => {} }) {
           </Card>
 
           {/* ---- ABOUT ME + two tags ---- */}
-          <div className="grid grid-cols-[1.5fr_1fr_1fr] gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-[1.5fr_1fr_1fr]">
             <Card>
               <p style={{ ...pixel, ...D }} className="text-[22px] leading-none">ABOUT ME</p>
               <p style={{ ...pixel, ...D }} className="mt-1 text-[17px] leading-snug">{data.profile.about}</p>
@@ -157,7 +157,7 @@ export default function ProfileMain({ onNavigate, onInspect = () => {} }) {
           </div>
 
           {/* ---- ACHIEVEMENTS + TRAINING SUMMARY ---- */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
             <Card>
               <div className="mb-2 flex items-center justify-between">
                 <Ribbon>ACHIEVEMENTS</Ribbon>

@@ -21,9 +21,9 @@ export default function TrainingSessionPage({ mode, onNavigate }) {
         </ActionButton>
       }
     >
-      <div className="grid grid-cols-3 gap-4 p-6">
-        <Card title="SELECTED SESSION" className="col-span-2">
-          <div className="flex items-center gap-6">
+      <div className="mx-auto grid w-full max-w-[1400px] grid-cols-1 gap-4 p-3 sm:p-6 lg:grid-cols-3">
+        <Card title="SELECTED SESSION" className="lg:col-span-2">
+          <div className="flex flex-col items-center gap-6 md:flex-row">
             <div
               aria-label={selectedMode.label}
               role="img"

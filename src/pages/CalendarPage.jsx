@@ -175,10 +175,10 @@ export default function CalendarPage({ onNavigate }) {
       icon={<CalIcon size={36} />} title="CALENDAR" subtitle="PLAN YOUR DAYS. REMEMBER WHAT MATTERS."
       action={<ActionButton icon={<Plus size={20} />} onClick={openNew}>NEW EVENT</ActionButton>}
     >
-      <div className="grid h-full min-h-0 grid-cols-3 gap-4 p-4">
+      <div className="mx-auto grid min-h-[720px] w-full max-w-[1700px] grid-cols-1 gap-4 p-3 sm:p-4 xl:h-full xl:min-h-0 xl:grid-cols-3">
         {/* calendar grid */}
-        <Card className="relative col-span-2 flex min-h-0 flex-col">
-          <div className="mb-3 flex shrink-0 items-center justify-between">
+        <Card className="relative flex min-h-[560px] flex-col overflow-x-auto xl:col-span-2 xl:min-h-0">
+          <div className="mb-3 flex min-w-[720px] shrink-0 items-center justify-between gap-2">
             {/* Month nav — every control locked to h-9 so the row reads as one
                 clean band. Padding is horizontal-only; height drives sizing. */}
             <div className="flex items-center gap-1.5">
@@ -223,7 +223,7 @@ export default function CalendarPage({ onNavigate }) {
           </div>
 
           {/* The diary sheet: ruled paper, days as margin-numbered rows. */}
-          <div className="wgt-diary grid min-h-0 flex-1 overflow-hidden rounded-[6px]"
+          <div className="wgt-diary grid min-h-0 min-w-[720px] flex-1 overflow-hidden rounded-[6px]"
             style={{
               gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
               gridTemplateRows: `auto repeat(${rows}, minmax(0, 1fr))`,
@@ -284,7 +284,7 @@ export default function CalendarPage({ onNavigate }) {
 
         {/* Margin column — two equal halves filling the calendar height: the
             selected day's timeline on top, the upcoming overview below. */}
-        <div className="grid min-h-0 grid-rows-2 gap-4 px-1 pb-1 pt-2">
+        <div className="grid min-h-0 grid-cols-1 gap-4 px-1 pb-1 pt-2 xl:grid-rows-2">
           <DaySlip
             active={daySelected} selected={selected} events={selectedEvents}
             onAdd={openNew} onEdit={openEdit}
@@ -554,13 +554,13 @@ function EventEditor({ value, onChange, onSave, onDelete, onClose }) {
             placeholder="e.g. Live Firing" className="wgt-input" />
         </Field>
 
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <Field label="DATE" className="flex-1">
             <input type="date" value={dateStr}
               onChange={(e) => { const [y, m, d] = e.target.value.split("-").map(Number); if (y) set({ year: y, month: m - 1, day: d }); }}
               className="wgt-input" />
           </Field>
-          <Field label="TIME" className="w-[120px]">
+          <Field label="TIME" className="sm:w-[120px]">
             <input type="time" value={value.time} onChange={(e) => set({ time: e.target.value })} className="wgt-input" />
           </Field>
         </div>

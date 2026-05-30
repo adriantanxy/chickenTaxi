@@ -39,11 +39,11 @@ export default function ProfileCustomizer({ onNavigate, onBack }) {
       subtitle="CUSTOMISE YOUR AVATAR LOADOUT."
       action={<ActionButton icon={<ArrowLeft size={18} />} onClick={onBack}>BACK TO PROFILE</ActionButton>}
     >
-      <div className="grid grid-cols-3 gap-4 p-6">
-        <div className="col-span-2">
+      <div className="mx-auto grid w-full max-w-[1400px] grid-cols-1 gap-4 p-3 sm:p-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
           <Card frame="card">
-            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 rounded-lg p-4" style={{ background: "#1b1c14" }}>
-              <div className="space-y-3">
+            <div className="grid grid-cols-1 items-center gap-4 rounded-lg p-4 md:grid-cols-[1fr_auto_1fr]" style={{ background: "#1b1c14" }}>
+              <div className="grid grid-cols-2 gap-3 md:block md:space-y-3">
                 {AVATAR_SLOTS_LEFT.map((s) => (
                   <Slot key={s.key} s={s} active={slot === s.key} onClick={() => setSlot(s.key)} />
                 ))}
@@ -72,14 +72,14 @@ export default function ProfileCustomizer({ onNavigate, onBack }) {
                 )}
               </div>
 
-              <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3 md:block md:space-y-3">
                 {AVATAR_SLOTS_RIGHT.map((s) => (
                   <Slot key={s.key} s={s} active={slot === s.key} onClick={() => setSlot(s.key)} />
                 ))}
               </div>
             </div>
 
-            <div className="mt-3 flex items-center justify-center gap-4">
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-4">
               <span style={pixel} className="text-[22px]">
                 <span style={{ color: C.textGold }}>◀ LOADOUT 1 ▶</span>
               </span>

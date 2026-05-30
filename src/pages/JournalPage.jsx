@@ -53,7 +53,7 @@ const data = {
 
 function CaptureButton({ icon, label }) {
   return (
-    <button className="wgt-press flex flex-1 items-center justify-center gap-2 rounded-lg px-2 py-3" style={{ background: C.green, color: C.textGold }}>
+    <button className="wgt-press flex min-w-[130px] flex-1 items-center justify-center gap-2 rounded-lg px-2 py-3" style={{ background: C.green, color: C.textGold }}>
       <span className="shrink-0">{icon}</span>
       <span style={pixel} className="whitespace-pre-line text-left text-[14px] leading-none">{label}</span>
     </button>
@@ -87,13 +87,13 @@ export default function JournalPage({ onNavigate }) {
       icon={<BookOpen size={36} />} title="JOURNAL" subtitle="CAPTURE MOMENTS. REFLECT. GROW."
       action={<ActionButton icon={<Plus size={20} />}>NEW MEMORY</ActionButton>}
     >
-      <div className="grid grid-cols-3 gap-4 p-6">
+      <div className="mx-auto grid w-full max-w-[1600px] grid-cols-1 gap-4 p-3 sm:p-6 lg:grid-cols-3">
         {/* ===================== LEFT / MAIN ===================== */}
-        <div className="col-span-2 space-y-4">
+        <div className="space-y-4 lg:col-span-2">
 
           {/* ---- COVER + QUICK CAPTURE ---- */}
           <Card>
-            <div className="flex gap-5">
+            <div className="flex flex-col gap-5 xl:flex-row">
               {/* leather scrapbook cover */}
               <div
                 className="relative flex-1 rounded-lg p-6"
@@ -114,7 +114,7 @@ export default function JournalPage({ onNavigate }) {
               </div>
 
               {/* ORD ticket + polaroid */}
-              <div className="flex w-44 shrink-0 flex-col gap-3">
+              <div className="flex w-full shrink-0 flex-col gap-3 sm:w-44">
                 <div className="rounded-md border-2 px-3 py-2 text-center" style={{ borderColor: "#7a8a52", background: "#cdd2ad" }}>
                   <p style={{ ...pixel, ...M }} className="text-[12px] leading-none">★ LOCKED UNTIL ORD ★</p>
                   <p style={pixel} className="text-[44px] leading-none" ><span style={{ color: "#2f3a1c" }}>{data.ord.daysLeft}</span></p>
@@ -128,7 +128,7 @@ export default function JournalPage({ onNavigate }) {
 
             {/* quick capture */}
             <p style={{ ...pixel, ...D }} className="mb-2 mt-4 text-[22px] leading-none">QUICK CAPTURE</p>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {data.capture.map((c) => (
                 <CaptureButton key={c.label} icon={c.icon} label={c.label} />
               ))}
@@ -137,7 +137,7 @@ export default function JournalPage({ onNavigate }) {
 
           {/* ---- SERVICE PROGRESS ---- */}
           <Card>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <span className="flex h-9 w-9 items-center justify-center rounded" style={{ background: C.green, color: C.gold }}>🎖️</span>
               <div>
                 <p style={pixel} className="text-[34px] leading-none" ><span style={{ color: C.ink }}>{data.progress.percent}%</span></p>
@@ -151,7 +151,7 @@ export default function JournalPage({ onNavigate }) {
                 <p style={{ ...pixel, ...M }} className="mt-1 text-center text-[14px]">{data.progress.days} / {data.progress.total} DAYS</p>
               </div>
             </div>
-            <div className="mt-3 grid grid-cols-4 gap-2">
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
               {data.progress.stats.map((s) => (
                 <div key={s.label} className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: C.cardInner }}>
                   <span className="text-2xl">{s.glyph}</span>
@@ -165,7 +165,7 @@ export default function JournalPage({ onNavigate }) {
           </Card>
 
           {/* ---- MASCOT QUOTE ---- */}
-          <div className="flex items-center gap-3 rounded-xl p-4" style={{ background: C.bgHeader }}>
+          <div className="flex items-start gap-3 rounded-xl p-4 sm:items-center" style={{ background: C.bgHeader }}>
             <span className="text-4xl">🧑‍✈️</span>
             <p className="whitespace-pre-line text-[18px] leading-snug" style={{ ...pixel, color: C.textGold }}>
               {data.quote}
@@ -207,7 +207,7 @@ export default function JournalPage({ onNavigate }) {
               <Ribbon>★ LETTERS TO FUTURE ME</Ribbon>
               <span style={{ ...pixel, ...M }} className="flex items-center gap-1 text-[12px]"><Lock size={11} /> UNLOCKS ON ORD DAY</span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {data.letters.map((l) => (
                 <button key={l.when} className="wgt-press flex flex-col items-center gap-2 rounded-lg px-2 py-3" style={{ background: C.cardInner }}>
                   <div className="flex h-12 w-full items-center justify-center rounded" style={{ background: "#d8c7a4" }}>

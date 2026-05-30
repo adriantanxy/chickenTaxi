@@ -60,7 +60,7 @@ function StatCard({ stat }) {
 
   return (
     <div
-      className="relative flex flex-1 flex-col items-center justify-center px-3 pb-4 pt-4"
+      className="relative flex min-w-[126px] flex-1 flex-col items-center justify-center px-3 pb-4 pt-4 xl:min-w-0"
       style={{
         backgroundImage: `url(${OVERVIEW.background})`,
         backgroundSize: "100% 100%",
@@ -71,7 +71,7 @@ function StatCard({ stat }) {
     >
       <span style={{ ...pixel, ...D }} className="text-[18px] font-bold leading-none tracking-wide">{stat.label}</span>
       {iconSrc ? (
-        <img src={iconSrc} alt="" className="my-1.5  h-[46px] w-auto max-w-[112px] object-contain" style={{ imageRendering: "pixelated" }} />
+        <img src={iconSrc} alt="" className="my-1.5 h-[46px] w-auto max-w-[112px] object-contain" style={{ imageRendering: "pixelated" }} />
       ) : (
         <span className="text-[64px] leading-none">{stat.glyph}</span>
       )}
@@ -109,20 +109,22 @@ export default function TrainingDashboard({ onNavigate, onStartTraining = () => 
       icon={<Dumbbell size={36} />} title="TRAINING" subtitle="BUILD STRENGTH. BUILD DISCIPLINE. BECOME BETTER."
       action={<ActionButton icon={<Plus size={20} />}>LOG TRAINING</ActionButton>}
     >
-      <div className="grid grid-cols-12 gap-4 p-5">
+      <div className="grid grid-cols-1 gap-4 p-3 sm:p-5 xl:grid-cols-12">
         <Card
           title="TRAINING OVERVIEW"
-          className="col-span-7 py-2 px-2"
+          className="overflow-hidden py-2 px-2 xl:col-span-7"
           action={<span style={{ ...pixel, ...M }} className="text-[14px]">TODAY'S RESULTS VS YOUR BEST</span>}
         >
-          <div className="flex gap-0">
-            {data.stats.map((s) => (
-              <StatCard key={s.key} stat={s} />
-            ))}
+          <div className="overflow-x-auto">
+            <div className="flex min-w-[756px] gap-0 xl:min-w-0">
+              {data.stats.map((s) => (
+                <StatCard key={s.key} stat={s} />
+              ))}
+            </div>
           </div>
         </Card>
 
-        <Card title="TODAY'S TRAINING" className="col-span-5 row-span-2 flex flex-col">
+        <Card title="TODAY'S TRAINING" className="flex flex-col xl:col-span-5 xl:row-span-2">
           <p style={{ ...pixel, ...D }} className="mb-2 text-[18px]">🧑‍✈️ {data.today.date} · {data.today.day}</p>
           <div className="space-y-1.5">
             {data.today.rows.map((r) => (
@@ -159,31 +161,33 @@ export default function TrainingDashboard({ onNavigate, onStartTraining = () => 
 
         <Card
           title="START A NEW SESSION"
-          className="col-span-7"
+          className="overflow-hidden xl:col-span-7"
           action={<span style={{ ...pixel, ...M }} className="text-[14px]">PICK A MODE TO BEGIN</span>}
         >
-          <div className="flex items-center justify-center gap-4 py-1">
-            {TRAINING_MODES.map((mode) => (
-              <TrainingSessionCard key={mode.key} mode={mode} onStart={onStartTraining} />
-            ))}
+          <div className="overflow-x-auto">
+            <div className="flex min-w-max items-center justify-start gap-4 py-1 xl:justify-center">
+              {TRAINING_MODES.map((mode) => (
+                <TrainingSessionCard key={mode.key} mode={mode} onStart={onStartTraining} />
+              ))}
+            </div>
           </div>
         </Card>
 
-        <Card title="RECENT WORKOUTS" className="col-span-6 flex flex-col">
+        <Card title="RECENT WORKOUTS" className="flex flex-col xl:col-span-6">
           <div className="flex flex-1 flex-col justify-between gap-2">
             {data.recent.map((w, i) => (
-              <div key={i} className="wgt-press flex flex-1 items-center gap-4 rounded-lg border px-4 py-3" style={{ background: C.cardInner, borderColor: C.line + "55" }}>
+              <div key={i} className="wgt-press flex flex-1 flex-col gap-3 rounded-lg border px-4 py-3 sm:flex-row sm:items-center sm:gap-4" style={{ background: C.cardInner, borderColor: C.line + "55" }}>
                 <span className="text-[18px]" style={{ color: C.gold }}>★</span>
-                <div className="w-20 leading-tight">
+                <div className="w-full leading-tight sm:w-20">
                   <p style={{ ...pixel, ...D }} className="text-[15px]">{w.date}</p>
                   <p style={{ ...pixel, ...M }} className="text-[12px]">{w.day}</p>
                 </div>
                 <Sprite name={w.exercise} size={32} fallback={w.glyph} />
-                <div className="w-44 leading-tight">
+                <div className="w-full leading-tight sm:w-44">
                   <p style={{ ...pixel, ...D }} className="text-[17px]">{w.name}</p>
                   <p style={{ ...pixel, ...M }} className="text-[12px]">{w.exercise}</p>
                 </div>
-                <div className="flex flex-1 items-center justify-around">
+                <div className="flex flex-1 flex-wrap items-center justify-around gap-3">
                   {w.stats.map((s, j) => (
                     <div key={j} className="text-center leading-tight">
                       <p style={{ ...pixel, ...D }} className="text-[22px] leading-none">{s.v}</p>
@@ -198,8 +202,8 @@ export default function TrainingDashboard({ onNavigate, onStartTraining = () => 
           </div>
         </Card>
 
-        <Card title="MISSIONS" className="col-span-4 flex flex-col">
-          <div className="flex flex-1 gap-2">
+        <Card title="MISSIONS" className="flex flex-col xl:col-span-4">
+          <div className="flex flex-1 flex-col gap-2 sm:flex-row">
             {data.missions.map((m, i) => {
               const challenge = m.tier === "CHALLENGE CARD";
               return (
@@ -242,7 +246,7 @@ export default function TrainingDashboard({ onNavigate, onStartTraining = () => 
           </div>
         </Card>
 
-        <Card title="REWARDS" className="col-span-2 flex flex-col">
+        <Card title="REWARDS" className="flex flex-col xl:col-span-2">
           <div className="flex flex-1 gap-2">
             <div className="flex flex-1 flex-col items-center justify-center rounded-lg p-4" style={{ background: C.green }}>
               <span style={{ ...pixel, color: C.textGold }} className="text-[18px] tracking-widest">XP</span>
