@@ -53,8 +53,244 @@ button {
   transform: translateY(1px);
 }
 
+/* ---- Calendar -------------------------------------------------------------- */
+
+/* Premium surfaces ---------------------------------------------------------
+   The "boxy/cartoon" feel came from flat fills + chunky 2px borders. These
+   classes trade that for embossed depth: a hairline edge, a faint top sheen,
+   an inner highlight, and a soft drop shadow — so controls read like pressed
+   leather/brass plates instead of outlined boxes. Colour is set inline; these
+   only contribute the lighting + edge treatment.                            */
+.wgt-plate {
+  position: relative;
+  border: 1px solid #5c4f3a66;
+  border-radius: 9px;
+  background-image: linear-gradient(180deg, #ffffff24 0%, #ffffff00 42%, #2a201010 100%);
+  box-shadow:
+    inset 0 1px 0 #ffffff40,
+    inset 0 -1px 0 #2a201020,
+    0 1px 2px #2a201025,
+    0 4px 10px -4px #2a201030;
+  transition: transform 0.13s ease, box-shadow 0.18s ease, filter 0.13s ease;
+}
+.wgt-plate:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 #ffffff50,
+    inset 0 -1px 0 #2a201020,
+    0 2px 4px #2a201025,
+    0 8px 16px -6px #2a201040;
+  filter: brightness(1.03);
+}
+.wgt-plate:active { transform: translateY(0) scale(0.99); filter: brightness(0.99); }
+
+/* Dark variant for the month plate — brass-on-leather, gilt hairline. */
+.wgt-plate-dark {
+  border-color: #cca66155;
+  background-image: linear-gradient(180deg, #ffffff14 0%, #ffffff00 38%, #00000028 100%);
+  box-shadow:
+    inset 0 1px 0 #ffffff18,
+    inset 0 0 0 1px #00000030,
+    0 1px 2px #00000040,
+    0 6px 14px -6px #00000055;
+}
+
+/* Active/selected variant — gilt edge + inner glow so it reads "lit", not boxed. */
+.wgt-plate-on {
+  border-color: #cca661aa;
+  box-shadow:
+    inset 0 1px 0 #ffffff2a,
+    inset 0 0 0 1px #cca66130,
+    inset 0 -2px 6px #00000028,
+    0 2px 6px #2a201035,
+    0 0 0 1px #cca66120;
+}
+
+/* Event tiles sit in a cell; lift a touch more than a plain press and cast a
+   warmer shadow so the day "pops" forward on hover. */
+.wgt-event {
+  border-radius: 6px;
+  background-image: linear-gradient(180deg, #ffffff20 0%, #ffffff00 50%);
+  box-shadow: inset 0 1px 0 #ffffff35, 0 1px 2px #2a201018;
+  transition: transform 0.14s ease, box-shadow 0.18s ease, filter 0.14s ease;
+}
+.wgt-event:hover {
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 #ffffff45, 0 4px 12px -2px #2a201045;
+  filter: brightness(1.03) saturate(1.04);
+}
+
+/* Cells brighten faintly on hover to telegraph that the whole day is clickable. */
+.wgt-day { transition: background-color 0.16s ease, box-shadow 0.16s ease; }
+.wgt-day:hover { background-color: #e6cfa8; box-shadow: inset 0 0 22px #ffffff30; }
+
+/* Selected day: a single refined gilt ring with a soft inner glow — no more
+   stacked 2px borders. */
+.wgt-day-selected {
+  box-shadow:
+    inset 0 0 0 1.5px #cca661,
+    inset 0 0 0 4px #3d4a2a55,
+    inset 0 0 14px #cca66130;
+  background-color: #ead4ad;
+}
+.wgt-day-selected:hover { background-color: #efd9b1; }
+
+/* Today's date sits in a small gilt-edged green capsule. */
+.wgt-today-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.45em;
+  height: 1.45em;
+  padding: 0 0.18em;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #4d5c34 0%, #3d4a2a 100%);
+  color: #ddc397 !important;
+  box-shadow: inset 0 1px 0 #ffffff22, 0 0 0 1px #cca66155, 0 1px 2px #00000030;
+}
+
+/* ---- Field diary ----------------------------------------------------------
+   The calendar is reframed as a soldier's worn planner. Days are ruled-paper
+   rows, entries look penned-in, today is ringed in ink. Imperfection (faint
+   stains, a slightly skewed pin) is what keeps it from reading machine-made. */
+
+/* Aged paper sheet: just a warm off-centre wash, no ruled lines (those hurt
+   readability). Day separation comes from the cell gridlines below. */
+.wgt-diary {
+  background-color: #e3cda6;
+  background-image:
+    radial-gradient(60% 50% at 82% 12%, #b9986318 0%, transparent 60%),
+    radial-gradient(40% 40% at 12% 88%, #9c7c4a16 0%, transparent 55%);
+}
+
+/* A day cell — separated by clean gridlines (the only lines on the sheet). */
+.wgt-diary-day {
+  border-right: 1px solid #6b5c3e33;
+  border-bottom: 1px solid #6b5c3e33;
+  transition: background-color 0.16s ease;
+}
+.wgt-diary-day:hover { background-color: #ecd8b4aa; }
+.wgt-diary-day.is-out { color: #b6a079; }
+.wgt-diary-day.is-out .wgt-diary-num { opacity: 0.5; }
+
+/* This-week band: a soft pencil highlight running across the row. */
+.wgt-diary-day.is-week { background-color: #ead7b03c; }
+
+/* Selected day: a pencil box drawn round the cell, slightly imperfect. */
+.wgt-diary-day.is-sel {
+  background-color: #efddb84d;
+  box-shadow: inset 0 0 0 2px #3d4a2a66;
+}
+
+/* Today's number, circled in green ink with a hand-drawn wobble. */
+.wgt-ink-ring {
+  position: relative;
+  color: #2f3a1f !important;
+}
+.wgt-ink-ring::after {
+  content: "";
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 1.9em; height: 1.7em;
+  transform: translate(-50%, -52%) rotate(-4deg);
+  border: 2px solid #3d4a2a;
+  border-radius: 47% 53% 50% 50% / 55% 45% 55% 45%;
+  box-shadow: 0 0 0 0.5px #3d4a2a55;
+  pointer-events: none;
+}
+
+/* A penned entry line: time + name, with a category ink-tick. Reads like a
+   handwritten roster line, not a coloured chip. */
+.wgt-entry {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4em;
+  border-radius: 3px;
+  padding: 1px 3px;
+  transition: background-color 0.13s ease;
+  cursor: pointer;
+}
+.wgt-entry:hover { background-color: #00000010; }
+.wgt-entry-tick {
+  flex: none;
+  width: 7px; height: 7px;
+  border-radius: 2px 2px 2px 0;     /* tiny flag, not a perfect dot */
+  transform: rotate(-2deg);
+  box-shadow: inset 0 1px 0 #ffffff40;
+}
+
+/* The side "margin slip" — a pinned scrap of paper, lightly skewed, with a
+   torn-ish feel via asymmetric shadow. */
+.wgt-slip {
+  position: relative;
+  background:
+    linear-gradient(180deg, #ffffff18, #ffffff00 30%),
+    #e7d2b0;
+  border: 1px solid #6b5c3e2a;
+  border-radius: 4px;
+  box-shadow: 0 1px 0 #ffffff40 inset, 0 6px 16px -8px #2a201050, 2px 3px 0 -1px #00000010;
+}
+.wgt-slip-pin {
+  position: absolute;
+  top: -7px; left: 18px;
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #d8633f, #8f2f1c);
+  box-shadow: 0 2px 3px #00000050, inset 0 1px 1px #ffffff60;
+}
+
+/* ---- Event editor modal ---------------------------------------------------- */
+
+.wgt-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: #14110a99;
+  backdrop-filter: blur(2px);
+  animation: wgt-fade 0.14s ease;
+}
+.wgt-modal {
+  box-shadow: 0 18px 50px #00000060;
+  animation: wgt-pop 0.16s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+@keyframes wgt-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes wgt-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Month/year picker popover shares the modal's spring-in. */
+.wgt-pop { animation: wgt-pop 0.14s cubic-bezier(0.2, 0.8, 0.3, 1); transform-origin: top left; }
+
+/* Pixel-styled form inputs that sit on the sepia card. */
+.wgt-input {
+  width: 100%;
+  font-family: 'VT323', monospace;
+  font-size: 19px;
+  color: #3a2f1c;
+  background: #e7d2b0;
+  border: 2px solid #80735988;
+  border-radius: 6px;
+  padding: 4px 10px;
+  outline: none;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.wgt-input::placeholder { color: #6b5c3e99; }
+.wgt-input:focus {
+  border-color: #cca661;
+  box-shadow: 0 0 0 2px #cca66140;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wgt-press { transition: none; }
   .wgt-press:hover { transform: none; }
+  .wgt-event { transition: none; }
+  .wgt-event:hover { transform: none; }
+  .wgt-selected-glow { animation: none; }
   .wgt-session-card:active { transform: none; }
+  .wgt-modal-overlay, .wgt-modal, .wgt-pop { animation: none; }
 }

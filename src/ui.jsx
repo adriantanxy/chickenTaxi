@@ -342,13 +342,16 @@ const CANVAS_TEXTURE = {
     repeating-linear-gradient(45deg, ${C.line}0a 0px, ${C.line}0a 1px, transparent 1px, transparent 7px)`,
 };
 
-export function AppShell({ active, onNavigate, user, icon, title, subtitle, action, children }) {
+// `fill` makes the page consume exactly the space below the header (no page
+// scroll); the page's own content decides how to use it. Default keeps the
+// classic behaviour where the whole main area scrolls.
+export function AppShell({ active, onNavigate, user, icon, title, subtitle, action, children, fill = false }) {
   return (
     <div className="flex h-screen w-full overflow-hidden" style={{ ...CANVAS_TEXTURE, color: C.textGold }}>
       <Sidebar active={active} onNavigate={onNavigate} user={user} />
-      <main className="min-w-0 flex-1 overflow-y-auto">
+      <main className={`flex min-w-0 flex-1 flex-col ${fill ? "overflow-hidden" : "overflow-y-auto"}`}>
         <header
-          className="sticky top-0 z-20 flex items-center justify-between gap-4 px-8 py-4"
+          className={`${fill ? "" : "sticky top-0"} z-20 flex shrink-0 items-center justify-between gap-4 px-8 py-4`}
           style={{ background: C.bgHeader, borderBottom: `1px solid ${C.line}33` }}
         >
           <div className="flex min-w-0 items-center gap-3">
@@ -364,7 +367,7 @@ export function AppShell({ active, onNavigate, user, icon, title, subtitle, acti
           </div>
           {action}
         </header>
-        {children}
+        {fill ? <div className="min-h-0 flex-1">{children}</div> : children}
       </main>
     </div>
   );
