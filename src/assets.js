@@ -62,6 +62,24 @@ export const ASSETS = {
   },
 
   training: {
+    // Stat tiles on the TRAINING OVERVIEW card. Each stat renders on the shared
+    // parchment background with its own pixel-art icon. Medals map by tier.
+    overview: {
+      background: "/assets/training/training_overview/card_background.png",
+      icons: {
+        pushups: "/assets/training/training_overview/pushup.png",
+        situps: "/assets/training/training_overview/situp.png",
+        run: "/assets/training/training_overview/clock.png",
+        streak: "/assets/training/training_overview/calendar.png",
+        weekly: "/assets/training/training_overview/checklist.png",
+      },
+      medals: {
+        gold: "/assets/training/training_overview/medal_gold.png",
+        silver: "/assets/training/training_overview/medal_silver.png",
+        bronze: "/assets/training/training_overview/medal_bronze.png",
+        empty: "/assets/training/training_overview/medal_empty.png",
+      },
+    },
     sessionCards: {
       src: "/assets/training/session/training-session.png",
       sheetWidth: 2170,
