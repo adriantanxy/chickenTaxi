@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { ASSETS } from "./assets";
-import { ROUTES } from "./routes";
+import { ROUTES, pathToRoute } from "./routes";
+import { useAppNavigate } from "./useAppNavigate";
 import { C, pixel } from "./theme";
 import {
   BookOpen,
@@ -247,7 +249,13 @@ function BrandMark({ collapsed }) {
   );
 }
 
-export function Sidebar({ active, onNavigate = () => {}, user }) {
+export function Sidebar({ active, onNavigate, user }) {
+  const location = useLocation();
+  const fallbackNavigate = useAppNavigate();
+  // URL is the source of truth for the active tab; the `active` prop is still
+  // accepted for compatibility but the current path wins when present.
+  const activeRoute = active ?? pathToRoute(location.pathname);
+  const navigate = onNavigate ?? fallbackNavigate;
   const [collapsed, setCollapsed] = useState(getInitialSidebarState);
   const navSheet = ASSETS.sidebar?.navTabs;
   const closedNavSheet = ASSETS.sidebar?.navTabsClosed;
@@ -295,10 +303,10 @@ export function Sidebar({ active, onNavigate = () => {}, user }) {
             key={n.route}
             {...n}
             itemKey={n.assetKey}
-            active={active === n.route}
+            active={activeRoute === n.route}
             collapsed={collapsed}
             useArt={collapsed ? closedNavArtReady : navArtReady}
-            onClick={() => onNavigate(n.route)}
+            onClick={() => navigate(n.route)}
           />
         ))}
       </nav>
