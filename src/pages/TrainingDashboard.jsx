@@ -71,18 +71,18 @@ function StatCard({ stat }) {
     >
       <span style={{ ...pixel, ...D }} className="text-[18px] font-bold leading-none tracking-wide">{stat.label}</span>
       {iconSrc ? (
-        <img src={iconSrc} alt="" className="-mt-1.5 -mb-3 h-[84px] w-auto max-w-[112px] object-contain" style={{ imageRendering: "pixelated" }} />
+        <img src={iconSrc} alt="" className="my-1.5  h-[46px] w-auto max-w-[112px] object-contain" style={{ imageRendering: "pixelated" }} />
       ) : (
         <span className="text-[64px] leading-none">{stat.glyph}</span>
       )}
-      <span style={{ ...pixel, color: C.green }} className="text-[36px] font-bold leading-none">{stat.value}</span>
+      <span style={{ ...pixel, color: C.green }} className="text-[38px] font-bold leading-none">{stat.value}</span>
       <span style={{ ...pixel, ...D }} className="mt-0.5 text-[14px] font-bold uppercase leading-none tracking-wider">{stat.caption}</span>
 
       {/* Personal record, inline under the value. Kept short and centred so the
           whole stat reads as one tidy block; the heart baked into the art's
           bottom-right corner stays as its own decoration. */}
       {stat.best && (
-        <span style={{ ...pixel, ...M }} className="mt-1 mb-0.5 text-[13px] uppercase leading-none tracking-wider">
+        <span style={{ ...pixel, ...M }} className="mt-1 mb-0 text-[13px] uppercase leading-none tracking-wider">
           {stat.best}
         </span>
       )}
