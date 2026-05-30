@@ -32,6 +32,6 @@ export const M = { color: C.inkSoft };
 // each re-declaring their own copy.
 export const USER = {
   name: "RECRUIT ALEX",
-  unit: "PLATOON ALPHA 3-1",
+  unit: "ALPHA 1-1",
   ordDays: 143,
 };

@@ -3,11 +3,33 @@ export const ASSETS = {
     logo: "/assets/brand/logo_cleaned.png",
   },
 
-  // 9-slice frames. slice = corner size in px of your art.
+  // 9-slice frames. slice = corner size in px of the source art (the painted
+  // border thickness), so the middle stretches but the stitched edge doesn't.
   frames: {
     // card: { src: "/assets/frames/card.png", slice: 24 },
     // ribbon: { src: "/assets/frames/ribbon.png", slice: 16 },
     // button: { src: "/assets/frames/button.png", slice: 18 },
+
+    // --- Squad page boards (aged leather / parchment plates) ---------------
+    // Big parchment panels — used as the two main Card surfaces.
+    squadCard: { src: "/assets/squad/bigger_board.png", slice: 61 },     // 1448x1086
+    squadCardTall: { src: "/assets/squad/sideboard.png", slice: 143 }, // 1024x1536
+    // Wide leather/green plates (2172x724) — tabs, footer plates, buttons.
+    leatherWide: { src: "/assets/squad/black_board.png", slice: 154 },
+    greenWide: { src: "/assets/squad/green_board.png", slice: 144 },
+    parchmentWide: { src: "/assets/squad/rectangle_board.png", slice: 111 },
+    // Dark leather search bar (2508x627).
+    search: { src: "/assets/squad/search.png", slice: 143 },
+    // Square dark-leather tile (1254x1254) — avatar / badge backings.
+    leatherTile: { src: "/assets/squad/square_black_board.png", slice: 122 },
+  },
+
+  // Common boards painted as plain backgrounds (NOT 9-slice). bio.png is a
+  // fixed taped scrap whose tape lives in two corners, so stretching it as a
+  // border-image breaks it — paint it full-bleed and pad text into the paper.
+  commonBoards: {
+    tapedScrap: "/assets/common/bio.png", // 1536x1024
+    verticalBoard: "/assets/common/vertical_board.png", // 1024x1536
   },
 
   // Square pixel icons. Example: pushups: "/assets/icons/pushups.png",

@@ -93,15 +93,23 @@ function getSidebarTabArt(itemKey, active, collapsed) {
   };
 }
 
-export function Frame({ frame = "card", className = "", style = {}, children }) {
+// 9-slice frame. `slice` is sampled from the source art (the painted border
+// thickness in source px). `border` overrides how thick that edge renders on
+// screen — needed for high-res boards whose slice (e.g. 150px) is far larger
+// than the edge should appear. Defaults to the slice for backwards compat.
+export function Frame({ frame = "card", border, className = "", style = {}, children }) {
   const f = ASSETS.frames[frame];
+  const width = border ?? f?.slice;
   const art = f
     ? {
         borderStyle: "solid",
-        borderWidth: f.slice,
+        borderWidth: width,
         borderImageSource: `url(${f.src})`,
-        borderImageSlice: f.slice,
-        borderImageWidth: `${f.slice}px`,
+        // `fill` keeps the middle slice painted as the surface — without it
+        // border-image only draws the edge and the centre is transparent
+        // (which made the board textures vanish, showing only the stitching).
+        borderImageSlice: `${f.slice} fill`,
+        borderImageWidth: `${width}px`,
         borderImageRepeat: "stretch",
         imageRendering: "pixelated",
       }
@@ -134,9 +142,9 @@ export function Sprite({ name, size = 32, fallback = "?", className = "" }) {
   );
 }
 
-export function Card({ title, action, children, className = "", frame = "card" }) {
+export function Card({ title, action, children, className = "", frame = "card", border }) {
   return (
-    <Frame frame={frame} className={`p-3 ${className}`}>
+    <Frame frame={frame} border={border} className={`p-3 ${className}`}>
       {(title || action) && (
         <div className="mb-2 flex items-center justify-between gap-2">
           {title && <Ribbon>{title}</Ribbon>}
