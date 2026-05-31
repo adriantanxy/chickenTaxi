@@ -133,8 +133,13 @@ const journalEntries = [
   },
 ];
 
-/* ─────────────────── page dimensions ─────────────────── */
-const PAGE_W = 480;
+/* ─────────────────── page dimensions ───────────────────
+   All journal background images are 1122x1402 (aspect 0.800, i.e. 4:5).
+   Page dims MUST match that ratio so objectFit:"cover" shows the whole
+   image with no cropping — otherwise percentage-based text overlays
+   drift off their parchment slots and pages look inconsistent.
+   552 / 690 = 0.800. */
+const PAGE_W = 505;
 const PAGE_H = 690;
 
 /* ─────────────── placeholder image box ─────────────── */
@@ -325,6 +330,78 @@ const EnlistmentRight = forwardRef(function EnlistmentRight({ userNote }, ref) {
   );
 });
 
+// ── BMT CHAPTER LEFT — complete designed spread, image only ──
+const BmtChapterLeft = forwardRef(function BmtChapterLeft(_props, ref) {
+  return (
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/bmt_chapter_left.png"
+        alt="BMT Chapter Left"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "99%", objectFit: "cover" }}
+      />
+    </div>
+  );
+});
+
+// ── BMT CHAPTER RIGHT — group photo spread + two handwritten notes ──
+const BmtChapterRight = forwardRef(function BmtChapterRight({ userNote, commanderNote }, ref) {
+  // Personal message from the section commander, addressed to the soldier.
+  const cmdNote = commanderNote
+    || "Alex,\n\n At the start of BMT, you couldn't hold a 1-min plank. Last week you carried Rafiq's load on the last 2km without being asked.\n\nThat's the soldier I'll remember.\n\nProud of you. Now go be great.\n\n— 3SG Lim";
+
+  const myNote = userNote
+    || "63 days. Came in alone, leaving with brothers. \n\nCan't believe I made it through. This was crazy...\nbut i guess it's time for round 2...";
+
+  const noteText = {
+    fontFamily: "'VT323', monospace",
+    color: C.ink,
+    whiteSpace: "pre-wrap",
+    margin: 0,
+  };
+
+  return (
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/bmt_chapter_right.png"
+        alt="BMT Chapter Right"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "99%", objectFit: "cover" }}
+      />
+
+      {/* COMMANDER'S NOTES lined slot (bottom-left); lines ~ x:7%-36%, y:74%-88% */}
+      <div style={{
+        position: "absolute",
+        top: "72.6%",
+        left: "9%",
+        transform: "rotate(-5deg)",
+        width: "27%",
+        height: "13.5%",
+        overflow: "hidden",
+        boxSizing: "border-box",
+      }}>
+        <p style={{ ...noteText, fontSize: 11, lineHeight: "13px" }}>
+          {cmdNote}
+        </p>
+      </div>
+
+      {/* MY NOTES lined slot (bottom-right); lines ~ x:64%-92%, y:74%-88% */}
+      <div style={{
+        position: "absolute",
+        top: "73.2%",
+        left: "64.5%",
+        width: "27%",
+        transform: "rotate(5.5deg)",
+        height: "13.5%",
+        overflow: "hidden",
+        boxSizing: "border-box",
+      }}>
+        <p style={{ ...noteText, fontSize: 12, lineHeight: "13px" }}>
+          {myNote}
+        </p>
+      </div>
+    </div>
+  );
+});
+
 // ── MILESTONE ──
 const MilestonePage = forwardRef(function MilestonePage({ entry }, ref) {
   return (
@@ -501,7 +578,7 @@ function renderPage(entry) {
 function JournalFlipbook({ onClose }) {
   const bookRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(0);
-  const totalPages = journalEntries.length + 4;
+  const totalPages = journalEntries.length + 6;
 
   const onFlip = useCallback(function (e) { setCurrentPage(e.data); }, []);
 
@@ -525,6 +602,8 @@ function JournalFlipbook({ onClose }) {
           <CoverPage />
           <EnlistmentLeft commanderNote={null} />
           <EnlistmentRight userNote={null} />
+          <BmtChapterLeft />
+          <BmtChapterRight userNote={null} commanderNote={null} />
           {journalEntries.map(function (entry) { return renderPage(entry); })}
           <BackCover />
         </HTMLFlipBook>
