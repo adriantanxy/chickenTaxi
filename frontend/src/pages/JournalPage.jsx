@@ -451,7 +451,7 @@ const FieldCampRight = forwardRef(function FieldCampRight({ buddyNote }, ref) {
       <img
         src="/assets/journal/fieldcamp_right.png"
         alt="Field Camp Right"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "99%", objectFit: "cover" }}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
       />
       {/* BUDDY'S NOTE lined slot (bottom-left); lines ~ x:9%-37%, y:57%-79% */}
       <div style={{
@@ -469,6 +469,63 @@ const FieldCampRight = forwardRef(function FieldCampRight({ buddyNote }, ref) {
           fontSize: 13,
           color: C.ink,
           lineHeight: "13px",
+          whiteSpace: "pre-wrap",
+          margin: 0,
+        }}>
+          {displayNote}
+        </p>
+      </div>
+    </div>
+  );
+});
+
+// ── POP LEFT — passing-out parade spread, image only ──
+const PopLeft = forwardRef(function PopLeft(_props, ref) {
+  return (
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/pop_left.png"
+        alt="POP Left"
+        /* Image has a book-spine/binding crease baked into its right edge.
+           Render ~3% wider than the page and anchor top-left so the page's
+           overflow:hidden clips that crease off the right side. */
+        style={{ position: "absolute", top: 0, left: 0, width: "103%", height: "99%", objectFit: "cover", objectPosition: "center" }}
+      />
+    </div>
+  );
+});
+
+// ── POP RIGHT — graduation spread + commander's send-off in COMMANDER'S NOTE slot ──
+const PopRight = forwardRef(function PopRight({ commanderNote }, ref) {
+  // POP send-off — different in tone from the enlistment (welcome) and BMT
+  // (proud-of-your-progress) notes: this one is a farewell as the soldier
+  // graduates BMT and moves on to their vocation.
+  const displayNote = commanderNote
+    || "Alex,\n\nMy job was to take a scared recruit and hand back a soldier. Today I'm done. You don't need me anymore.\n\nWherever you post out to, lead the way you marched: heart first. Make us proud.\n\n— 3SG Lim";
+
+  return (
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/pop_right.png"
+        alt="POP Right"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "99%", objectFit: "cover" }}
+      />
+      {/* COMMANDER'S NOTE lined slot (center-right); card ~ x:57%-91%, y:55%-79% */}
+      <div style={{
+        position: "absolute",
+        top: "53%",
+        left: "54.5%",
+        transform: "rotate(5.5deg)",
+        width: "32%",
+        height: "30%",
+        overflow: "hidden",
+        boxSizing: "border-box",
+      }}>
+        <p style={{
+          fontFamily: "'VT323', monospace",
+          fontSize: 12,
+          color: C.ink,
+          lineHeight: "14px",
           whiteSpace: "pre-wrap",
           margin: 0,
         }}>
@@ -655,7 +712,7 @@ function renderPage(entry) {
 function JournalFlipbook({ onClose }) {
   const bookRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(0);
-  const totalPages = journalEntries.length + 8;
+  const totalPages = journalEntries.length + 10;
 
   const onFlip = useCallback(function (e) { setCurrentPage(e.data); }, []);
 
@@ -683,6 +740,8 @@ function JournalFlipbook({ onClose }) {
           <BmtChapterRight userNote={null} commanderNote={null} />
           <FieldCampLeft userNote={null} />
           <FieldCampRight buddyNote={null} />
+          <PopLeft />
+          <PopRight commanderNote={null} />
           {journalEntries.map(function (entry) { return renderPage(entry); })}
           <BackCover />
         </HTMLFlipBook>
