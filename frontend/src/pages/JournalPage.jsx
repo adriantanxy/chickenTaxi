@@ -402,6 +402,83 @@ const BmtChapterRight = forwardRef(function BmtChapterRight({ userNote, commande
   );
 });
 
+// ── FIELD CAMP LEFT — outfield spread + my own reflection in MY REFLECTION slot ──
+const FieldCampLeft = forwardRef(function FieldCampLeft({ userNote }, ref) {
+  const displayNote = userNote
+    || "5 days. Honestly the worst week of my life.\n\nSoaked to the bone, no sleep, ration packs for every meal...\n\nThere were nights I wanted to give up. But Hao Jie kept me going when I wanted to give up.\n\nSomehow we survived it. Together.";
+
+  return (
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/fieldcamp_left.png"
+        alt="Field Camp Left"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "99%", objectFit: "cover" }}
+      />
+      {/* MY REFLECTION lined slot (right, mid-lower); lines ~ x:63%-93%, y:64%-88% */}
+      <div style={{
+        position: "absolute",
+        top: "60.5%",
+        left: "60%",
+        transform: "rotate(6.2deg)",
+        width: "30%",
+        height: "24%",
+        overflow: "hidden",
+        boxSizing: "border-box",
+      }}>
+        <p style={{
+          fontFamily: "'VT323', monospace",
+          fontSize: 12,
+          color: C.ink,
+          lineHeight: "13px",
+          whiteSpace: "pre-wrap",
+          margin: 0,
+        }}>
+          {displayNote}
+        </p>
+      </div>
+    </div>
+  );
+});
+
+// ── FIELD CAMP RIGHT — group photo spread + buddy's handwritten note ──
+const FieldCampRight = forwardRef(function FieldCampRight({ buddyNote }, ref) {
+  // A note the soldier's buddy (Hao Jie) wrote to them.
+  const displayNote = buddyNote
+    || "Bro,\n\n5 days of hell and we made it. I still can't believe we slept in that flooded shellscrape.\n\nWhen I was about to break, you cheered me up. I won't forget that. Whatever comes next, I wish you all the best.\n\n— Hao Jie";
+
+  return (
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/fieldcamp_right.png"
+        alt="Field Camp Right"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "99%", objectFit: "cover" }}
+      />
+      {/* BUDDY'S NOTE lined slot (bottom-left); lines ~ x:9%-37%, y:57%-79% */}
+      <div style={{
+        position: "absolute",
+        top: "57%",
+        left: "16%",
+        transform: "rotate(-2.5deg)",
+        width: "29%",
+        height: "40%",
+        overflow: "hidden",
+        boxSizing: "border-box",
+      }}>
+        <p style={{
+          fontFamily: "'VT323', monospace",
+          fontSize: 13,
+          color: C.ink,
+          lineHeight: "13px",
+          whiteSpace: "pre-wrap",
+          margin: 0,
+        }}>
+          {displayNote}
+        </p>
+      </div>
+    </div>
+  );
+});
+
 // ── MILESTONE ──
 const MilestonePage = forwardRef(function MilestonePage({ entry }, ref) {
   return (
@@ -578,7 +655,7 @@ function renderPage(entry) {
 function JournalFlipbook({ onClose }) {
   const bookRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(0);
-  const totalPages = journalEntries.length + 6;
+  const totalPages = journalEntries.length + 8;
 
   const onFlip = useCallback(function (e) { setCurrentPage(e.data); }, []);
 
@@ -604,6 +681,8 @@ function JournalFlipbook({ onClose }) {
           <EnlistmentRight userNote={null} />
           <BmtChapterLeft />
           <BmtChapterRight userNote={null} commanderNote={null} />
+          <FieldCampLeft userNote={null} />
+          <FieldCampRight buddyNote={null} />
           {journalEntries.map(function (entry) { return renderPage(entry); })}
           <BackCover />
         </HTMLFlipBook>
