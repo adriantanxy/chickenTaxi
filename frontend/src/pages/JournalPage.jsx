@@ -854,10 +854,14 @@ function JournalFlipbook({ onClose }) {
           width={PAGE_W}
           height={PAGE_H}
           showCover={true}
-          flippingTime={800}
+          /* Faster flip + lighter shadow so the brief mid-flip frame (where a
+             turning page's border doesn't perfectly align with the page
+             beneath it) passes quickly and is less noticeable. */
+          flippingTime={550}
           usePortrait={true}
           autoSize={true}
-          maxShadowOpacity={0.35}
+          maxShadowOpacity={0.2}
+          drawShadow={true}
           mobileScrollSupport={false}
           onFlip={onFlip}
           style={{ boxShadow: "0 8px 32px #00000066" }}
