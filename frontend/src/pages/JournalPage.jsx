@@ -340,7 +340,7 @@ const BmtChapterLeft = forwardRef(function BmtChapterLeft(_props, ref) {
         /* Image aspect (0.800) is wider than the page box, so cover would clip
            the sides. Scaling to ~94% height lets the full width show (only ~1%
            side crop) with a thin top/bottom margin that blends with the page. */
-        style={{ position: "absolute", left: 0, right: 0, top: "2%", width: "100%", height: "95%", objectFit: "cover" }}
+        style={{ position: "absolute", left: 0, right: 0, top: "2%", width: "100%", height: "97%", objectFit: "cover" }}
       />
     </div>
   );
@@ -350,7 +350,7 @@ const BmtChapterLeft = forwardRef(function BmtChapterLeft(_props, ref) {
 const BmtChapterRight = forwardRef(function BmtChapterRight({ userNote, commanderNote }, ref) {
   // Personal message from the section commander, addressed to the soldier.
   const cmdNote = commanderNote
-    || "Alex,\n\n At the start of BMT, you couldn't hold a 1-min plank. Last week you carried Rafiq's load on the last 2km without being asked.\n\nThat's the soldier I'll remember.\n\nProud of you. Now go be great.\n\n— 3SG Lim";
+    || "Alex,\n\nAt the start of BMT, you couldn't hold a 1-min plank. Last week you carried Rafiq's load on the last 2km without being asked.\n\nThat's the soldier I'll remember.\n\nProud of you. Now go be great.\n\n— 3SG Lim";
 
   const myNote = userNote
     || "63 days. Came in alone, leaving with brothers. \n\nCan't believe I made it through. This was crazy...\nbut i guess it's time for round 2...";
@@ -369,13 +369,13 @@ const BmtChapterRight = forwardRef(function BmtChapterRight({ userNote, commande
         alt="BMT Chapter Right"
         /* See BMT left: scaled to ~94% height so the full width shows with
            minimal side crop and a thin blending top/bottom margin. */
-        style={{ position: "absolute", left: 0, right: 0, top: "2%", width: "100%", height: "95%", objectFit: "cover" }}
+        style={{ position: "absolute", left: 0, right: 0, top: "2%", width: "100%", height: "97%", objectFit: "cover" }}
       />
 
       {/* COMMANDER'S NOTES lined slot (bottom-left); lines ~ x:7%-36%, y:74%-88% */}
       <div style={{
         position: "absolute",
-        top: "72.6%",
+        top: "74.5%",
         left: "9%",
         transform: "rotate(-5deg)",
         width: "27%",
@@ -391,7 +391,7 @@ const BmtChapterRight = forwardRef(function BmtChapterRight({ userNote, commande
       {/* MY NOTES lined slot (bottom-right); lines ~ x:64%-92%, y:74%-88% */}
       <div style={{
         position: "absolute",
-        top: "73.2%",
+        top: "75%",
         left: "64.5%",
         width: "27%",
         transform: "rotate(5.5deg)",
@@ -417,7 +417,7 @@ const FieldCampLeft = forwardRef(function FieldCampLeft({ userNote }, ref) {
       <img
         src="/assets/journal/fieldcamp_left.png"
         alt="Field Camp Left"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "99%", objectFit: "cover" }}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
       />
       {/* MY REFLECTION lined slot (right, mid-lower); lines ~ x:63%-93%, y:64%-88% */}
       <div style={{
@@ -492,9 +492,10 @@ const PopLeft = forwardRef(function PopLeft(_props, ref) {
         src="/assets/journal/pop_left.png"
         alt="POP Left"
         /* Image has a book-spine/binding crease baked into its right edge.
-           Render ~3% wider than the page and anchor top-left so the page's
-           overflow:hidden clips that crease off the right side. */
-        style={{ position: "absolute", top: 0, left: 0, width: "103%", height: "99%", objectFit: "cover", objectPosition: "center" }}
+           objectPosition:"left" anchors the image to the LEFT edge so the
+           horizontal crop comes entirely off the RIGHT (removing the crease)
+           and the left book border stays fully visible / uncropped. */
+        style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "99%", objectFit: "cover", objectPosition: "left" }}
       />
     </div>
   );
@@ -519,8 +520,8 @@ const PopRight = forwardRef(function PopRight({ commanderNote }, ref) {
       <div style={{
         position: "absolute",
         top: "53%",
-        left: "54.5%",
-        transform: "rotate(5.5deg)",
+        left: "57.5%",
+        transform: "rotate(6deg)",
         width: "32%",
         height: "30%",
         overflow: "hidden",
@@ -632,7 +633,7 @@ const OrdLeft = forwardRef(function OrdLeft(_props, ref) {
         alt="ORD Left"
         /* cover crops the taller image top+bottom; objectPosition:top anchors
            the crop to the bottom so the top banner/border stays visible. */
-        style={{ position: "absolute", left: 0, right: 0, top: "2%", width: "100%", height: "98%", objectFit: "cover", objectPosition: "top" }}
+        style={{ position: "absolute", left: 0, right: 0, top: "1%", width: "100%", height: "98%", objectFit: "cover", objectPosition: "top" }}
       />
     </div>
   );
@@ -645,7 +646,7 @@ const OrdRight = forwardRef(function OrdRight(_props, ref) {
       <img
         src="/assets/journal/ord_right.png"
         alt="ORD Right"
-        style={{ position: "absolute", left: 0, right: 0, top: "1%", width: "100%", height: "98%", objectFit: "cover", objectPosition: "top" }}
+        style={{ position: "absolute", left: 1, right: 0, top: "0%", width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }}
       />
     </div>
   );
@@ -658,7 +659,7 @@ const LastPage = forwardRef(function LastPage(_props, ref) {
       <img
         src="/assets/journal/lastpage.png"
         alt="Last Page"
-        style={{ position: "absolute", left: 0, right: 0, top: "1%", width: "100%", height: "98%", objectFit: "cover", objectPosition: "top" }}
+        style={{ position: "absolute", left: 0, right: 0, top: "1%", width: "100%", height: "99%", objectFit: "cover", objectPosition: "top" }}
       />
     </div>
   );
