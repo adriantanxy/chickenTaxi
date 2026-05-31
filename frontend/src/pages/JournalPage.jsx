@@ -954,6 +954,9 @@ function MateStack({ extra }) {
    ═══════════════════════════════════════════════════════════ */
 export default function JournalPage({ onNavigate }) {
   const [bookOpen, setBookOpen] = useState(false);
+  // Gate: the journal is sealed until ORD. While locked the cover is darkened
+  // and not openable. The "UNLOCK BOOK (TEST)" button flips this for testing.
+  const [unlocked, setUnlocked] = useState(false);
 
   if (bookOpen) {
     return (
@@ -980,23 +983,37 @@ export default function JournalPage({ onNavigate }) {
           {/* ---- COVER + QUICK CAPTURE ---- */}
           <Card>
             <div className="flex flex-col gap-5 xl:flex-row">
-              <div
-                className="relative flex-1 rounded-lg p-6"
-                style={{ background: "linear-gradient(145deg,#6b6a3a,#4a4a28)", border: "8px solid #3a2a1a", boxShadow: "inset 0 0 24px #00000055" }}
+              {/* Closed-journal cover image. The title, tagline and START tab
+                  are baked into the artwork, so the whole image is the clickable
+                  trigger that opens the flipbook — but only once unlocked. While
+                  locked it is darkened and shows a sealed-until-ORD overlay. */}
+              <button
+                onClick={function () { if (unlocked) setBookOpen(true); }}
+                className={(unlocked ? "wgt-press cursor-pointer " : "cursor-not-allowed ") + "relative flex flex-1 items-center justify-center"}
+                aria-label={unlocked ? "Open journal" : "Journal locked until ORD"}
+                disabled={!unlocked}
+                style={{ background: "transparent", border: "none", padding: 0 }}
               >
-                <div className="mx-auto inline-block w-full rounded-2xl px-6 py-5 text-center" style={{ background: "#efe3cb", border: "3px dashed #6b5c3e" }}>
-                  <p style={pixel} className="text-[48px] leading-none"><span style={{ color: C.ink }}>{data.cover.title}</span></p>
-                  <p style={pixel} className="text-[30px] leading-tight"><span style={{ color: C.green }}>{data.cover.subtitle}</span></p>
-                  <p style={pixel} className="mt-2 flex items-center justify-center gap-1 text-[14px]"><span style={{ color: C.inkSoft }}>{data.cover.tagline}</span><Heart size={11} className="fill-current text-red-700" /></p>
-                </div>
-                <div className="mt-3 flex items-end justify-between">
-                  <span className="text-2xl">{"\u{1F97E}"} {"\u{1F392}"} {"\u{1F9ED}"}</span>
-                  <button onClick={function () { setBookOpen(true); }} className="wgt-press rounded-lg px-6 py-2" style={{ background: "#efe3cb" }}>
-                    <span style={pixel} className="text-[24px]"><span style={{ color: C.ink }}>{"START ›"}</span></span>
-                  </button>
-                </div>
-                <span className="absolute -right-2 -top-2 text-2xl">{"\u{1F4CC}"}</span>
-              </div>
+                <img
+                  src="/assets/journal/journal_closed_image.png"
+                  alt={data.cover.title + " " + data.cover.subtitle}
+                  className="h-auto w-full max-w-[520px] transition-all duration-300"
+                  style={{
+                    filter: unlocked
+                      ? "drop-shadow(3px 5px 10px #00000055)"
+                      : "drop-shadow(3px 5px 10px #00000055) brightness(0.45) saturate(0.7)",
+                  }}
+                />
+                {/* Sealed overlay — only while locked */}
+                {!unlocked && (
+                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2">
+                    <span className="flex h-14 w-14 items-center justify-center rounded-full" style={{ background: "#00000088", border: "2px solid " + C.gold }}>
+                      <Lock size={26} style={{ color: C.gold }} />
+                    </span>
+                    <span style={{ ...pixel, fontSize: 14, color: C.textGold, textShadow: "1px 1px 3px #000" }}>SEALED UNTIL ORD</span>
+                  </div>
+                )}
+              </button>
 
               <div className="flex w-full shrink-0 flex-col gap-3 sm:w-44">
                 <div className="rounded-md border-2 px-3 py-2 text-center" style={{ borderColor: "#7a8a52", background: "#cdd2ad" }}>
@@ -1007,6 +1024,18 @@ export default function JournalPage({ onNavigate }) {
                 <div className="-rotate-2 rounded-sm bg-white p-2 pb-5 shadow-md">
                   <div className="flex h-24 items-center justify-center text-4xl" style={{ background: "#2a3320" }}>{"\u{1FA96}"}</div>
                 </div>
+
+                {/* TEST control — toggles the ORD lock so the cover can be opened. */}
+                <button
+                  onClick={function () { setUnlocked(function (v) { return !v; }); }}
+                  className="wgt-press flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed px-2 py-2"
+                  style={{ borderColor: C.gold, background: C.bgHeader, color: C.textGold }}
+                >
+                  {unlocked
+                    ? <BookOpen size={16} style={{ color: C.gold }} />
+                    : <Lock size={16} style={{ color: C.gold }} />}
+                  <span style={{ ...pixel, fontSize: 13 }}>{unlocked ? "LOCK BOOK (TEST)" : "UNLOCK BOOK (TEST)"}</span>
+                </button>
               </div>
             </div>
 
@@ -1018,16 +1047,6 @@ export default function JournalPage({ onNavigate }) {
             </div>
           </Card>
 
-          {/* ---- TEST UNLOCK BUTTON ---- */}
-          <button
-            onClick={function () { setBookOpen(true); }}
-            className="wgt-press flex w-full items-center justify-center gap-3 rounded-xl border-2 border-dashed px-4 py-4"
-            style={{ borderColor: C.gold, background: C.bgHeader, color: C.textGold }}
-          >
-            <BookOpen size={22} style={{ color: C.gold }} />
-            <span style={{ ...pixel, fontSize: 20 }}>UNLOCK BOOK (TEST)</span>
-            <Lock size={16} style={{ color: C.gold }} />
-          </button>
 
           {/* ---- SERVICE PROGRESS ---- */}
           <Card>
