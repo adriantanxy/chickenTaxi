@@ -6,18 +6,15 @@
  *   2. Flipbook — a react-pageflip book with dynamically composed pages
  *
  * The "START" button (or a test "UNLOCK BOOK" button) toggles into the
- * flipbook view. Each page is a React component rendered at 380x540
+ * flipbook view. Each page is a React component rendered at 480x690
  * and auto-scaled by StPageFlip.
- *
- * All images are placeholders for now — solid-colour boxes with labels
- * so you can verify sizing before generating real assets.
  */
-import React, { useState, useRef, forwardRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, forwardRef, useCallback } from "react";
 import HTMLFlipBook from "react-pageflip";
 import {
   BookOpen, Plus, Image, FileText, Mic, Star, Mail, Lock,
-  MoreHorizontal, ChevronRight, ChevronLeft, Heart, X, Camera,
-  Mountain, Users as UsersIcon, Pen, Award,
+  MoreHorizontal, ChevronRight, ChevronLeft, Heart, Camera,
+  Users as UsersIcon, Pen, Award,
 } from "lucide-react";
 import { AppShell, ActionButton, Card, Ribbon } from "../ui";
 import { ROUTES } from "../routes";
@@ -160,7 +157,11 @@ function PlaceholderImg({ label, w = "100%", h = 160, rotate = 0, className = ""
         boxSizing: "border-box",
       }}
     >
-      <span style={{ opacity: 0.7 }}>{label || "PHOTO"}<br /><Camera size={16} style={{ display: "inline" }} /></span>
+      <span style={{ opacity: 0.7 }}>
+        {label || "PHOTO"}
+        <br />
+        <Camera size={16} style={{ display: "inline" }} />
+      </span>
     </div>
   );
 }
@@ -190,7 +191,7 @@ function StampBadge({ text }) {
   return (
     <span
       style={{
-        display: "inline-block", border: `2px solid #7a3a2a`, borderRadius: 4,
+        display: "inline-block", border: "2px solid #7a3a2a", borderRadius: 4,
         padding: "2px 8px", ...pixel, fontSize: 11, color: "#7a3a2a",
         transform: "rotate(-6deg)", opacity: 0.7,
       }}
@@ -216,24 +217,110 @@ const pageBase = {
 };
 
 // ── COVER ──
-const CoverPage = forwardRef(function CoverPage(_, ref) {
+const CoverPage = forwardRef(function CoverPage(_props, ref) {
   return (
-    <div ref={ref} style={{ ...pageBase, background: "linear-gradient(145deg,#6b6a3a,#4a4a28)", border: "8px solid #3a2a1a" }}>
-      <div style={{ padding: 32, display: "flex", flexDirection: "column", height: "100%", justifyContent: "center" }}>
-        <div style={{ background: "#efe3cb", border: "3px dashed #6b5c3e", borderRadius: 16, padding: "28px 20px", textAlign: "center" }}>
-          <p style={{ ...pixel, fontSize: 44, color: C.ink, lineHeight: 1 }}>{data.cover.title}</p>
-          <p style={{ ...pixel, fontSize: 28, color: C.green, lineHeight: 1.2, marginTop: 4 }}>{data.cover.subtitle}</p>
-          <p style={{ ...pixel, fontSize: 13, color: C.inkSoft, marginTop: 10 }}>
-            {data.cover.tagline} <Heart size={10} style={{ display: "inline", color: "#7a3a2a" }} />
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/coverpage.png"
+        alt="Journal Cover"
+        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+      />
+    </div>
+  );
+});
+
+// ── ENLISTMENT LEFT — official welcome message on the parchment note card ──
+const EnlistmentLeft = forwardRef(function EnlistmentLeft({ commanderNote }, ref) {
+  const displayNote = commanderNote
+    || "To our newest recruit,\n\nThe next 2 months will be the hardest you've known. You'll be scared. You'll miss home, miss sleep, miss who you used to be.\n\nBe brave. We've got you.\n\n— Your Commanders";
+
+  return (
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/enlistment_left.png"
+        alt="Enlistment Left"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+      />
+      {/* parchment note card sits lower-right; corners ~ x:40%-95%, y:44%-88% */}
+      <div style={{
+        position: "absolute",
+        top: "54%",
+        left: "40%",
+        width: "50%",
+        height: "39%",
+        transform: "rotate(5deg)",
+        display: "flex",
+        flexDirection: "column",
+        padding: "10px 12px",
+        boxSizing: "border-box",
+      }}>
+        <p style={{
+          ...pixel, fontSize: 12, color: "#7a3a2a",
+          margin: "0 0 4px", textTransform: "uppercase", letterSpacing: 1,
+        }}>
+          ★ Official Message ★
+        </p>
+        <div style={{ flex: 1, overflow: "hidden" }}>
+          <p style={{
+            fontFamily: "'VT323', monospace",
+            fontSize: 13,
+            color: C.ink,
+            lineHeight: "16px",
+            whiteSpace: "pre-wrap",
+            margin: 0,
+          }}>
+            {displayNote}
           </p>
         </div>
-        <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-          <span style={{ fontSize: 24 }}>{"\u{1F97E}"} {"\u{1F392}"} {"\u{1F9ED}"}</span>
-          <StampBadge text={`ENLISTED ${data.cover.enlisted}`} />
-        </div>
-        <PlaceholderImg label="Cover photo" h={120} className="mt-3" />
       </div>
-      <PinEmoji top={8} right={8} />
+    </div>
+  );
+});
+
+// ── ENLISTMENT RIGHT — user's own day-1 note on the parchment note card ──
+const EnlistmentRight = forwardRef(function EnlistmentRight({ userNote }, ref) {
+  const displayNote = userNote
+    || "Enlisted today, " + data.cover.enlisted + ".\n\nI honestly don't know what I'm in for. Saying bye to my family at the ferry terminal was harder than I thought.\n\nBut I'm here now. " + user.name + ", reporting for duty.\n\nLet's see who I become....";
+
+  return (
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/enlistment_right.png"
+        alt="Enlistment Right"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+      />
+      {/* parchment note card is centered; corners ~ x:28%-85%, y:38%-83% */}
+      <div style={{
+        position: "absolute",
+        top: "43%",
+        left: "35%",
+        width: "52%",
+        height: "41%",
+        transform: "rotate(2.5deg)",
+        display: "flex",
+        flexDirection: "column",
+        padding: "10px 12px",
+        boxSizing: "border-box",
+      }}>
+        <p style={{
+          ...pixel, fontSize: 14, color: C.inkSoft,
+          margin: "0 0 4px", textTransform: "uppercase", letterSpacing: 1,
+        }}>
+          What YOU wrote on Day 1
+        </p>
+        <div style={{ flex: 1, overflow: "hidden" }}>
+          <p style={{
+            fontFamily: "'VT323', monospace",
+            fontSize: 12,
+            color: C.ink,
+            lineHeight: "18px",
+            whiteSpace: "pre-wrap",
+            margin: 0,
+          }}>
+            {displayNote}
+          </p>
+        </div>
+      </div>
     </div>
   );
 });
@@ -270,12 +357,14 @@ const CollagePage = forwardRef(function CollagePage({ entry }, ref) {
         gridTemplateColumns: entry.photos.length > 4 ? "1fr 1fr 1fr" : "1fr 1fr",
         gap: 10, marginTop: 14,
       }}>
-        {entry.photos.map((p, i) => (
-          <div key={i} style={{ background: "white", padding: 4, paddingBottom: 18, boxShadow: "2px 3px 8px #00000033", transform: `rotate(${p.rotate}deg)` }}>
-            <PlaceholderImg label={p.label} h={entry.photos.length > 4 ? 90 : 120} rotate={0} />
-            <p style={{ ...pixel, fontSize: 9, color: C.inkSoft, textAlign: "center", marginTop: 2 }}>{p.label}</p>
-          </div>
-        ))}
+        {entry.photos.map(function (p, i) {
+          return (
+            <div key={i} style={{ background: "white", padding: 4, paddingBottom: 18, boxShadow: "2px 3px 8px #00000033", transform: "rotate(" + p.rotate + "deg)" }}>
+              <PlaceholderImg label={p.label} h={entry.photos.length > 4 ? 90 : 120} rotate={0} />
+              <p style={{ ...pixel, fontSize: 9, color: C.inkSoft, textAlign: "center", marginTop: 2 }}>{p.label}</p>
+            </div>
+          );
+        })}
       </div>
       <PinEmoji top={4} right={4} />
     </div>
@@ -295,12 +384,14 @@ const SquadPage = forwardRef(function SquadPage({ entry }, ref) {
       <PlaceholderImg label={entry.imageLabel} h={160} />
       <p style={{ ...pixel, fontSize: 14, color: C.ink, marginTop: 12, lineHeight: 1.4 }}>{entry.text}</p>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12 }}>
-        {entry.mates.map((m) => (
-          <span key={m} style={{
-            ...pixel, fontSize: 11, background: C.green, color: C.textGold,
-            borderRadius: 6, padding: "3px 8px",
-          }}>{m}</span>
-        ))}
+        {entry.mates.map(function (m) {
+          return (
+            <span key={m} style={{
+              ...pixel, fontSize: 11, background: C.green, color: C.textGold,
+              borderRadius: 6, padding: "3px 8px",
+            }}>{m}</span>
+          );
+        })}
       </div>
       <PinEmoji top={6} right={6} />
     </div>
@@ -339,7 +430,7 @@ const LetterPage = forwardRef(function LetterPage({ entry }, ref) {
   return (
     <div ref={ref} style={{ ...pageBase, padding: 24, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
       {entry.locked ? (
-        <>
+        <React.Fragment>
           <div style={{
             width: 240, padding: "32px 24px", background: "#d8c7a4",
             border: "2px solid #9a8a6a", borderRadius: 4, textAlign: "center",
@@ -354,7 +445,7 @@ const LetterPage = forwardRef(function LetterPage({ entry }, ref) {
             </div>
           </div>
           <StampBadge text="TIME CAPSULE" />
-        </>
+        </React.Fragment>
       ) : (
         <div style={{ width: "100%", padding: 16 }}>
           <h2 style={{ ...pixel, fontSize: 22, color: C.ink, marginBottom: 12 }}>{entry.title}</h2>
@@ -368,7 +459,7 @@ const LetterPage = forwardRef(function LetterPage({ entry }, ref) {
 });
 
 // ── BACK COVER ──
-const BackCover = forwardRef(function BackCover(_, ref) {
+const BackCover = forwardRef(function BackCover(_props, ref) {
   return (
     <div ref={ref} style={{ ...pageBase, background: "linear-gradient(145deg,#4a4a28,#3a3a1c)", border: "8px solid #3a2a1a", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 32 }}>
       <p style={{ ...pixel, fontSize: 20, color: C.textGold, textAlign: "center", lineHeight: 1.5 }}>
@@ -410,13 +501,12 @@ function renderPage(entry) {
 function JournalFlipbook({ onClose }) {
   const bookRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(0);
-  const totalPages = journalEntries.length + 2; // +cover +back
+  const totalPages = journalEntries.length + 4;
 
-  const onFlip = useCallback((e) => setCurrentPage(e.data), []);
+  const onFlip = useCallback(function (e) { setCurrentPage(e.data); }, []);
 
   return (
     <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", backgroundImage: "url(/assets/journal/table.png)", backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed" }}>
-      {/* the book */}
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
         <HTMLFlipBook
           ref={bookRef}
@@ -433,7 +523,9 @@ function JournalFlipbook({ onClose }) {
           className="journal-flipbook"
         >
           <CoverPage />
-          {journalEntries.map((entry) => renderPage(entry))}
+          <EnlistmentLeft commanderNote={null} />
+          <EnlistmentRight userNote={null} />
+          {journalEntries.map(function (entry) { return renderPage(entry); })}
           <BackCover />
         </HTMLFlipBook>
       </div>
@@ -442,7 +534,7 @@ function JournalFlipbook({ onClose }) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   LANDING VIEW (original layout, slightly trimmed)
+   LANDING VIEW
    ═══════════════════════════════════════════════════════════ */
 
 function CaptureButton({ icon, label }) {
@@ -458,15 +550,17 @@ function MateStack({ extra }) {
   return (
     <div className="flex items-center">
       <div className="flex">
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className="flex h-6 w-6 items-center justify-center rounded-full text-[12px]"
-            style={{ background: C.green, outline: `2px solid ${C.cardLight}`, marginLeft: i ? -6 : 0 }}
-          >
-            {"\u{1F9D1}‍✈️"}
-          </div>
-        ))}
+        {[0, 1, 2].map(function (i) {
+          return (
+            <div
+              key={i}
+              className="flex h-6 w-6 items-center justify-center rounded-full text-[12px]"
+              style={{ background: C.green, outline: "2px solid " + C.cardLight, marginLeft: i ? -6 : 0 }}
+            >
+              {"\u{1F9D1}‍✈️"}
+            </div>
+          );
+        })}
       </div>
       <span style={{ ...pixel, ...M }} className="ml-1 text-[13px]">+{extra}</span>
     </div>
@@ -486,7 +580,7 @@ export default function JournalPage({ onNavigate }) {
         icon={<BookOpen size={36} />} title="JOURNAL" subtitle="CAPTURE MOMENTS. REFLECT. GROW."
         fill
       >
-        <JournalFlipbook onClose={() => setBookOpen(false)} />
+        <JournalFlipbook onClose={function () { setBookOpen(false); }} />
       </AppShell>
     );
   }
@@ -504,7 +598,6 @@ export default function JournalPage({ onNavigate }) {
           {/* ---- COVER + QUICK CAPTURE ---- */}
           <Card>
             <div className="flex flex-col gap-5 xl:flex-row">
-              {/* leather scrapbook cover */}
               <div
                 className="relative flex-1 rounded-lg p-6"
                 style={{ background: "linear-gradient(145deg,#6b6a3a,#4a4a28)", border: "8px solid #3a2a1a", boxShadow: "inset 0 0 24px #00000055" }}
@@ -516,14 +609,13 @@ export default function JournalPage({ onNavigate }) {
                 </div>
                 <div className="mt-3 flex items-end justify-between">
                   <span className="text-2xl">{"\u{1F97E}"} {"\u{1F392}"} {"\u{1F9ED}"}</span>
-                  <button onClick={() => setBookOpen(true)} className="wgt-press rounded-lg px-6 py-2" style={{ background: "#efe3cb" }}>
-                    <span style={pixel} className="text-[24px]"><span style={{ color: C.ink }}>START {"›"}</span></span>
+                  <button onClick={function () { setBookOpen(true); }} className="wgt-press rounded-lg px-6 py-2" style={{ background: "#efe3cb" }}>
+                    <span style={pixel} className="text-[24px]"><span style={{ color: C.ink }}>{"START ›"}</span></span>
                   </button>
                 </div>
                 <span className="absolute -right-2 -top-2 text-2xl">{"\u{1F4CC}"}</span>
               </div>
 
-              {/* ORD ticket + polaroid */}
               <div className="flex w-full shrink-0 flex-col gap-3 sm:w-44">
                 <div className="rounded-md border-2 px-3 py-2 text-center" style={{ borderColor: "#7a8a52", background: "#cdd2ad" }}>
                   <p style={{ ...pixel, ...M }} className="text-[12px] leading-none">{"★"} LOCKED UNTIL ORD {"★"}</p>
@@ -536,18 +628,17 @@ export default function JournalPage({ onNavigate }) {
               </div>
             </div>
 
-            {/* quick capture */}
             <p style={{ ...pixel, ...D }} className="mb-2 mt-4 text-[22px] leading-none">QUICK CAPTURE</p>
             <div className="flex flex-wrap gap-2">
-              {data.capture.map((c) => (
-                <CaptureButton key={c.label} icon={c.icon} label={c.label} />
-              ))}
+              {data.capture.map(function (c) {
+                return <CaptureButton key={c.label} icon={c.icon} label={c.label} />;
+              })}
             </div>
           </Card>
 
           {/* ---- TEST UNLOCK BUTTON ---- */}
           <button
-            onClick={() => setBookOpen(true)}
+            onClick={function () { setBookOpen(true); }}
             className="wgt-press flex w-full items-center justify-center gap-3 rounded-xl border-2 border-dashed px-4 py-4"
             style={{ borderColor: C.gold, background: C.bgHeader, color: C.textGold }}
           >
@@ -567,21 +658,23 @@ export default function JournalPage({ onNavigate }) {
               <div className="flex-1">
                 <p style={{ ...pixel, ...M }} className="mb-1 text-center text-[18px]">YOUR SERVICE PROGRESS</p>
                 <div className="h-4 w-full overflow-hidden rounded-full" style={{ background: "#00000020" }}>
-                  <div className="h-full rounded-full" style={{ width: `${data.progress.percent}%`, background: C.green }} />
+                  <div className="h-full rounded-full" style={{ width: data.progress.percent + "%", background: C.green }} />
                 </div>
                 <p style={{ ...pixel, ...M }} className="mt-1 text-center text-[14px]">{data.progress.days} / {data.progress.total} DAYS</p>
               </div>
             </div>
             <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-              {data.progress.stats.map((s) => (
-                <div key={s.label} className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: C.cardInner }}>
-                  <span className="text-2xl">{s.glyph}</span>
-                  <div className="leading-tight">
-                    <p style={pixel} className="text-[26px] leading-none"><span style={{ color: C.ink }}>{s.value}</span></p>
-                    <p style={{ ...pixel, ...M }} className="text-[11px]">{s.label}</p>
+              {data.progress.stats.map(function (s) {
+                return (
+                  <div key={s.label} className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: C.cardInner }}>
+                    <span className="text-2xl">{s.glyph}</span>
+                    <div className="leading-tight">
+                      <p style={pixel} className="text-[26px] leading-none"><span style={{ color: C.ink }}>{s.value}</span></p>
+                      <p style={{ ...pixel, ...M }} className="text-[11px]">{s.label}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </Card>
 
@@ -601,20 +694,22 @@ export default function JournalPage({ onNavigate }) {
           {/* ---- RECENT SEALED MEMORIES ---- */}
           <Card title={"★ RECENT SEALED MEMORIES ★"}>
             <div className="space-y-2">
-              {data.sealed.map((m) => (
-                <div key={m.title} className="wgt-press flex items-center gap-3 rounded-lg px-2 py-2" style={{ background: C.cardInner }}>
-                  <div className="flex h-12 w-14 shrink-0 items-center justify-center rounded text-2xl" style={{ background: "#2a3320" }}>{m.glyph}</div>
-                  <div className="min-w-0 flex-1 leading-tight">
-                    <p style={pixel} className="flex items-center gap-1 text-[16px]"><span style={{ color: C.ink }}>{m.title}</span><Star size={11} style={{ color: C.gold }} /></p>
-                    <p style={{ ...pixel, ...M }} className="text-[12px]">{m.date}</p>
-                    <div className="mt-1"><MateStack extra={m.extra} /></div>
+              {data.sealed.map(function (m) {
+                return (
+                  <div key={m.title} className="wgt-press flex items-center gap-3 rounded-lg px-2 py-2" style={{ background: C.cardInner }}>
+                    <div className="flex h-12 w-14 shrink-0 items-center justify-center rounded text-2xl" style={{ background: "#2a3320" }}>{m.glyph}</div>
+                    <div className="min-w-0 flex-1 leading-tight">
+                      <p style={pixel} className="flex items-center gap-1 text-[16px]"><span style={{ color: C.ink }}>{m.title}</span><Star size={11} style={{ color: C.gold }} /></p>
+                      <p style={{ ...pixel, ...M }} className="text-[12px]">{m.date}</p>
+                      <div className="mt-1"><MateStack extra={m.extra} /></div>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <Lock size={15} style={{ color: C.green }} />
+                      <MoreHorizontal size={15} style={M} />
+                    </div>
                   </div>
-                  <div className="flex flex-col items-center gap-1">
-                    <Lock size={15} style={{ color: C.green }} />
-                    <MoreHorizontal size={15} style={M} />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <button className="wgt-press mt-3 flex w-full items-center justify-center gap-2 rounded-lg py-2" style={{ background: C.green, color: C.textGold }}>
               <span style={pixel} className="text-[16px]">VIEW ALL SEALED MEMORIES</span>
@@ -629,16 +724,20 @@ export default function JournalPage({ onNavigate }) {
               <span style={{ ...pixel, ...M }} className="flex items-center gap-1 text-[12px]"><Lock size={11} /> UNLOCKS ON ORD DAY</span>
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              {data.letters.map((l) => (
-                <button key={l.when} className="wgt-press flex flex-col items-center gap-2 rounded-lg px-2 py-3" style={{ background: C.cardInner }}>
-                  <div className="flex h-12 w-full items-center justify-center rounded" style={{ background: "#d8c7a4" }}>
-                    <Mail size={26} style={{ color: "#7a3a2a" }} />
-                  </div>
-                  <span style={{ ...pixel, ...D }} className="text-center text-[13px] leading-none">{l.when}</span>
-                </button>
-              ))}
+              {data.letters.map(function (l) {
+                return (
+                  <button key={l.when} className="wgt-press flex flex-col items-center gap-2 rounded-lg px-2 py-3" style={{ background: C.cardInner }}>
+                    <div className="flex h-12 w-full items-center justify-center rounded" style={{ background: "#d8c7a4" }}>
+                      <Mail size={26} style={{ color: "#7a3a2a" }} />
+                    </div>
+                    <span style={{ ...pixel, ...D }} className="text-center text-[13px] leading-none">{l.when}</span>
+                  </button>
+                );
+              })}
             </div>
-            <p style={{ ...pixel, ...M }} className="mt-2 flex items-center gap-1 text-[13px]">Write to your future self. Read it when you've completed your journey. <Heart size={10} className="fill-current text-red-700" /></p>
+            <p style={{ ...pixel, ...M }} className="mt-2 flex items-center gap-1 text-[13px]">
+              Write to your future self. Read it when you have completed your journey. <Heart size={10} className="fill-current text-red-700" />
+            </p>
           </Card>
         </div>
       </div>
