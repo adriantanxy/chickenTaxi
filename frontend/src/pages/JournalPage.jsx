@@ -848,7 +848,34 @@ function JournalFlipbook({ onClose }) {
   const onFlip = useCallback(function (e) { setCurrentPage(e.data); }, []);
 
   return (
-    <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", backgroundImage: "url(/assets/journal/table.png)", backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed" }}>
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", backgroundImage: "url(/assets/journal/table.png)", backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed" }}>
+      {/* Back tab — a scrapbook-style tag pinned to the table, styled like the
+          rest of the journal (pixel font, gold-on-dark) so it reads as part of
+          the keepsake rather than a generic browser chrome button. */}
+      <button
+        onClick={onClose}
+        className="wgt-press"
+        style={{
+          position: "absolute",
+          top: 20,
+          left: 20,
+          zIndex: 10,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "8px 14px 8px 12px",
+          background: C.bgHeader,
+          color: C.textGold,
+          border: "2px solid " + C.gold,
+          borderRadius: 8,
+          boxShadow: "2px 3px 10px #00000055",
+          transform: "rotate(-2deg)",
+        }}
+      >
+        <ChevronLeft size={18} style={{ color: C.gold }} />
+        <span style={{ ...pixel, fontSize: 16 }}>CLOSE BOOK</span>
+      </button>
+
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
         <HTMLFlipBook
           ref={bookRef}
