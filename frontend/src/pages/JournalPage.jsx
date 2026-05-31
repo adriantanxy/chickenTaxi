@@ -554,7 +554,7 @@ const NewPostingLeft = forwardRef(function NewPostingLeft({ commanderNote }, ref
       <img
         src="/assets/journal/new_posting_left.png"
         alt="New Posting Left"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "99%", objectFit: "cover" }}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "99.5%", objectFit: "cover" }}
       />
       {/* COMMANDER'S NOTE card — write below the baked-in label, clear of the
           plant sprig at the card's right; writable ~ x:46%-75%, y:45%-50% */}
@@ -619,6 +619,34 @@ const NewPostingRight = forwardRef(function NewPostingRight({ commanderNote }, r
           {displayNote}
         </p>
       </div>
+    </div>
+  );
+});
+
+// ── ORD LEFT — ORD milestone spread, image only (self-contained) ──
+const OrdLeft = forwardRef(function OrdLeft(_props, ref) {
+  return (
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/ord_left.png"
+        alt="ORD Left"
+        /* cover crops the taller image top+bottom; objectPosition:top anchors
+           the crop to the bottom so the top banner/border stays visible. */
+        style={{ position: "absolute", left: 0, right: 0, top: "2%", width: "100%", height: "98%", objectFit: "cover", objectPosition: "top" }}
+      />
+    </div>
+  );
+});
+
+// ── ORD RIGHT — closing spread, image only (self-contained) ──
+const OrdRight = forwardRef(function OrdRight(_props, ref) {
+  return (
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/ord_right.png"
+        alt="ORD Right"
+        style={{ position: "absolute", left: 0, right: 0, top: "1%", width: "100%", height: "98%", objectFit: "cover", objectPosition: "top" }}
+      />
     </div>
   );
 });
@@ -799,7 +827,7 @@ function renderPage(entry) {
 function JournalFlipbook({ onClose }) {
   const bookRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(0);
-  const totalPages = journalEntries.length + 12;
+  const totalPages = journalEntries.length + 14;
 
   const onFlip = useCallback(function (e) { setCurrentPage(e.data); }, []);
 
@@ -831,6 +859,8 @@ function JournalFlipbook({ onClose }) {
           <PopRight commanderNote={null} />
           <NewPostingLeft commanderNote={null} />
           <NewPostingRight commanderNote={null} />
+          <OrdLeft />
+          <OrdRight />
           {journalEntries.map(function (entry) { return renderPage(entry); })}
           <BackCover />
         </HTMLFlipBook>
