@@ -58,9 +58,7 @@ const data = {
     { when: "6 MONTHS IN" },
     { when: "1 YEAR IN" },
     { when: "1.5 YEARS IN" },
-  ],
-  quote:
-    "The moments may be small, but the growth is real.\nKeep going. Your future self is counting on you.",
+  ]
 };
 
 /* ── fake journal entries that the flipbook will render ── */
@@ -1079,14 +1077,6 @@ export default function JournalPage({ onNavigate }) {
             </div>
           </Card>
 
-          {/* ---- MASCOT QUOTE ---- */}
-          <div className="flex items-start gap-3 rounded-xl p-4 sm:items-center" style={{ background: C.bgHeader }}>
-            <span className="text-4xl">{"\u{1F9D1}‍✈️"}</span>
-            <p className="whitespace-pre-line text-[18px] leading-snug" style={{ ...pixel, color: C.textGold }}>
-              {data.quote}
-            </p>
-            <Heart size={16} className="ml-auto self-start fill-current text-red-700" />
-          </div>
         </div>
 
         {/* ===================== RIGHT COLUMN ===================== */}
