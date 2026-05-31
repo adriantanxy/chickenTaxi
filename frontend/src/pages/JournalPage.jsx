@@ -337,7 +337,10 @@ const BmtChapterLeft = forwardRef(function BmtChapterLeft(_props, ref) {
       <img
         src="/assets/journal/bmt_chapter_left.png"
         alt="BMT Chapter Left"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "99%", objectFit: "cover" }}
+        /* Image aspect (0.800) is wider than the page box, so cover would clip
+           the sides. Scaling to ~94% height lets the full width show (only ~1%
+           side crop) with a thin top/bottom margin that blends with the page. */
+        style={{ position: "absolute", left: 0, right: 0, top: "2%", width: "100%", height: "95%", objectFit: "cover" }}
       />
     </div>
   );
@@ -364,7 +367,9 @@ const BmtChapterRight = forwardRef(function BmtChapterRight({ userNote, commande
       <img
         src="/assets/journal/bmt_chapter_right.png"
         alt="BMT Chapter Right"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "99%", objectFit: "cover" }}
+        /* See BMT left: scaled to ~94% height so the full width shows with
+           minimal side crop and a thin blending top/bottom margin. */
+        style={{ position: "absolute", left: 0, right: 0, top: "2%", width: "100%", height: "95%", objectFit: "cover" }}
       />
 
       {/* COMMANDER'S NOTES lined slot (bottom-left); lines ~ x:7%-36%, y:74%-88% */}
