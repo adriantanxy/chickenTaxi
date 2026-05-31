@@ -651,6 +651,19 @@ const OrdRight = forwardRef(function OrdRight(_props, ref) {
   );
 });
 
+// ── LAST PAGE — final back cover, image only (self-contained) ──
+const LastPage = forwardRef(function LastPage(_props, ref) {
+  return (
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/lastpage.png"
+        alt="Last Page"
+        style={{ position: "absolute", left: 0, right: 0, top: "1%", width: "100%", height: "98%", objectFit: "cover", objectPosition: "top" }}
+      />
+    </div>
+  );
+});
+
 // ── MILESTONE ──
 const MilestonePage = forwardRef(function MilestonePage({ entry }, ref) {
   return (
@@ -827,7 +840,9 @@ function renderPage(entry) {
 function JournalFlipbook({ onClose }) {
   const bookRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(0);
-  const totalPages = journalEntries.length + 14;
+  // Fixed image pages: cover, enlistment L/R, BMT L/R, field camp L/R,
+  // POP L/R, new posting L/R, ORD L/R, last page.
+  const totalPages = 14;
 
   const onFlip = useCallback(function (e) { setCurrentPage(e.data); }, []);
 
@@ -861,8 +876,7 @@ function JournalFlipbook({ onClose }) {
           <NewPostingRight commanderNote={null} />
           <OrdLeft />
           <OrdRight />
-          {journalEntries.map(function (entry) { return renderPage(entry); })}
-          <BackCover />
+          <LastPage />
         </HTMLFlipBook>
       </div>
     </div>
