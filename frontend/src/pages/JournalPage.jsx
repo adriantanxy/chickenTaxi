@@ -536,6 +536,88 @@ const PopRight = forwardRef(function PopRight({ commanderNote }, ref) {
   );
 });
 
+// ── NEW POSTING LEFT — unit posting spread + new section commander's welcome ──
+const NewPostingLeft = forwardRef(function NewPostingLeft({ commanderNote }, ref) {
+  // The NEW section commander welcoming Alex into Alpha 3-1. Purpose: a
+  // fresh-start welcome to a new unit — short, since the slot is a wide,
+  // shallow card.
+  const displayNote = commanderNote
+    || "Welcome to Alpha 3-1, Alex. You show me what you've got. It was fun doing this with you\n\n  — 2SG Faizal";
+
+  return (
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/new_posting_left.png"
+        alt="New Posting Left"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "99%", objectFit: "cover" }}
+      />
+      {/* COMMANDER'S NOTE card — write below the baked-in label, clear of the
+          plant sprig at the card's right; writable ~ x:46%-75%, y:45%-50% */}
+      <div style={{
+        position: "absolute",
+        top: "43.5%",
+        left: "46%",
+        transform: "rotate(-1deg)",
+        width: "29%",
+        height: "10%",
+        overflow: "hidden",
+        boxSizing: "border-box",
+      }}>
+        <p style={{
+          fontFamily: "'VT323', monospace",
+          fontSize: 11,
+          color: C.ink,
+          lineHeight: "12px",
+          whiteSpace: "pre-wrap",
+          margin: 0,
+        }}>
+          {displayNote}
+        </p>
+      </div>
+    </div>
+  );
+});
+
+// ── NEW POSTING RIGHT — new team spread + the CO's mission charge ──
+const NewPostingRight = forwardRef(function NewPostingRight({ commanderNote }, ref) {
+  // LTC Lim is the Commanding Officer — a senior officer, not a section
+  // commander. Purpose: a bigger-picture mission charge to the whole unit,
+  // distinct in rank and voice from the section-level welcomes/send-offs.
+  const displayNote = commanderNote
+    || "You guys were amazing, wouldn't have asked for another group of people to do this with. Don't avoid me when you see me next time >.<\n— LTC Lim, CO";
+
+  return (
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/new_posting_right.png"
+        alt="New Posting Right"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "101%", objectFit: "cover" }}
+      />
+      {/* LTC LIM'S NOTE lined slot (bottom-left); card ~ x:11%-42%, y:81%-93% */}
+      <div style={{
+        position: "absolute",
+        top: "82.5%",
+        left: "11.5%",
+        width: "30%",
+        height: "11%",
+        overflow: "hidden",
+        boxSizing: "border-box",
+      }}>
+        <p style={{
+          fontFamily: "'VT323', monospace",
+          fontSize: 11,
+          color: C.ink,
+          lineHeight: "12px",
+          whiteSpace: "pre-wrap",
+          margin: 0,
+        }}>
+          {displayNote}
+        </p>
+      </div>
+    </div>
+  );
+});
+
 // ── MILESTONE ──
 const MilestonePage = forwardRef(function MilestonePage({ entry }, ref) {
   return (
@@ -712,7 +794,7 @@ function renderPage(entry) {
 function JournalFlipbook({ onClose }) {
   const bookRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(0);
-  const totalPages = journalEntries.length + 10;
+  const totalPages = journalEntries.length + 12;
 
   const onFlip = useCallback(function (e) { setCurrentPage(e.data); }, []);
 
@@ -742,6 +824,8 @@ function JournalFlipbook({ onClose }) {
           <FieldCampRight buddyNote={null} />
           <PopLeft />
           <PopRight commanderNote={null} />
+          <NewPostingLeft commanderNote={null} />
+          <NewPostingRight commanderNote={null} />
           {journalEntries.map(function (entry) { return renderPage(entry); })}
           <BackCover />
         </HTMLFlipBook>
