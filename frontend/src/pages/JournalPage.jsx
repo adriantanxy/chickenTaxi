@@ -12,7 +12,7 @@
  * All images are placeholders for now — solid-colour boxes with labels
  * so you can verify sizing before generating real assets.
  */
-import { useState, useRef, forwardRef, useCallback } from "react";
+import React, { useState, useRef, forwardRef, useCallback, useEffect } from "react";
 import HTMLFlipBook from "react-pageflip";
 import {
   BookOpen, Plus, Image, FileText, Mic, Star, Mail, Lock,
@@ -415,7 +415,7 @@ function JournalFlipbook({ onClose }) {
   const onFlip = useCallback((e) => setCurrentPage(e.data), []);
 
   return (
-    <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+    <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", backgroundImage: "url(/assets/journal/table.png)", backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed" }}>
       {/* the book */}
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
         <HTMLFlipBook
