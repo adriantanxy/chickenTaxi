@@ -273,6 +273,78 @@ button {
   box-shadow: 0 2px 3px #00000050, inset 0 1px 1px #ffffff60;
 }
 
+/* ---- Journal keepsake surfaces --------------------------------------------
+   The journal landing is a scrapbook. These give pure-CSS polish where art
+   assets don't exist yet: aged-paper cards with a torn deckled edge, polaroid
+   photo frames, washi-tape strips, and a dog-tag chip. Colour/quirk is baked
+   in so the page reads handmade, not boxed. */
+
+/* Aged parchment card — warm stains, soft vignette, deckled (torn) edge via a
+   slightly irregular radius + double shadow. The base sepia card art still wins
+   when present; this is the fallback surface the journal uses directly. */
+.wgt-paper {
+  position: relative;
+  /* Base sepia MUST match the shared Card surface (C.cardLight = #ddbe98) so the
+     journal's boxes read identical to Training/Squad/etc. Only texture + a
+     deckled torn edge are layered on top — no colour drift. */
+  background-color: #ddbe98;
+  background-image:
+    radial-gradient(70% 55% at 88% 8%, #b9986320 0%, transparent 60%),
+    radial-gradient(50% 45% at 8% 92%, #9c7c4a1c 0%, transparent 55%),
+    radial-gradient(40% 30% at 50% 50%, #ffffff12 0%, transparent 70%);
+  border: 1px solid #6b5c3e3a;
+  border-radius: 14px 12px 13px 11px;
+  box-shadow:
+    inset 0 1px 0 #ffffff4a,
+    inset 0 0 22px #b9986312,
+    0 2px 3px #2a201022,
+    0 10px 24px -10px #2a201050;
+}
+/* Faint deckled torn-edge highlight along the top. */
+.wgt-paper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 2px 1px #fff7e64a;
+}
+
+/* A polaroid: white frame, thick bottom lip, soft drop shadow, faint tilt set
+   inline per-photo. The photo well sits inside. */
+.wgt-polaroid {
+  background: linear-gradient(160deg, #fffdf6 0%, #f3ebd9 100%);
+  padding: 6px 6px 20px;
+  box-shadow: 0 2px 3px #2a201030, 0 8px 18px -6px #2a201055;
+  border-radius: 2px;
+}
+.wgt-polaroid .wgt-photo-well {
+  position: relative;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(135deg, #2f3a20 0 8px, #28331c 8px 16px);
+  box-shadow: inset 0 0 0 1px #00000033, inset 0 2px 10px #00000040;
+}
+
+/* Washi-tape strip — translucent, faintly striped, set with top/left/rotate
+   inline. Sits above polaroids to "hold" them down. */
+.wgt-tape {
+  position: absolute;
+  width: 56px; height: 18px;
+  background:
+    repeating-linear-gradient(90deg, #d8c89a55 0 5px, #cdbb8855 5px 10px);
+  box-shadow: 0 1px 2px #00000022;
+  z-index: 3;
+}
+.wgt-tape::after {        /* soft torn ends */
+  content: ""; position: absolute; inset: 0;
+  box-shadow: inset 6px 0 4px -4px #00000018, inset -6px 0 4px -4px #00000018;
+}
+
+/* Blinking caret for the mascot pep-talk typewriter. */
+.wgt-caret { animation: wgt-blink 1s steps(1) infinite; }
+@keyframes wgt-blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+
 /* ---- Event editor modal ---------------------------------------------------- */
 
 .wgt-modal-overlay {

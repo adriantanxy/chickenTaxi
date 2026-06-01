@@ -166,6 +166,24 @@ export const ASSETS = {
     },
   },
 
+  // Journal landing — pixel-art icons + the ORD countdown plate.
+  journal: {
+    // ORD countdown backdrop: a blank green leather plate with a thumbs-up
+    // soldier baked into the lower-right. All count text is overlaid by us.
+    ordBackdrop: "/assets/journal/ord_backdrop.png",
+    // Wide blank green leather plate behind the Quick Capture buttons.
+    quickCaptureBoard: "/assets/journal/quick_capture_backboard.png",
+    // Full-body talking soldier — the pep-talk mascot (raised finger, mouth open).
+    mascot: "/assets/journal/talking_soldier.png",
+    icons: {
+      photo: "/assets/journal/photo.png",        // framed landscape
+      milestone: "/assets/journal/milestone.png", // gold star
+      medal: "/assets/journal/medal.png",         // shield + star crest
+      mates: "/assets/journal/mates.png",         // two soldiers
+      memories: "/assets/journal/memories.png",   // closed field book
+    },
+  },
+
   // Avatar paper-doll layers. Keep every PNG on the same canvas size.
   avatar: {
     // base: "/assets/avatar/base.png",

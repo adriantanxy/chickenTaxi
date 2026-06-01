@@ -13,12 +13,36 @@ import React, { useState, useRef, forwardRef, useCallback } from "react";
 import HTMLFlipBook from "react-pageflip";
 import {
   BookOpen, Plus, Image, FileText, Mic, Star, Mail, Lock,
-  MoreHorizontal, ChevronRight, ChevronLeft, Heart, Camera,
+  ChevronRight, ChevronLeft, Camera, X,
   Users as UsersIcon, Pen, Award,
 } from "lucide-react";
-import { AppShell, ActionButton, Card, Ribbon } from "../ui";
+import { AppShell, ActionButton, Ribbon, Frame } from "../ui";
+import { ASSETS } from "../assets";
 import { ROUTES } from "../routes";
-import { C, pixel, D, M, USER as user } from "../theme";
+import { C, pixel, M, USER as user } from "../theme";
+
+const JOURNAL_ART = ASSETS.journal;
+
+// ORD plate text position. The count text is centered, then nudged by these to
+// sit in the plate's empty area (clear of the baked-in soldier on the right).
+// Tweak these two numbers to slide the text — units are % of the plate.
+const ORD_TEXT_OFFSET = { x: -8, y: 0 }; // x: negative = left, y: negative = up
+
+// How far (px) to drop the pep-talk mascot below the speech bubble's baseline.
+// Bigger = lower (he dips toward the UNLOCK button). 0 = aligned with bubble.
+const MASCOT_DROP = 24;
+
+// Small helper: a pixel-art icon image at a fixed height (width follows art).
+function PixIcon({ src, size = 20, className = "" }) {
+  return (
+    <img
+      src={src}
+      alt=""
+      className={"object-contain " + className}
+      style={{ height: size, width: "auto", imageRendering: "pixelated", filter: "drop-shadow(0 1px 1px #0003)" }}
+    />
+  );
+}
 
 /* ───────────────────────── fake data ───────────────────────── */
 
@@ -31,34 +55,73 @@ const data = {
   },
   ord: { daysLeft: 143 },
   capture: [
-    { label: "PHOTO", icon: <Image size={18} /> },
-    { label: "NOTE", icon: <FileText size={18} /> },
-    { label: "VOICE", icon: <Mic size={18} /> },
-    { label: "MILESTONE", icon: <Star size={18} /> },
-    { label: "LETTER TO\nFUTURE ME", icon: <Mail size={18} /> },
+    { type: "photo", label: "PHOTO", icon: <Image size={20} /> },
+    { type: "note", label: "NOTE", icon: <FileText size={20} /> },
+    { type: "voice", label: "VOICE", icon: <Mic size={20} /> },
+    { type: "milestone", label: "MILESTONE", icon: <Star size={20} /> },
   ],
   progress: {
     percent: 27,
     days: 143,
     total: 730,
     stats: [
-      { label: "MEMORIES", value: 42, glyph: "\u{1F4D6}" },
-      { label: "PHOTOS", value: 31, glyph: "\u{1F5BC}️" },
-      { label: "MATES TAGGED", value: 18, glyph: "\u{1F465}" },
-      { label: "MILESTONES", value: 8, glyph: "⭐" },
+      { label: "MEMORIES", value: 42, art: "memories" },
+      { label: "PHOTOS", value: 31, art: "photo" },
+      { label: "MATES TAGGED", value: 18, art: "mates" },
+      { label: "MILESTONES", value: 8, art: "milestone" },
     ],
   },
-  sealed: [
-    { title: "First book in camp", date: "20 APR 2024", glyph: "\u{1F3D5}️", extra: 6 },
-    { title: "Route March", date: "17 MAY 2024", glyph: "\u{1F6A9}", extra: 9 },
-    { title: "Outfield night", date: "27 JUN 2024", glyph: "\u{1F30C}", extra: 5 },
-    { title: "Made new buddies", date: "08 SEP 2024", glyph: "\u{1F305}", extra: 4 },
+  // The soldier's own captures — live, viewable any time (the book itself stays
+  // sealed until ORD). Newest first. `ago` is a pre-baked relative time so the
+  // mock feed reads naturally without date math.
+  recentEntries: [
+    { id: "e1", type: "photo", title: "Bunk after stand-by-bed", ago: "2d", date: "29 MAY 2024", text: "Finally passed inspection. Took a shot before the SGT could mess it up again." },
+    { id: "e2", type: "note", title: "Note to Hao Jie", ago: "3d", date: "28 MAY 2024", text: "Bro thanks for covering my guard duty when I was down with fever. I owe you one." },
+    { id: "e3", type: "voice", title: "Voice memo · 0:42", ago: "5d", date: "26 MAY 2024", text: "Recorded my thoughts after the 8km route march. Legs gone but feeling good." },
+    { id: "e4", type: "milestone", title: "First live firing", ago: "1w", date: "22 MAY 2024", text: "Range day. Hit marksman on the first try. Didn't expect that at all." },
   ],
-  letters: [
-    { when: "6 MONTHS IN" },
-    { when: "1 YEAR IN" },
-    { when: "1.5 YEARS IN" },
-  ]
+  // Photos the COMMANDER assigned to this soldier's SECTION — scoped to the
+  // section (ALPHA 3-1), never the whole unit. The hook is "new from CMD".
+  sectionGallery: {
+    section: "ALPHA 3-1",
+    newCount: 12,
+    photos: [
+      { id: "g1", label: "Section photo", by: "2SG Faizal", date: "20 MAY 2024", glyph: "\u{1F4F8}" },
+      { id: "g2", label: "Route march start", by: "2SG Faizal", date: "17 MAY 2024", glyph: "\u{1F6A9}" },
+      { id: "g3", label: "Field camp brief", by: "3SG Lim", date: "25 JUN 2024", glyph: "\u{1F3D5}️" },
+      { id: "g4", label: "Range day", by: "2SG Faizal", date: "22 MAY 2024", glyph: "\u{1F3AF}" },
+      { id: "g5", label: "Cohesion BBQ", by: "3SG Lim", date: "30 MAY 2024", glyph: "\u{1F356}" },
+      { id: "g6", label: "Morning PT", by: "2SG Faizal", date: "15 MAY 2024", glyph: "\u{1F3C3}" },
+    ],
+  },
+};
+
+// Rotating one-liners the mascot "types out" in the right rail. Short so they
+// fit the narrow box and read as a buddy egging you on toward ORD.
+const PEP_LINES = [
+  "Almost there, soldier...",
+  "Every day is one closer.",
+  "Your future self thanks you.",
+  "Small moments, big growth.",
+  "One book down. Keep going.",
+  "Tough days build tough men.",
+  "Capture it before you forget.",
+  "You're stronger than day one.",
+  "ORD loading... stay locked in.",
+  "Trust the process, recruit.",
+  "Memories now, medals later.",
+  "Hooyah! Another day conquered.",
+];
+
+// Per-capture-type icon for the recent-entries feed. photo/milestone have pixel
+// art; note/voice fall back to emoji until art exists (🖉 note, 🎙 voice).
+const ENTRY_ART = {
+  photo: JOURNAL_ART.icons.photo,
+  milestone: JOURNAL_ART.icons.milestone,
+};
+const ENTRY_GLYPH = {
+  note: "\u{1F4DD}",
+  voice: "\u{1F399}️",
 };
 
 /* ── fake journal entries that the flipbook will render ── */
@@ -917,33 +980,370 @@ function JournalFlipbook({ onClose }) {
    LANDING VIEW
    ═══════════════════════════════════════════════════════════ */
 
-function CaptureButton({ icon, label }) {
+// A Quick Capture button: a gold-on-green lucide icon + label, each on its OWN
+// green leather backboard plate.
+function CaptureButton({ icon, label, onClick }) {
   return (
-    <button className="wgt-press flex min-w-[130px] flex-1 items-center justify-center gap-2 rounded-lg px-2 py-3" style={{ background: C.green, color: C.textGold }}>
-      <span className="shrink-0">{icon}</span>
-      <span style={pixel} className="whitespace-pre-line text-left text-[14px] leading-none">{label}</span>
+    <button
+      onClick={onClick}
+      className="wgt-press flex flex-1 items-center justify-center gap-2 rounded-lg px-2 py-4"
+      style={{
+        color: C.textGold,
+        maxWidth: 230,
+        backgroundImage: "url(" + JOURNAL_ART.quickCaptureBoard + ")",
+        backgroundSize: "100% 100%",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
+      <span className="shrink-0" style={{ color: C.gold }}>{icon}</span>
+      <span style={pixel} className="text-[15px] leading-none">{label}</span>
     </button>
   );
 }
 
-function MateStack({ extra }) {
+/* ═══════════════════════════════════════════════════════════
+   KEEPSAKE UI — small scrapbook pieces used across the landing.
+   Pure CSS where art is missing; emoji glyphs mark slots to be replaced by
+   generated pixel art (flagged in the asset list returned to the user).
+   ═══════════════════════════════════════════════════════════ */
+
+// A tilted polaroid with a pixel-art photo well. `glyph` is a placeholder for
+// art-to-be-generated; pass `tilt` (deg) and `tape` to taste.
+function Polaroid({ glyph, caption, h = 64, tilt = 0, tape = false, className = "", onClick }) {
+  const El = onClick ? "button" : "div";
   return (
-    <div className="flex items-center">
-      <div className="flex">
-        {[0, 1, 2].map(function (i) {
-          return (
-            <div
-              key={i}
-              className="flex h-6 w-6 items-center justify-center rounded-full text-[12px]"
-              style={{ background: C.green, outline: "2px solid " + C.cardLight, marginLeft: i ? -6 : 0 }}
-            >
-              {"\u{1F9D1}‍✈️"}
-            </div>
-          );
-        })}
+    <El
+      onClick={onClick}
+      className={"wgt-polaroid " + (onClick ? "wgt-press " : "") + className}
+      style={{ transform: "rotate(" + tilt + "deg)", border: 0 }}
+      title={caption}
+    >
+      {tape && <span className="wgt-tape" style={{ top: -8, left: "50%", marginLeft: -28, transform: "rotate(-4deg)" }} />}
+      <div className="wgt-photo-well flex items-center justify-center" style={{ height: h }}>
+        <span style={{ fontSize: Math.min(h * 0.5, 34), filter: "drop-shadow(0 1px 2px #0006)" }}>{glyph}</span>
       </div>
-      <span style={{ ...pixel, ...M }} className="ml-1 text-[13px]">+{extra}</span>
+      {caption && (
+        <p style={{ ...pixel, color: C.inkSoft }} className="mt-1 truncate text-center text-[11px]">{caption}</p>
+      )}
+    </El>
+  );
+}
+
+// Typewriter that cycles a list of lines: type out → hold → erase → next.
+// Returns the currently-visible substring. Pure timers, cleaned up on unmount.
+function useTypewriter(lines, { typeMs = 55, eraseMs = 28, holdMs = 1600 } = {}) {
+  // Start on a random line so the sequence isn't identical every page load.
+  const [idx, setIdx] = useState(function () { return Math.floor(Math.random() * lines.length); });
+  const [len, setLen] = useState(0);     // chars shown
+  const [phase, setPhase] = useState("typing"); // typing | holding | erasing
+
+  React.useEffect(function () {
+    const line = lines[idx % lines.length];
+    let t;
+    if (phase === "typing") {
+      if (len < line.length) t = setTimeout(function () { setLen(len + 1); }, typeMs);
+      else t = setTimeout(function () { setPhase("holding"); }, holdMs);
+    } else if (phase === "holding") {
+      t = setTimeout(function () { setPhase("erasing"); }, holdMs);
+    } else { // erasing
+      if (len > 0) t = setTimeout(function () { setLen(len - 1); }, eraseMs);
+      else { setIdx(idx + 1); setPhase("typing"); }
+    }
+    return function () { clearTimeout(t); };
+  }, [lines, idx, len, phase, typeMs, eraseMs, holdMs]);
+
+  return lines[idx % lines.length].slice(0, len);
+}
+
+// The mascot pep-talk — a big talking-soldier sprite anchored bottom-RIGHT, with
+// a parchment speech bubble above-left whose tail points down-diagonally at him.
+// The line is typed out with a blinking caret.
+function PepTalk() {
+  const text = useTypewriter(PEP_LINES);
+  return (
+    <div className="flex items-center justify-end gap-0">
+      {/* Speech bubble — grows to fill the space left of the soldier. */}
+      <div
+        className="relative flex-1 rounded-xl px-3 py-2.5"
+        style={{ background: "#f3e8d0", border: "1px solid " + C.line, boxShadow: "0 2px 5px #0004, inset 0 1px 0 #fff8" }}
+      >
+        {/* Tail — a parchment triangle on the bubble's RIGHT edge, pointing
+            across at the soldier (upper area, toward his head/raised hand). */}
+        <span
+          className="absolute"
+          style={{
+            right: -8, top: "38%", width: 15, height: 15,
+            background: "#f3e8d0",
+            borderTop: "1px solid " + C.line, borderRight: "1px solid " + C.line,
+            transform: "rotate(45deg)",
+            boxShadow: "2px -1px 3px #0001",
+          }}
+        />
+        <p style={{ fontFamily: "'VT323', monospace", color: C.ink }} className="min-h-[2.6em] text-[16px] leading-tight">
+          {text}
+          <span className="wgt-caret" style={{ color: C.green }}>▋</span>
+        </p>
+      </div>
+
+      <img
+        src={JOURNAL_ART.mascot}
+        alt="Your buddy"
+        className="-ml-1 shrink-0 self-end"
+        /* translateY pushes him lower without growing the row, so he can dip
+           toward the UNLOCK button below. Increase MASCOT_DROP to move down. */
+        style={{ height: 120, width: "auto", imageRendering: "pixelated", filter: "drop-shadow(0 3px 4px #0007)", transform: "translateY(" + MASCOT_DROP + "px)" }}
+      />
     </div>
+  );
+}
+
+// Section title — the shared green Ribbon pill, matching Training/Squad so card
+// headers look identical across the app. `right` holds an optional corner label.
+function StarTitle({ children, right }) {
+  return (
+    <div className="mb-2 flex items-center justify-between gap-2">
+      <Ribbon>{children}</Ribbon>
+      {right}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MODALS — capture (photo/note/voice/milestone), read view, lightbox.
+   All share ModalShell: a centered sepia card over a dim backdrop. These are
+   prototype interfaces — Save pushes a mock entry into session state; there is
+   no backend, so entries reset on refresh.
+   ═══════════════════════════════════════════════════════════ */
+
+function ModalShell({ title, icon, onClose, children, footer, maxWidth = 460 }) {
+  // Esc closes; the backdrop is a click target. Body content scrolls if tall.
+  React.useEffect(function () {
+    function onKey(e) { if (e.key === "Escape") onClose(); }
+    document.addEventListener("keydown", onKey);
+    return function () { document.removeEventListener("keydown", onKey); };
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title}>
+      <button
+        type="button"
+        aria-label="Close"
+        onClick={onClose}
+        className="absolute inset-0 h-full w-full cursor-default"
+        style={{ background: "#11100bcc" }}
+      />
+      <Frame
+        frame="card"
+        className="relative flex max-h-[88vh] w-full flex-col overflow-hidden p-4"
+        style={{ maxWidth }}
+      >
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <Ribbon size={15}>
+            <span className="inline-flex items-center gap-2">{icon}{title}</span>
+          </Ribbon>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            className="wgt-press flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+            style={{ background: C.green, color: C.textGold }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+        {footer && <div className="mt-3 flex justify-end gap-2">{footer}</div>}
+      </Frame>
+    </div>
+  );
+}
+
+// Shared field styling for the capture forms.
+const fieldStyle = {
+  ...pixel,
+  width: "100%",
+  background: "#f3e8d0",
+  border: "2px solid " + C.line,
+  borderRadius: 8,
+  padding: "8px 10px",
+  color: C.ink,
+  fontSize: 16,
+  boxSizing: "border-box",
+};
+
+function FieldLabel({ children }) {
+  return (
+    <p style={{ ...pixel, ...M }} className="mb-1 mt-3 text-[14px] uppercase tracking-wide first:mt-0">
+      {children}
+    </p>
+  );
+}
+
+function SaveButton({ onClick, children = "SAVE TO JOURNAL" }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="wgt-press flex items-center gap-2 rounded-lg border-2 px-4 py-2"
+      style={{ borderColor: C.gold + "99", background: C.green, color: C.textGold }}
+    >
+      <Plus size={16} />
+      <span style={pixel} className="text-[16px]">{children}</span>
+    </button>
+  );
+}
+
+// Single capture modal that adapts its body to the capture type.
+function CaptureModal({ type, onClose, onSave }) {
+  const [title, setTitle] = useState("");
+  const [text, setText] = useState("");
+  // Voice: fake a recording timer so the control feels real (no real audio).
+  const [recording, setRecording] = useState(false);
+  const [seconds, setSeconds] = useState(0);
+
+  React.useEffect(function () {
+    if (!recording) return undefined;
+    const id = setInterval(function () { setSeconds(function (s) { return s + 1; }); }, 1000);
+    return function () { clearInterval(id); };
+  }, [recording]);
+
+  const meta = {
+    photo: { label: "PHOTO", icon: <Image size={16} /> },
+    note: { label: "NOTE", icon: <FileText size={16} /> },
+    voice: { label: "VOICE NOTE", icon: <Mic size={16} /> },
+    milestone: { label: "MILESTONE", icon: <Star size={16} /> },
+  }[type];
+
+  function mmss(s) {
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return m + ":" + String(r).padStart(2, "0");
+  }
+
+  function handleSave() {
+    const fallbackTitle = {
+      photo: "New photo",
+      note: "New note",
+      voice: "Voice memo · " + mmss(seconds),
+      milestone: "New milestone",
+    }[type];
+    onSave({
+      id: "e" + Date.now(),
+      type,
+      title: title.trim() || fallbackTitle,
+      ago: "now",
+      date: "TODAY",
+      text: text.trim(),
+    });
+    onClose();
+  }
+
+  return (
+    <ModalShell title={meta.label} icon={meta.icon} onClose={onClose} footer={<SaveButton onClick={handleSave} />}>
+      {type === "photo" && (
+        <>
+          <FieldLabel>Photo</FieldLabel>
+          <PlaceholderImg label="Tap to add photo" h={150} />
+          <FieldLabel>Caption</FieldLabel>
+          <input style={fieldStyle} value={title} onChange={function (e) { setTitle(e.target.value); }} placeholder="What's happening?" />
+          <FieldLabel>Tag mates (optional)</FieldLabel>
+          <input style={fieldStyle} value={text} onChange={function (e) { setText(e.target.value); }} placeholder="e.g. Hao Jie, Rafiq" />
+        </>
+      )}
+
+      {type === "note" && (
+        <>
+          <FieldLabel>Title</FieldLabel>
+          <input style={fieldStyle} value={title} onChange={function (e) { setTitle(e.target.value); }} placeholder="Give it a title" />
+          <FieldLabel>Your note</FieldLabel>
+          <textarea style={{ ...fieldStyle, minHeight: 140, resize: "vertical" }} value={text} onChange={function (e) { setText(e.target.value); }} placeholder="Write what's on your mind..." />
+        </>
+      )}
+
+      {type === "voice" && (
+        <div className="flex flex-col items-center gap-3 py-4">
+          <button
+            type="button"
+            onClick={function () { setRecording(function (v) { return !v; }); }}
+            className="wgt-press flex h-20 w-20 items-center justify-center rounded-full border-2"
+            style={{ borderColor: C.gold, background: recording ? "#7a2a2a" : C.green, color: C.textGold }}
+            aria-label={recording ? "Stop recording" : "Start recording"}
+          >
+            <Mic size={34} />
+          </button>
+          <p style={{ ...pixel, color: C.ink }} className="text-[28px] leading-none">{mmss(seconds)}</p>
+          <p style={{ ...pixel, ...M }} className="text-[14px]">{recording ? "RECORDING… TAP TO STOP" : "TAP TO RECORD"}</p>
+          <input style={{ ...fieldStyle, marginTop: 8 }} value={title} onChange={function (e) { setTitle(e.target.value); }} placeholder="Label this memo (optional)" />
+        </div>
+      )}
+
+      {type === "milestone" && (
+        <>
+          <div className="mb-2 flex items-center gap-2">
+            <Award size={20} style={{ color: C.green }} />
+            <span style={{ ...pixel, ...M }} className="text-[14px] uppercase tracking-wide">Mark a milestone</span>
+          </div>
+          <FieldLabel>Milestone</FieldLabel>
+          <input style={fieldStyle} value={title} onChange={function (e) { setTitle(e.target.value); }} placeholder="e.g. Passed IPPT Gold" />
+          <FieldLabel>What happened</FieldLabel>
+          <textarea style={{ ...fieldStyle, minHeight: 110, resize: "vertical" }} value={text} onChange={function (e) { setText(e.target.value); }} placeholder="Why does this one matter?" />
+        </>
+      )}
+    </ModalShell>
+  );
+}
+
+// Read-only view of one of the soldier's own entries.
+function EntryReadModal({ entry, onClose }) {
+  const meta = {
+    photo: { label: "PHOTO", icon: <Image size={16} /> },
+    note: { label: "NOTE", icon: <FileText size={16} /> },
+    voice: { label: "VOICE NOTE", icon: <Mic size={16} /> },
+    milestone: { label: "MILESTONE", icon: <Star size={16} /> },
+  }[entry.type] || { label: "ENTRY", icon: <FileText size={16} /> };
+
+  return (
+    <ModalShell title={meta.label} icon={meta.icon} onClose={onClose}>
+      <div className="mb-2 flex items-center gap-2">
+        <span style={{ ...pixel, ...M }} className="text-[13px]">{entry.date}</span>
+        {entry.ago && <span style={{ ...pixel, ...M }} className="text-[13px]">· {entry.ago} ago</span>}
+      </div>
+      <h2 style={{ ...pixel, color: C.ink }} className="text-[26px] leading-tight">{entry.title}</h2>
+
+      {entry.type === "photo" && <div className="mt-3"><PlaceholderImg label={entry.title} h={200} /></div>}
+      {entry.type === "voice" && (
+        <div className="mt-3 flex items-center gap-3 rounded-lg px-3 py-3" style={{ background: C.cardInner }}>
+          <span className="flex h-11 w-11 items-center justify-center rounded-full" style={{ background: C.green, color: C.textGold }}>
+            <Mic size={20} />
+          </span>
+          <div className="h-2 flex-1 rounded-full" style={{ background: "linear-gradient(90deg," + C.green + " 40%, #00000020 40%)" }} />
+        </div>
+      )}
+
+      {entry.text && (
+        <p style={{ fontFamily: "'VT323', monospace", color: C.ink }} className="mt-3 whitespace-pre-wrap text-[16px] leading-relaxed">
+          {entry.text}
+        </p>
+      )}
+    </ModalShell>
+  );
+}
+
+// Enlarged view of a commander-assigned section photo.
+function GalleryLightbox({ photo, section, onClose }) {
+  return (
+    <ModalShell title="SECTION PHOTO" icon={<Camera size={16} />} onClose={onClose} maxWidth={520}>
+      <PlaceholderImg label={photo.label} h={260} />
+      <h2 style={{ ...pixel, color: C.ink }} className="mt-3 text-[24px] leading-tight">{photo.label}</h2>
+      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span style={{ ...pixel, ...M }} className="text-[14px]">{photo.date}</span>
+        <span style={{ ...pixel, ...M }} className="text-[14px]">· {section}</span>
+      </div>
+      <div className="mt-3 inline-flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: C.cardInner }}>
+        <UsersIcon size={16} style={{ color: C.green }} />
+        <span style={{ ...pixel, color: C.ink }} className="text-[15px]">Assigned by {photo.by}</span>
+      </div>
+    </ModalShell>
   );
 }
 
@@ -955,6 +1355,17 @@ export default function JournalPage({ onNavigate }) {
   // Gate: the journal is sealed until ORD. While locked the cover is darkened
   // and not openable. The "UNLOCK BOOK (TEST)" button flips this for testing.
   const [unlocked, setUnlocked] = useState(false);
+
+  // Live, pre-ORD content + the modal interfaces over it. The book stays sealed;
+  // these are the soldier's day-to-day captures, viewable any time.
+  const [entries, setEntries] = useState(data.recentEntries);
+  const [captureType, setCaptureType] = useState(null); // photo|note|voice|milestone
+  const [readEntry, setReadEntry] = useState(null);
+  const [lightboxPhoto, setLightboxPhoto] = useState(null);
+
+  function handleSaveEntry(entry) {
+    setEntries(function (prev) { return [entry, ...prev]; });
+  }
 
   if (bookOpen) {
     return (
@@ -971,167 +1382,246 @@ export default function JournalPage({ onNavigate }) {
   return (
     <AppShell
       active={ROUTES.JOURNAL} onNavigate={onNavigate} user={user}
-      icon={<BookOpen size={36} />} title="JOURNAL" subtitle="CAPTURE MOMENTS. REFLECT. GROW."
-      action={<ActionButton icon={<Plus size={20} />}>NEW MEMORY</ActionButton>}
+      icon={<BookOpen size={36} />} title="JOURNAL" subtitle="CAPTURE MOMENTS · REFLECT · GROW"
+      action={<ActionButton icon={<Plus size={20} />} onClick={function () { setCaptureType("note"); }}>NEW MEMORY</ActionButton>}
+      fill
     >
-      <div className="mx-auto grid w-full max-w-[1600px] grid-cols-1 gap-4 p-3 sm:p-6 lg:grid-cols-3">
-        {/* ===================== LEFT / MAIN ===================== */}
-        <div className="space-y-4 lg:col-span-2">
+      {/* No-scroll desk: the whole landing is laid out to fit one viewport on a
+          common laptop. On xl+ it locks to the screen height; below that it
+          relaxes into a normal scroll so nothing clips on short windows. */}
+      <div className="mx-auto h-full w-full max-w-[1640px] overflow-y-auto p-3 sm:p-5 xl:overflow-hidden">
+        <div className="grid h-full grid-cols-1 gap-4 lg:grid-cols-12">
 
-          {/* ---- COVER + QUICK CAPTURE ---- */}
-          <Card>
-            <div className="flex flex-col gap-5 xl:flex-row">
-              {/* Closed-journal cover image. The title, tagline and START tab
-                  are baked into the artwork, so the whole image is the clickable
-                  trigger that opens the flipbook — but only once unlocked. While
-                  locked it is darkened and shows a sealed-until-ORD overlay. */}
-              <button
-                onClick={function () { if (unlocked) setBookOpen(true); }}
-                className={(unlocked ? "wgt-press cursor-pointer " : "cursor-not-allowed ") + "relative flex flex-1 items-center justify-center"}
-                aria-label={unlocked ? "Open journal" : "Journal locked until ORD"}
-                disabled={!unlocked}
-                style={{ background: "transparent", border: "none", padding: 0 }}
-              >
-                <img
-                  src="/assets/journal/journal_closed_image.png"
-                  alt={data.cover.title + " " + data.cover.subtitle}
-                  className="h-auto w-full max-w-[520px] transition-all duration-300"
-                  style={{
-                    filter: unlocked
-                      ? "drop-shadow(3px 5px 10px #00000055)"
-                      : "drop-shadow(3px 5px 10px #00000055) brightness(0.45) saturate(0.7)",
-                  }}
-                />
-                {/* Sealed overlay — only while locked */}
-                {!unlocked && (
-                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2">
-                    <span className="flex h-14 w-14 items-center justify-center rounded-full" style={{ background: "#00000088", border: "2px solid " + C.gold }}>
-                      <Lock size={26} style={{ color: C.gold }} />
-                    </span>
-                    <span style={{ ...pixel, fontSize: 14, color: C.textGold, textShadow: "1px 1px 3px #000" }}>SEALED UNTIL ORD</span>
-                  </div>
-                )}
-              </button>
+          {/* ═══════════════ LEFT — the book + capture ═══════════════ */}
+          <section className="flex min-h-0 flex-col gap-4 lg:col-span-7">
 
-              <div className="flex w-full shrink-0 flex-col gap-3 sm:w-44">
-                <div className="rounded-md border-2 px-3 py-2 text-center" style={{ borderColor: "#7a8a52", background: "#cdd2ad" }}>
-                  <p style={{ ...pixel, ...M }} className="text-[12px] leading-none">{"★"} LOCKED UNTIL ORD {"★"}</p>
-                  <p style={pixel} className="text-[44px] leading-none"><span style={{ color: "#2f3a1c" }}>{data.ord.daysLeft}</span></p>
-                  <p style={{ ...pixel, ...M }} className="text-[12px]">DAYS LEFT</p>
-                </div>
-                <div className="-rotate-2 rounded-sm bg-white p-2 pb-5 shadow-md">
-                  <div className="flex h-24 items-center justify-center text-4xl" style={{ background: "#2a3320" }}>{"\u{1FA96}"}</div>
-                </div>
+            {/* ---- COVER (sealed) + ORD dog-tag + quick capture ---- */}
+            <div className="wgt-paper flex min-h-0 flex-1 flex-col p-3">
+              <div className="flex min-h-0 flex-1 items-stretch">
 
-                {/* TEST control — toggles the ORD lock so the cover can be opened. */}
+                {/* Closed-journal cover — the hero. Grows to fill the card so
+                    there's no dead space. Sealed until ORD: darkened, not
+                    openable, with a wax-seal lock overlay. */}
                 <button
-                  onClick={function () { setUnlocked(function (v) { return !v; }); }}
-                  className="wgt-press flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed px-2 py-2"
-                  style={{ borderColor: C.gold, background: C.bgHeader, color: C.textGold }}
+                  onClick={function () { if (unlocked) setBookOpen(true); }}
+                  className={(unlocked ? "wgt-press cursor-pointer " : "cursor-not-allowed ") + "group relative flex min-h-0 flex-1 items-center justify-center"}
+                  aria-label={unlocked ? "Open journal" : "Journal sealed until ORD"}
+                  disabled={!unlocked}
+                  style={{ background: "transparent", border: "none", padding: 0 }}
                 >
-                  {unlocked
-                    ? <BookOpen size={16} style={{ color: C.gold }} />
-                    : <Lock size={16} style={{ color: C.gold }} />}
-                  <span style={{ ...pixel, fontSize: 13 }}>{unlocked ? "LOCK BOOK (TEST)" : "UNLOCK BOOK (TEST)"}</span>
+                  <img
+                    src="/assets/journal/journal_closed_image.png"
+                    alt={data.cover.title + " " + data.cover.subtitle}
+                    className="max-h-full w-auto max-w-full object-contain transition-all duration-300"
+                    style={{
+                      filter: unlocked
+                        ? "drop-shadow(4px 7px 14px #00000066)"
+                        : "drop-shadow(4px 7px 14px #00000066) brightness(0.5) saturate(0.65) sepia(0.15)",
+                    }}
+                  />
+                  {!unlocked && (
+                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2">
+                      {/* Wax-seal lock — placeholder for a wax-seal sprite. */}
+                      <span
+                        className="flex h-16 w-16 items-center justify-center rounded-full"
+                        style={{ background: "radial-gradient(circle at 38% 32%, #7a3a2a, #4a1f16)", border: "2px solid " + C.gold, boxShadow: "0 4px 12px #000a, inset 0 2px 4px #fff3" }}
+                      >
+                        <Lock size={28} style={{ color: C.gold }} />
+                      </span>
+                      <span style={{ ...pixel, fontSize: 15, color: C.textGold, textShadow: "1px 1px 3px #000" }}>SEALED UNTIL ORD</span>
+                    </div>
+                  )}
                 </button>
-              </div>
-            </div>
 
-            <p style={{ ...pixel, ...D }} className="mb-2 mt-4 text-[22px] leading-none">QUICK CAPTURE</p>
-            <div className="flex flex-wrap gap-2">
-              {data.capture.map(function (c) {
-                return <CaptureButton key={c.label} icon={c.icon} label={c.label} />;
-              })}
-            </div>
-          </Card>
-
-
-          {/* ---- SERVICE PROGRESS ---- */}
-          <Card>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <span className="flex h-9 w-9 items-center justify-center rounded" style={{ background: C.green, color: C.gold }}>{"\u{1F396}️"}</span>
-              <div>
-                <p style={pixel} className="text-[34px] leading-none"><span style={{ color: C.ink }}>{data.progress.percent}%</span></p>
-                <p style={{ ...pixel, ...M }} className="text-[12px]">COMPLETE</p>
-              </div>
-              <div className="flex-1">
-                <p style={{ ...pixel, ...M }} className="mb-1 text-center text-[18px]">YOUR SERVICE PROGRESS</p>
-                <div className="h-4 w-full overflow-hidden rounded-full" style={{ background: "#00000020" }}>
-                  <div className="h-full rounded-full" style={{ width: data.progress.percent + "%", background: C.green }} />
-                </div>
-                <p style={{ ...pixel, ...M }} className="mt-1 text-center text-[14px]">{data.progress.days} / {data.progress.total} DAYS</p>
-              </div>
-            </div>
-            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-              {data.progress.stats.map(function (s) {
-                return (
-                  <div key={s.label} className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: C.cardInner }}>
-                    <span className="text-2xl">{s.glyph}</span>
-                    <div className="leading-tight">
-                      <p style={pixel} className="text-[26px] leading-none"><span style={{ color: C.ink }}>{s.value}</span></p>
-                      <p style={{ ...pixel, ...M }} className="text-[11px]">{s.label}</p>
+                {/* Side rail — ORD countdown plate + TEST gate. */}
+                <div className="flex w-[34%] max-w-[250px] shrink-0 flex-col justify-center gap-3 ">
+                  {/* ORD countdown on the blank leather plate (soldier baked into
+                      the lower-right). All text is overlaid by us, formatted to
+                      match the reference: gilt label, big cream count, DAYS LEFT,
+                      kept clear of the soldier on the right. */}
+                  <div
+                    className="relative w-full"
+                    style={{
+                      backgroundImage: "url(" + JOURNAL_ART.ordBackdrop + ")",
+                      backgroundSize: "100% 100%",
+                      backgroundRepeat: "no-repeat",
+                      aspectRatio: "600 / 300",
+                    }}
+                  >
+                    <div
+                      className="absolute inset-0 flex flex-col items-center justify-center text-center"
+                      style={{ transform: "translate(" + ORD_TEXT_OFFSET.x + "%, " + ORD_TEXT_OFFSET.y + "%)" }}
+                    >
+                      <p style={{ ...pixel, color: C.gold }} className="text-[12px] leading-none tracking-wide">LOCKED UNTIL ORD</p>
+                      <p style={{ ...pixel, color: "#efe3c4", textShadow: "0 2px 0 #00000055" }} className="text-[52px] leading-none">{data.ord.daysLeft}</p>
+                      <p style={{ ...pixel, color: C.gold }} className="text-[13px] leading-none tracking-[0.2em]">DAYS LEFT</p>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </Card>
 
-        </div>
+                  {/* Mascot pep-talk — rotating typewriter lines. */}
+                  <PepTalk />
 
-        {/* ===================== RIGHT COLUMN ===================== */}
-        <div className="space-y-4">
-
-          {/* ---- RECENT SEALED MEMORIES ---- */}
-          <Card title={"★ RECENT SEALED MEMORIES ★"}>
-            <div className="space-y-2">
-              {data.sealed.map(function (m) {
-                return (
-                  <div key={m.title} className="wgt-press flex items-center gap-3 rounded-lg px-2 py-2" style={{ background: C.cardInner }}>
-                    <div className="flex h-12 w-14 shrink-0 items-center justify-center rounded text-2xl" style={{ background: "#2a3320" }}>{m.glyph}</div>
-                    <div className="min-w-0 flex-1 leading-tight">
-                      <p style={pixel} className="flex items-center gap-1 text-[16px]"><span style={{ color: C.ink }}>{m.title}</span><Star size={11} style={{ color: C.gold }} /></p>
-                      <p style={{ ...pixel, ...M }} className="text-[12px]">{m.date}</p>
-                      <div className="mt-1"><MateStack extra={m.extra} /></div>
-                    </div>
-                    <div className="flex flex-col items-center gap-1">
-                      <Lock size={15} style={{ color: C.green }} />
-                      <MoreHorizontal size={15} style={M} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <button className="wgt-press mt-3 flex w-full items-center justify-center gap-2 rounded-lg py-2" style={{ background: C.green, color: C.textGold }}>
-              <span style={pixel} className="text-[16px]">VIEW ALL SEALED MEMORIES</span>
-              <ChevronRight size={16} />
-            </button>
-          </Card>
-
-          {/* ---- LETTERS TO FUTURE ME ---- */}
-          <Card>
-            <div className="mb-2 flex items-center justify-between">
-              <Ribbon>{"★"} LETTERS TO FUTURE ME</Ribbon>
-              <span style={{ ...pixel, ...M }} className="flex items-center gap-1 text-[12px]"><Lock size={11} /> UNLOCKS ON ORD DAY</span>
-            </div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              {data.letters.map(function (l) {
-                return (
-                  <button key={l.when} className="wgt-press flex flex-col items-center gap-2 rounded-lg px-2 py-3" style={{ background: C.cardInner }}>
-                    <div className="flex h-12 w-full items-center justify-center rounded" style={{ background: "#d8c7a4" }}>
-                      <Mail size={26} style={{ color: "#7a3a2a" }} />
-                    </div>
-                    <span style={{ ...pixel, ...D }} className="text-center text-[13px] leading-none">{l.when}</span>
+                  {/* TEST control — clearly a dev/demo gate. */}
+                  <button
+                    onClick={function () { setUnlocked(function (v) { return !v; }); }}
+                    className="wgt-press flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed px-2 py-2"
+                    style={{ borderColor: C.gold, background: C.bgHeader, color: C.textGold }}
+                  >
+                    {unlocked ? <BookOpen size={15} style={{ color: C.gold }} /> : <Lock size={15} style={{ color: C.gold }} />}
+                    <span style={{ ...pixel, fontSize: 13 }}>{unlocked ? "LOCK (TEST)" : "UNLOCK (TEST)"}</span>
                   </button>
-                );
-              })}
+                </div>
+              </div>
+
+              {/* QUICK CAPTURE — the daily-use hook. Each button rides on its own
+                  green leather backboard plate. */}
+              <div className="mt-3 shrink-0">
+                <StarTitle>QUICK CAPTURE</StarTitle>
+                <div className="flex items-stretch justify-between gap-3">
+                  {data.capture.map(function (c) {
+                    return (
+                      <CaptureButton
+                        key={c.label}
+                        icon={c.icon}
+                        label={c.label}
+                        onClick={function () { setCaptureType(c.type); }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-            <p style={{ ...pixel, ...M }} className="mt-2 flex items-center gap-1 text-[13px]">
-              Write to your future self. Read it when you have completed your journey. <Heart size={10} className="fill-current text-red-700" />
-            </p>
-          </Card>
+
+            {/* ---- SERVICE PROGRESS ---- */}
+            <div className="wgt-paper shrink-0 p-3">
+              <div className="flex items-center gap-3">
+                {/* Medal crest art (shield + star). Negative margin so the big
+                    sprite reads large without inflating the header row height. */}
+                <PixIcon src={JOURNAL_ART.icons.medal} size={78} className="-my-3 -mr-5 shrink-0" />
+                <div className="shrink-0">
+                  <p style={{ ...pixel, color: C.ink }} className="text-[36px] leading-none">{data.progress.percent}%</p>
+                  <p style={{ ...pixel, ...M }} className="text-[13px] leading-none">COMPLETE</p>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p style={{ ...pixel, ...M }} className="mb-1 text-[17px]">YOUR SERVICE PROGRESS</p>
+                  <div className="h-4 w-full overflow-hidden rounded-full" style={{ background: "#0000002a", boxShadow: "inset 0 1px 2px #0005" }}>
+                    <div className="h-full rounded-full" style={{ width: data.progress.percent + "%", background: "linear-gradient(90deg," + C.greenLit + "," + C.green + ")", boxShadow: "inset 0 1px 0 #fff3" }} />
+                  </div>
+                  <p style={{ ...pixel, ...M }} className="mt-0.5 text-center text-[16px]">{data.progress.days} / {data.progress.total} DAYS</p>
+                </div>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2 xl:grid-cols-4">
+                {data.progress.stats.map(function (s) {
+                  return (
+                    <div key={s.label} className="wgt-plate flex items-center gap-2 px-3 py-2.5" style={{ background: C.cardInner }}>
+                      {/* Fixed box keeps every tile the same height regardless of
+                          each PNG's internal transparent padding. */}
+                      <span className="flex h-14 w-14 shrink-0 items-center justify-center">
+                        <PixIcon src={JOURNAL_ART.icons[s.art]} size={56} />
+                      </span>
+                      <div className="leading-tight">
+                        <p style={{ ...pixel, color: C.ink }} className="text-[30px] leading-none">{s.value}</p>
+                        <p style={{ ...pixel, ...M }} className="text-[12px]">{s.label}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          {/* ═══════════════ RIGHT — live content ═══════════════ */}
+          <section className="flex min-h-0 flex-col gap-4 lg:col-span-5">
+
+            {/* ---- MY RECENT ENTRIES (live; the book stays sealed) ---- */}
+            <div className="wgt-paper flex min-h-0 flex-1 flex-col p-3">
+              <StarTitle right={<span style={{ ...pixel, ...M }} className="text-[11px]">LIVE</span>}>MY RECENT ENTRIES</StarTitle>
+              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+                {entries.map(function (e) {
+                  return (
+                    <button
+                      key={e.id}
+                      onClick={function () { setReadEntry(e); }}
+                      className="wgt-press flex w-full items-center gap-3 rounded-lg p-2 text-left"
+                      style={{ background: C.cardInner, boxShadow: "inset 0 1px 0 #fff4, 0 1px 2px #0002" }}
+                    >
+                      {/* Mini-polaroid thumbnail. photo/milestone use pixel art;
+                          note/voice fall back to emoji until art exists. */}
+                      <div className="wgt-polaroid shrink-0" style={{ transform: "rotate(-3deg)", padding: "3px 3px 9px" }}>
+                        <div className="wgt-photo-well flex h-10 w-12 items-center justify-center">
+                          {ENTRY_ART[e.type]
+                            ? <PixIcon src={ENTRY_ART[e.type]} size={22} />
+                            : <span style={{ fontSize: 18 }}>{ENTRY_GLYPH[e.type] || ENTRY_GLYPH.note}</span>}
+                        </div>
+                      </div>
+                      <div className="min-w-0 flex-1 leading-tight">
+                        <p style={{ ...pixel, color: C.ink }} className="truncate text-[16px]">{e.title}</p>
+                        {e.text && <p style={{ ...pixel, ...M }} className="truncate text-[12px]">{e.text}</p>}
+                        <p style={{ ...pixel, ...M }} className="text-[11px]">{e.date}</p>
+                      </div>
+                      <span style={{ ...pixel, ...M }} className="shrink-0 text-[12px]">{e.ago}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <button className="wgt-press mt-2 flex shrink-0 w-full items-center justify-center gap-2 rounded-lg py-2" style={{ background: C.green, color: C.textGold, boxShadow: "inset 0 1px 0 #fff2, 0 1px 3px #0004" }}>
+                <span style={pixel} className="text-[15px]">VIEW ALL ENTRIES</span>
+                <ChevronRight size={15} />
+              </button>
+            </div>
+
+            {/* ---- SECTION GALLERY (commander-assigned, section-scoped) ---- */}
+            <div className="wgt-paper flex shrink-0 flex-col p-3">
+              <StarTitle
+                right={
+                  <span style={{ ...pixel, ...M }} className="flex items-center gap-1 text-[11px]">
+                    <UsersIcon size={10} /> {data.sectionGallery.section}
+                  </span>
+                }
+              >
+                SECTION GALLERY
+              </StarTitle>
+              <p style={{ ...pixel, ...M }} className="mb-2 flex items-center gap-1 text-[12px]">
+                <Camera size={12} />
+                <span style={{ color: C.green }}>{data.sectionGallery.newCount} new</span> from your commander
+              </p>
+              <div className="grid grid-cols-3 gap-2.5">
+                {data.sectionGallery.photos.map(function (p, i) {
+                  return (
+                    <Polaroid
+                      key={p.id}
+                      glyph={p.glyph}
+                      caption={p.label}
+                      h={62}
+                      tilt={[-3, 2, -1, 1, -2, 3][i % 6]}
+                      onClick={function () { setLightboxPhoto(p); }}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          </section>
         </div>
       </div>
+
+      {/* ---- modal interfaces (prototype, session state) ---- */}
+      {captureType && (
+        <CaptureModal
+          type={captureType}
+          onClose={function () { setCaptureType(null); }}
+          onSave={handleSaveEntry}
+        />
+      )}
+      {readEntry && (
+        <EntryReadModal entry={readEntry} onClose={function () { setReadEntry(null); }} />
+      )}
+      {lightboxPhoto && (
+        <GalleryLightbox
+          photo={lightboxPhoto}
+          section={data.sectionGallery.section}
+          onClose={function () { setLightboxPhoto(null); }}
+        />
+      )}
     </AppShell>
   );
 }
