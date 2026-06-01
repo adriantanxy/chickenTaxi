@@ -89,6 +89,8 @@ export const ASSETS = {
         profile: { y: 864 },
       },
     },
+    // Riveted plate behind the signed-in soldier's identity card.
+    profileBackdrop: "/assets/sidebar/profile_backdrop.png", // 1536x1024
   },
 
   training: {

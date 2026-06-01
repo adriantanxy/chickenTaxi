@@ -321,28 +321,43 @@ export function Sidebar({ active, onNavigate, user }) {
         ))}
       </nav>
 
-      {!collapsed && (
-        <div className="mt-4 rounded-md p-3 text-center" style={{ background: C.bgHeader }}>
-          <p style={pixel} className="text-[13px] leading-snug" >
-            Good work out there, team. Every small step builds strong soldiers.
-          </p>
-        </div>
-      )}
 
+      {/* Signed-in soldier on the riveted plate. Rivets sit in the art's four
+          corners, so content is padded inside the painted frame. */}
       {user && (
         <div
-          className={`mt-auto flex items-center rounded-md p-2 transition-colors ${collapsed ? "justify-center" : "gap-2"}`}
-          style={{ background: C.bgHeader }}
+          className={`mt-auto ${collapsed ? "" : "relative"}`}
           title={collapsed ? `${user.name} · ORD ${user.ordDays} DAYS` : undefined}
         >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded" style={{ background: C.green }}>
-            <User size={22} />
-          </div>
-          {!collapsed && (
-            <div className="min-w-0 leading-tight">
-              <p style={pixel} className="truncate text-[14px]">{user.name}</p>
-              <p style={{ ...pixel, color: C.textMuted }} className="truncate text-[10px]">{user.unit}</p>
-              <p style={{ ...pixel, color: C.gold }} className="text-[10px]">ORD {user.ordDays} DAYS</p>
+          {collapsed ? (
+            <div className="flex items-center justify-center rounded-md p-2" style={{ background: C.bgHeader }}>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded" style={{ background: C.green }}>
+                <User size={22} />
+              </div>
+            </div>
+          ) : (
+            <div
+              className="flex items-center gap-2.5"
+              style={{
+                backgroundImage: `url(${ASSETS.sidebar.profileBackdrop})`,
+                backgroundSize: "100% 100%",
+                backgroundRepeat: "no-repeat",
+                aspectRatio: "1536 / 1024",
+                padding: "13% 12% 13% 11%",
+              }}
+            >
+              {/* Avatar slot — placeholder soldier glyph for now (art TBD). */}
+              <div
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded"
+                style={{ background: C.green, boxShadow: "inset 0 1px 0 #ffffff22, inset 0 0 0 1px #00000033" }}
+              >
+                <User size={26} style={{ color: C.textGold }} />
+              </div>
+              <div className="min-w-0 leading-tight">
+                <p style={{ ...pixel, color: C.textDark }} className="truncate text-[17px] font-bold">{user.name}</p>
+                <p style={{ ...pixel, color: C.inkSoft }} className="truncate text-[14px] uppercase tracking-wide">{user.unit}</p>
+                <p style={{ ...pixel, color: "#7a5a1a" }} className="mt-0.5 text-[13px] font-bold">ORD {user.ordDays} DAYS</p>
+              </div>
             </div>
           )}
         </div>
