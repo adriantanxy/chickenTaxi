@@ -319,9 +319,22 @@ button {
   box-shadow: 0 0 0 2px #cca66140;
 }
 
+/* The "rare" mission card (CHALLENGE) gets a soft gilt aura + a slow breathing
+   glow so it reads as the special, collectible one in the row. */
+.wgt-card-rare {
+  filter: drop-shadow(0 0 0 #cca66100);
+  animation: wgt-rare-glow 3.4s ease-in-out infinite;
+}
+.wgt-card-rare:hover { animation-play-state: paused; }
+@keyframes wgt-rare-glow {
+  0%, 100% { filter: drop-shadow(0 2px 6px #2a201040) drop-shadow(0 0 6px #cca66130); }
+  50%      { filter: drop-shadow(0 2px 6px #2a201040) drop-shadow(0 0 14px #cca66170); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wgt-press { transition: none; }
   .wgt-press:hover { transform: none; }
+  .wgt-card-rare { animation: none; }
   .wgt-event { transition: none; }
   .wgt-event:hover { transform: none; }
   .wgt-selected-glow { animation: none; }

@@ -22,6 +22,14 @@ export const ASSETS = {
     search: { src: "/assets/squad/search.png", slice: 143 },
     // Square dark-leather tile (1254x1254) — avatar / badge backings.
     leatherTile: { src: "/assets/squad/square_black_board.png", slice: 122 },
+
+    // --- Training page boards ---------------------------------------------
+    // Wide beige parchment plate (2172x724) — RECENT WORKOUT rows + TODAY rows.
+    beigeWide: { src: "/assets/training/recent/beige_horizontal_board.png", slice: 120 },
+    // Tall dark-leather plate (1024x1536) — MISSION / CHALLENGE cards.
+    missionCard: { src: "/assets/training/mission/card_background.png", slice: 130 },
+    // Wide green plate (2172x724) — REWARDS shop button.
+    shopWide: { src: "/assets/training/shop/shop_backboard.png", slice: 120 },
   },
 
   // Common boards painted as plain backgrounds (NOT 9-slice). bio.png is a
@@ -113,6 +121,45 @@ export const ASSETS = {
         emom: { x: 913, y: 32, w: 409, h: 663 },
         toFailure: { x: 1341, y: 32, w: 400, h: 663 },
         targetMode: { x: 1760, y: 32, w: 390, h: 663 },
+      },
+    },
+
+    // TODAY'S TRAINING card — parchment plate + the day's exercise icons.
+    today: {
+      board: "/assets/training/today_training/beige_horizontal_board.png",
+      icons: {
+        pushups: "/assets/training/today_training/pushup.png",
+        situps: "/assets/training/today_training/situp.png",
+        run: "/assets/training/today_training/running.png",
+      },
+    },
+
+    // RECENT WORKOUTS rows — small pixel exercise icons.
+    recent: {
+      icons: {
+        pushups: "/assets/training/recent/pushup.png",
+        situps: "/assets/training/recent/situp.png",
+        run: "/assets/training/recent/clock.png",
+      },
+    },
+
+    // MISSIONS cards — dark leather card backing + per-mission art.
+    missions: {
+      background: "/assets/training/mission/card_background.png",
+      icons: {
+        toFailure: "/assets/training/mission/pushup.png",
+        weekly: "/assets/training/mission/calendar.png",
+        plank: "/assets/training/mission/plank.png",
+      },
+    },
+
+    // REWARDS card — XP/shop boards + medal art.
+    rewards: {
+      xpBoard: "/assets/training/shop/xp_backboard.png",
+      shopBoard: "/assets/training/shop/shop_backboard.png",
+      medals: {
+        gold: "/assets/training/shop/gold_star_medal.png",
+        bronze: "/assets/training/shop/bronze_star_medal.png",
       },
     },
   },
