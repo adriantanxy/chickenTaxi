@@ -38,8 +38,12 @@ export default function RootPage() {
   const destination =
     location.state?.from?.pathname ?? routeToPath(ROUTES.TRAINING);
 
+  // During the initial session check, render nothing so a logged-in user who
+  // refreshes on /login doesn't flash the login form before being redirected.
+  if (loading) return null;
+
   // Already signed in (e.g. returning visitor) — skip the form entirely.
-  if (!loading && user) return <Navigate to={destination} replace />;
+  if (user) return <Navigate to={destination} replace />;
 
   const isSignup = mode === "signup";
 

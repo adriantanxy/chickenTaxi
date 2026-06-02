@@ -8,7 +8,18 @@
     <link rel="preload" href="/assets/sidebar/sidebar-tabs.png" as="image" />
     <link rel="preload" href="/assets/sidebar/sidebar-tabs-closed.png" as="image" />
     <link rel="preload" href="/assets/training/training-session.png" as="image" />
-    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
+    <!-- Preload the stylesheet so the font is discovered immediately, and use
+         display=block so text appears once already in VT323 instead of swapping
+         from a fallback font (which caused a visible flicker on every refresh). -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=VT323&display=block"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=VT323&display=block"
+      rel="stylesheet"
+    />
     <title>Where Got Time</title>
   </head>
   <body>
