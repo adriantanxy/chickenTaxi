@@ -338,32 +338,46 @@ export function Sidebar({ active, onNavigate, user }) {
 
 
       {/* Signed-in soldier on the riveted plate. Rivets sit in the art's four
-          corners, so content is padded inside the painted frame. */}
+          corners, so content is padded inside the painted frame. The plate is
+          also the sign-out affordance: a quiet dog-tag-style action that reveals
+          on hover (expanded) or by flipping the avatar tile (collapsed). */}
       {displayUser && (
         <div
           className={`mt-auto ${collapsed ? "" : "relative"}`}
           title={collapsed ? `${displayUser.name} · ORD ${displayUser.ordDays} DAYS` : undefined}
         >
           {collapsed ? (
-            <div className="flex flex-col items-center gap-2 rounded-md p-2" style={{ background: C.bgHeader }}>
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded" style={{ background: C.green }}>
-                <User size={22} />
-              </div>
-              <button
-                type="button"
-                aria-label="Log out"
-                title="Log out"
-                onClick={handleLogout}
-                className="wgt-press flex h-9 w-9 items-center justify-center rounded"
-                style={{ background: C.green, color: C.textGold, border: `1px solid ${C.gold}66` }}
-              >
-                <LogOut size={18} />
-              </button>
-            </div>
+            // Single tile that flips from soldier → log-out glyph on hover, in
+            // step with the stamped-metal collapsed nav tabs above it.
+            <button
+              type="button"
+              aria-label="Log out"
+              title={`${displayUser.name} · Log out`}
+              onClick={handleLogout}
+              className="wgt-logout-tile group relative mx-auto flex h-11 w-11 items-center justify-center overflow-hidden rounded"
+              style={{
+                background: C.green,
+                boxShadow: "inset 0 1px 0 #ffffff22, inset 0 0 0 1px #00000033",
+                color: C.textGold,
+              }}
+            >
+              <User
+                size={22}
+                className="absolute transition-all duration-200 group-hover:scale-75 group-hover:opacity-0"
+              />
+              <LogOut
+                size={20}
+                className="absolute opacity-0 transition-all duration-200 group-hover:opacity-100"
+                style={{ color: C.gold }}
+              />
+            </button>
           ) : (
             <>
-              <div
-                className="flex items-center gap-2.5"
+              <button
+                type="button"
+                onClick={handleLogout}
+                aria-label={`Log out ${displayUser.name}`}
+                className="wgt-logout-plate group flex w-full items-center gap-2.5 text-left"
                 style={{
                   backgroundImage: `url(${ASSETS.sidebar.profileBackdrop})`,
                   backgroundSize: "100% 100%",
@@ -372,31 +386,35 @@ export function Sidebar({ active, onNavigate, user }) {
                   padding: "13% 12% 13% 11%",
                 }}
               >
-                {/* Avatar slot — placeholder soldier glyph for now (art TBD). */}
+                {/* Avatar slot — placeholder soldier glyph for now (art TBD).
+                    Cross-fades to a log-out glyph when the plate is hovered. */}
                 <div
-                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded"
+                  className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded"
                   style={{ background: C.green, boxShadow: "inset 0 1px 0 #ffffff22, inset 0 0 0 1px #00000033" }}
                 >
-                  <User size={26} style={{ color: C.textGold }} />
+                  <User
+                    size={26}
+                    className="absolute transition-opacity duration-200 group-hover:opacity-0"
+                    style={{ color: C.textGold }}
+                  />
+                  <LogOut
+                    size={24}
+                    className="absolute opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                    style={{ color: C.gold }}
+                  />
                 </div>
                 <div className="min-w-0 leading-tight">
-                  <p style={{ ...pixel, color: C.textDark }} className="truncate text-[17px] font-bold">{displayUser.name}</p>
+                  {/* Name swaps to a "SIGN OUT" prompt on hover so the action is
+                      unmistakable without adding a second control. */}
+                  <p style={{ ...pixel, color: C.textDark }} className="truncate text-[17px] font-bold group-hover:hidden">{displayUser.name}</p>
+                  <p style={{ ...pixel, color: "#6b3a1a" }} className="hidden truncate text-[17px] font-bold uppercase tracking-wide group-hover:block">Sign out</p>
                   {displayUser.unit && (
-                    <p style={{ ...pixel, color: C.inkSoft }} className="truncate text-[14px] uppercase tracking-wide">{displayUser.unit}</p>
+                    <p style={{ ...pixel, color: C.inkSoft }} className="truncate text-[14px] uppercase tracking-wide group-hover:opacity-60">{displayUser.unit}</p>
                   )}
                   {displayUser.ordDays > 0 && (
-                    <p style={{ ...pixel, color: "#7a5a1a" }} className="mt-0.5 text-[13px] font-bold">ORD {displayUser.ordDays} DAYS</p>
+                    <p style={{ ...pixel, color: "#7a5a1a" }} className="mt-0.5 text-[13px] font-bold group-hover:opacity-60">ORD {displayUser.ordDays} DAYS</p>
                   )}
                 </div>
-              </div>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="wgt-press mt-2 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2"
-                style={{ background: C.green, color: C.textGold, border: `1px solid ${C.gold}66` }}
-              >
-                <LogOut size={16} />
-                <span style={pixel} className="text-[16px] tracking-wide">LOG OUT</span>
               </button>
             </>
           )}
@@ -486,18 +504,26 @@ function MobileNavDrawer({ open, onClose, user }) {
         </nav>
 
         {(authUser || user) && (
-          <div className="mt-auto rounded-md p-3" style={{ background: C.bgHeader }}>
-            <p style={pixel} className="truncate text-[16px]">{displayName}</p>
-            {user?.unit && <p style={{ ...pixel, color: C.textMuted }} className="truncate text-[12px]">{user.unit}</p>}
-            {user?.ordDays > 0 && <p style={{ ...pixel, color: C.gold }} className="text-[12px]">ORD {user.ordDays} DAYS</p>}
+          <div className="mt-auto overflow-hidden rounded-md" style={{ background: C.bgHeader }}>
+            <div className="flex items-center gap-3 p-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded" style={{ background: C.green, color: C.textGold }}>
+                <User size={22} />
+              </div>
+              <div className="min-w-0 leading-tight">
+                <p style={pixel} className="truncate text-[16px]">{displayName}</p>
+                {user?.unit && <p style={{ ...pixel, color: C.textMuted }} className="truncate text-[12px] uppercase tracking-wide">{user.unit}</p>}
+                {user?.ordDays > 0 && <p style={{ ...pixel, color: C.gold }} className="text-[12px]">ORD {user.ordDays} DAYS</p>}
+              </div>
+            </div>
+            {/* A separated, gold-keyed row — distinct from nav, clearly an exit. */}
             <button
               type="button"
               onClick={handleLogout}
-              className="wgt-press mt-3 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2"
-              style={{ background: C.green, color: C.textGold, border: `1px solid ${C.gold}66` }}
+              className="flex w-full items-center gap-2 px-3 py-2.5"
+              style={{ borderTop: `1px solid ${C.line}33`, color: C.gold }}
             >
               <LogOut size={16} />
-              <span style={pixel} className="text-[16px] tracking-wide">LOG OUT</span>
+              <span style={pixel} className="text-[15px] uppercase tracking-wide">Sign out</span>
             </button>
           </div>
         )}
