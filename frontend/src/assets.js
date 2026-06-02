@@ -186,7 +186,7 @@ export const ASSETS = {
 
   // Avatar paper-doll layers. Keep every PNG on the same canvas size.
   avatar: {
-    // base: "/assets/avatar/base.png",
+    base: "/assets/avatar/army_profile_picture.jpg",
     // headwear: "/assets/avatar/helmet.png",
     // eyewear: "/assets/avatar/goggles.png",
   },
