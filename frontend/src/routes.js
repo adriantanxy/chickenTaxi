@@ -1,5 +1,6 @@
 export const ROUTES = Object.freeze({
   ROOT: "ROOT",
+  LOGIN: "LOGIN",
   TRAINING: "TRAINING",
   TRAINING_SESSION: "TRAINING_SESSION",
   CALENDAR: "CALENDAR",
@@ -16,6 +17,7 @@ export const DEFAULT_ROUTE = ROUTES.ROOT;
 // react-router param filled in by routeToPath().
 export const ROUTE_PATHS = Object.freeze({
   [ROUTES.ROOT]: "/",
+  [ROUTES.LOGIN]: "/login",
   [ROUTES.TRAINING]: "/training",
   [ROUTES.TRAINING_SESSION]: "/training/session/:mode",
   [ROUTES.CALENDAR]: "/calendar",
@@ -42,6 +44,7 @@ export function routeToPath(route, params = {}) {
 // in-session screen both highlight the Training tab (preserves prior behaviour).
 export function pathToRoute(pathname) {
   if (pathname === "/") return ROUTES.ROOT;
+  if (pathname.startsWith("/login")) return ROUTES.LOGIN;
   if (pathname.startsWith("/training")) return ROUTES.TRAINING;
   if (pathname.startsWith("/calendar")) return ROUTES.CALENDAR;
   if (pathname.startsWith("/journal")) return ROUTES.JOURNAL;

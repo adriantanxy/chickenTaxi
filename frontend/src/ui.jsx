@@ -10,12 +10,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Dumbbell,
+  LogOut,
   Menu,
   Star,
   User,
   Users,
   X,
 } from "lucide-react";
+import { useAuth } from "./auth/AuthContext";
 
 const SIDEBAR_STORAGE_KEY = "wgt-sidebar-collapsed";
 const READY_IMAGES = new Set();
@@ -262,6 +264,19 @@ function BrandMark({ collapsed }) {
 export function Sidebar({ active, onNavigate, user }) {
   const location = useLocation();
   const fallbackNavigate = useAppNavigate();
+  const { user: authUser, logout } = useAuth();
+  // Prefer the signed-in user's real name; fall back to the passed-in demo user
+  // so existing pages keep working until their data comes from the backend.
+  const displayUser = authUser
+    ? {
+        name: authUser.displayName || authUser.email || "SOLDIER",
+        unit: user?.unit ?? "",
+        ordDays: user?.ordDays ?? 0,
+      }
+    : user;
+  const handleLogout = () => {
+    logout().catch((error) => console.error("[auth] logout failed:", error));
+  };
   // URL is the source of truth for the active tab; the `active` prop is still
   // accepted for compatibility but the current path wins when present.
   const activeRoute = active ?? pathToRoute(location.pathname);
@@ -324,41 +339,66 @@ export function Sidebar({ active, onNavigate, user }) {
 
       {/* Signed-in soldier on the riveted plate. Rivets sit in the art's four
           corners, so content is padded inside the painted frame. */}
-      {user && (
+      {displayUser && (
         <div
           className={`mt-auto ${collapsed ? "" : "relative"}`}
-          title={collapsed ? `${user.name} · ORD ${user.ordDays} DAYS` : undefined}
+          title={collapsed ? `${displayUser.name} · ORD ${displayUser.ordDays} DAYS` : undefined}
         >
           {collapsed ? (
-            <div className="flex items-center justify-center rounded-md p-2" style={{ background: C.bgHeader }}>
+            <div className="flex flex-col items-center gap-2 rounded-md p-2" style={{ background: C.bgHeader }}>
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded" style={{ background: C.green }}>
                 <User size={22} />
               </div>
+              <button
+                type="button"
+                aria-label="Log out"
+                title="Log out"
+                onClick={handleLogout}
+                className="wgt-press flex h-9 w-9 items-center justify-center rounded"
+                style={{ background: C.green, color: C.textGold, border: `1px solid ${C.gold}66` }}
+              >
+                <LogOut size={18} />
+              </button>
             </div>
           ) : (
-            <div
-              className="flex items-center gap-2.5"
-              style={{
-                backgroundImage: `url(${ASSETS.sidebar.profileBackdrop})`,
-                backgroundSize: "100% 100%",
-                backgroundRepeat: "no-repeat",
-                aspectRatio: "1536 / 1024",
-                padding: "13% 12% 13% 11%",
-              }}
-            >
-              {/* Avatar slot — placeholder soldier glyph for now (art TBD). */}
+            <>
               <div
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded"
-                style={{ background: C.green, boxShadow: "inset 0 1px 0 #ffffff22, inset 0 0 0 1px #00000033" }}
+                className="flex items-center gap-2.5"
+                style={{
+                  backgroundImage: `url(${ASSETS.sidebar.profileBackdrop})`,
+                  backgroundSize: "100% 100%",
+                  backgroundRepeat: "no-repeat",
+                  aspectRatio: "1536 / 1024",
+                  padding: "13% 12% 13% 11%",
+                }}
               >
-                <User size={26} style={{ color: C.textGold }} />
+                {/* Avatar slot — placeholder soldier glyph for now (art TBD). */}
+                <div
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded"
+                  style={{ background: C.green, boxShadow: "inset 0 1px 0 #ffffff22, inset 0 0 0 1px #00000033" }}
+                >
+                  <User size={26} style={{ color: C.textGold }} />
+                </div>
+                <div className="min-w-0 leading-tight">
+                  <p style={{ ...pixel, color: C.textDark }} className="truncate text-[17px] font-bold">{displayUser.name}</p>
+                  {displayUser.unit && (
+                    <p style={{ ...pixel, color: C.inkSoft }} className="truncate text-[14px] uppercase tracking-wide">{displayUser.unit}</p>
+                  )}
+                  {displayUser.ordDays > 0 && (
+                    <p style={{ ...pixel, color: "#7a5a1a" }} className="mt-0.5 text-[13px] font-bold">ORD {displayUser.ordDays} DAYS</p>
+                  )}
+                </div>
               </div>
-              <div className="min-w-0 leading-tight">
-                <p style={{ ...pixel, color: C.textDark }} className="truncate text-[17px] font-bold">{user.name}</p>
-                <p style={{ ...pixel, color: C.inkSoft }} className="truncate text-[14px] uppercase tracking-wide">{user.unit}</p>
-                <p style={{ ...pixel, color: "#7a5a1a" }} className="mt-0.5 text-[13px] font-bold">ORD {user.ordDays} DAYS</p>
-              </div>
-            </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="wgt-press mt-2 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2"
+                style={{ background: C.green, color: C.textGold, border: `1px solid ${C.gold}66` }}
+              >
+                <LogOut size={16} />
+                <span style={pixel} className="text-[16px] tracking-wide">LOG OUT</span>
+              </button>
+            </>
           )}
         </div>
       )}
@@ -370,6 +410,12 @@ function MobileNavDrawer({ open, onClose, user }) {
   const location = useLocation();
   const navigate = useAppNavigate();
   const activeRoute = pathToRoute(location.pathname);
+  const { user: authUser, logout } = useAuth();
+  const displayName = authUser?.displayName || authUser?.email || user?.name;
+  const handleLogout = () => {
+    logout().catch((error) => console.error("[auth] logout failed:", error));
+    onClose();
+  };
 
   useEffect(() => {
     if (!open) return undefined;
@@ -439,11 +485,20 @@ function MobileNavDrawer({ open, onClose, user }) {
           })}
         </nav>
 
-        {user && (
+        {(authUser || user) && (
           <div className="mt-auto rounded-md p-3" style={{ background: C.bgHeader }}>
-            <p style={pixel} className="truncate text-[16px]">{user.name}</p>
-            <p style={{ ...pixel, color: C.textMuted }} className="truncate text-[12px]">{user.unit}</p>
-            <p style={{ ...pixel, color: C.gold }} className="text-[12px]">ORD {user.ordDays} DAYS</p>
+            <p style={pixel} className="truncate text-[16px]">{displayName}</p>
+            {user?.unit && <p style={{ ...pixel, color: C.textMuted }} className="truncate text-[12px]">{user.unit}</p>}
+            {user?.ordDays > 0 && <p style={{ ...pixel, color: C.gold }} className="text-[12px]">ORD {user.ordDays} DAYS</p>}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="wgt-press mt-3 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2"
+              style={{ background: C.green, color: C.textGold, border: `1px solid ${C.gold}66` }}
+            >
+              <LogOut size={16} />
+              <span style={pixel} className="text-[16px] tracking-wide">LOG OUT</span>
+            </button>
           </div>
         )}
       </aside>

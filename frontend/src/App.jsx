@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import RootPage from "./pages/RootPage";
+import ProtectedRoute from "./auth/ProtectedRoute";
 import TrainingDashboard from "./pages/TrainingDashboard";
 import TrainingSessionPage from "./pages/TrainingSessionPage";
 import CalendarPage from "./pages/CalendarPage";
@@ -55,18 +56,32 @@ function ProfileCustomizeRoute() {
   return <ProfileCustomizer onNavigate={onNavigate} onBack={onBack} />;
 }
 
+// Wraps a page element in the auth gate. Keeps the route table below readable.
+const guard = (element) => <ProtectedRoute>{element}</ProtectedRoute>;
+
 export default function App() {
   return (
     <Routes>
-      <Route path={routeToPath(ROUTES.ROOT)} element={<RootPage />} />
-      <Route path={routeToPath(ROUTES.TRAINING)} element={<TrainingRoute />} />
-      <Route path={routeToPath(ROUTES.TRAINING_SESSION)} element={<TrainingSessionRoute />} />
-      <Route path={routeToPath(ROUTES.CALENDAR)} element={<CalendarRoute />} />
-      <Route path={routeToPath(ROUTES.JOURNAL)} element={<JournalRoute />} />
-      <Route path={routeToPath(ROUTES.SQUAD)} element={<SquadRoute />} />
-      <Route path={routeToPath(ROUTES.SHOP)} element={<ShopRoute />} />
-      <Route path={routeToPath(ROUTES.PROFILE)} element={<ProfileRoute />} />
-      <Route path={routeToPath(ROUTES.PROFILE_CUSTOMIZE)} element={<ProfileCustomizeRoute />} />
+      {/* Public: the combined login / sign-up screen. */}
+      <Route path={routeToPath(ROUTES.LOGIN)} element={<RootPage />} />
+
+      {/* `/` just sends signed-in users into the app (and signed-out users to
+          login, via the guard). */}
+      <Route
+        path={routeToPath(ROUTES.ROOT)}
+        element={guard(<Navigate to={routeToPath(ROUTES.TRAINING)} replace />)}
+      />
+
+      {/* Protected: everything below requires a signed-in user. */}
+      <Route path={routeToPath(ROUTES.TRAINING)} element={guard(<TrainingRoute />)} />
+      <Route path={routeToPath(ROUTES.TRAINING_SESSION)} element={guard(<TrainingSessionRoute />)} />
+      <Route path={routeToPath(ROUTES.CALENDAR)} element={guard(<CalendarRoute />)} />
+      <Route path={routeToPath(ROUTES.JOURNAL)} element={guard(<JournalRoute />)} />
+      <Route path={routeToPath(ROUTES.SQUAD)} element={guard(<SquadRoute />)} />
+      <Route path={routeToPath(ROUTES.SHOP)} element={guard(<ShopRoute />)} />
+      <Route path={routeToPath(ROUTES.PROFILE)} element={guard(<ProfileRoute />)} />
+      <Route path={routeToPath(ROUTES.PROFILE_CUSTOMIZE)} element={guard(<ProfileCustomizeRoute />)} />
+
       <Route path="*" element={<Navigate to={DEFAULT_PATH} replace />} />
     </Routes>
   );
