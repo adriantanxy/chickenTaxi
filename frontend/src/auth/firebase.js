@@ -38,7 +38,7 @@ if (missing.length > 0) {
   );
 }
 
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 
