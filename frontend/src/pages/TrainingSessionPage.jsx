@@ -422,10 +422,10 @@ function ActiveView({ videoRef, canvasRef, stats, elapsed, onPause, onEnd, isPau
       {/* Main row: stats + camera */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[200px_1fr]">
         {/* Left stats panel */}
-        <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-2 gap-3 lg:flex lg:flex-col">
 
           {/* PUSH-UPS card */}
-          <div style={outerCard}>
+          <div style={outerCard} className="col-span-2 lg:col-span-1">
             <div style={{ backgroundImage: "url('/assets/training/training_overview/card_background.png')", backgroundPosition: "center", backgroundSize: "130% 115%", backgroundRepeat: "no-repeat", borderRadius: 3, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
               <div className="flex items-center gap-1 mb-1">
                 <PushUpIcon size={25} color="grey" />
@@ -462,22 +462,42 @@ function ActiveView({ videoRef, canvasRef, stats, elapsed, onPause, onEnd, isPau
 
           {/* PAUSE / RESUME button */}
           <button
-            className="wgt-press flex w-full items-center justify-center gap-2 rounded-lg border-2 py-2"
-            style={{ borderColor: C.gold + "80", background: isPaused ? C.green : "#3a3a1e", color: C.textGold }}
+            className="wgt-press w-full flex justify-center"
             onClick={onPause}
+            style={{ background: "none", border: "none", padding: 0 }}
           >
-            {isPaused ? <Play size={16} /> : <Pause size={16} />}
-            <span style={pixel} className="text-[16px]">{isPaused ? "RESUME" : "PAUSE"}</span>
+            <img
+              src={
+                isPaused
+                  ? "/assets/training/training_overview/resume.png"
+                  : "/assets/training/training_overview/pause.png"
+              }
+              alt={isPaused ? "Resume" : "Pause"}
+              style={{
+                width: "min(220px, 90%)", 
+                height: "auto",
+              }}
+            />
           </button>
 
           {/* END SESSION button */}
           <button
-            className="wgt-press flex w-full items-center justify-center gap-2 rounded-lg border-2 py-2"
-            style={{ borderColor: "#aa3333", background: "#3a1e1e", color: "#ff6b6b" }}
+            className="wgt-press w-full flex justify-center"
             onClick={onEnd}
+            style={{
+              background: "none",
+              border: "none",
+              padding: 0,
+            }}
           >
-            <Square size={16} />
-            <span style={pixel} className="text-[16px]">END SESSION</span>
+            <img
+              src="/assets/training/training_overview/end_session.png"
+              alt="End Session"
+              style={{
+                width: "min(220px, 90%)",
+                height: "auto",
+              }}
+            />
           </button>
         </div>
 
@@ -486,26 +506,35 @@ function ActiveView({ videoRef, canvasRef, stats, elapsed, onPause, onEnd, isPau
           {/* Tiny Camera ON badge */}
           <div
             className="absolute top-3 right-3 z-20 flex items-center gap-1 rounded px-2 py-1"
-            style={{ background: "#1a1a1a", border: "1px solid #444" }}
+            style={{ backgroundImage: "url('/assets/training/training_overview/camera_on.png')", backgroundSize: "100%", backgroundRepeat: "no-repeat", borderRadius: 4, height: "100%", padding: "4%"}}
           >
-            <Camera size={12} style={{ color: C.gold }} />
-            <span style={{ ...pixel, fontSize: 10, color: C.gold }}>CAMERA ON</span>
           </div>
 
-          {/* Angle display overlay */}
+          <div className="absolute top-3 left-3 z-20 flex items-center gap-2">
+              <img
+                src="/assets/training/training_overview/body_point_markers.png"
+                width={140} className="rounded"
+              />
+              <img
+                src="/assets/training/training_overview/angle_guideline.png"
+                width={140} className="rounded"
+              />
+          </div>
+
           {stats.elbowAngle && (
-            <div
-              className="absolute top-3 left-3 z-20 rounded px-2 py-1"
-              style={{ background: "#1a1a1acc" }}
+          <div
+              className="absolute top-3 left-80 z-20 flex items-center gap-2"
             >
-              <span style={{ ...pixel, fontSize: 12, color: "#ffd700" }}>
-                ELBOW: {stats.elbowAngle}°
-              </span>
-              {stats.bodyAngle && (
-                <span style={{ ...pixel, fontSize: 12, color: "#a0c0ff", display: "block" }}>
-                  BODY: {stats.bodyAngle}°
+              <div className="rounded px-4 py-2" style={{ background: "#1a1a1acc" }}>
+                <span style={{ ...pixel, fontSize: 12, color: "#ffd700" }}>
+                  ELBOW: {stats.elbowAngle}°
                 </span>
-              )}
+                {stats.bodyAngle && (
+                  <span style={{ ...pixel, fontSize: 12, color: "#a0c0ff", display: "block" }}>
+                    BODY: {stats.bodyAngle}°
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
@@ -704,8 +733,8 @@ function SummaryView({ stats, elapsed, onNavigate }) {
           <div className="flex flex-col gap-1.5">
             {[
               ["FORM ACCURACY", `${stats.accuracy}%`, true],
-              ["TOTAL REPS",    stats.reps + 4,       false],
-              ["SETS COMPLETED","4 / 4",              false],
+              ["TOTAL REPS",    stats.reps,       false],
+              ["SETS COMPLETED","1 / 4",              false],
               ["REST EFFICIENCY","85%",               false],
             ].map(([k, v, star]) => (
               <div key={k} className="flex justify-between items-center"
