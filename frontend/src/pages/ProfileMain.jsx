@@ -33,6 +33,7 @@ import { ASSETS } from "../assets";
 import { AVATAR_LAYER_ORDER, AVATAR_SLOTS_LEFT, AVATAR_SLOTS_RIGHT } from "../avatarConfig";
 import { ROUTES } from "../routes";
 import { C, pixel, D, M, USER as user } from "../theme";
+import EnableNotificationsButton from "../components/EnableNotificationsButton";
 
 const data = {
   profile: {
@@ -94,6 +95,7 @@ export default function ProfileMain({ onNavigate, onInspect = () => {} }) {
             SHOP
           </ActionButton>
           <ActionButton icon={<Pencil size={18} />}>EDIT PROFILE</ActionButton>
+          <EnableNotificationsButton />
         </div>
       }
     >

@@ -3,12 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- PWA install + iOS web push. iOS only allows push for apps added to the
+         Home Screen, and only honours these apple-* meta tags for the installed
+         look. theme-color matches the manifest. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="Where Got Time" />
+    <link rel="apple-touch-icon" href="/assets/brand/logo_cleaned.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preload" href="/assets/sidebar/sidebar-tabs.png" as="image" />
     <link rel="preload" href="/assets/sidebar/sidebar-tabs-closed.png" as="image" />
     <link rel="preload" href="/assets/training/training-session.png" as="image" />
-    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
+    <!-- Preload the stylesheet so the font is discovered immediately, and use
+         display=block so text appears once already in VT323 instead of swapping
+         from a fallback font (which caused a visible flicker on every refresh). -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=VT323&display=block"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=VT323&display=block"
+      rel="stylesheet"
+    />
     <title>Where Got Time</title>
   </head>
   <body>

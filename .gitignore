@@ -1,0 +1,8 @@
+# Firebase CLI local deploy cache — machine-local, regenerated on each deploy.
+.firebase/
+
+# Firebase debug logs
+*-debug.log
+firebase-debug.log
+firestore-debug.log
+ui-debug.log

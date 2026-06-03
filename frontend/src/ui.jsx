@@ -10,12 +10,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Dumbbell,
+  LogOut,
   Menu,
   Star,
   User,
   Users,
   X,
 } from "lucide-react";
+import { useAuth } from "./auth/AuthContext";
 
 const SIDEBAR_STORAGE_KEY = "wgt-sidebar-collapsed";
 const READY_IMAGES = new Set();
@@ -262,6 +264,19 @@ function BrandMark({ collapsed }) {
 export function Sidebar({ active, onNavigate, user }) {
   const location = useLocation();
   const fallbackNavigate = useAppNavigate();
+  const { user: authUser, logout } = useAuth();
+  // Prefer the signed-in user's real name; fall back to the passed-in demo user
+  // so existing pages keep working until their data comes from the backend.
+  const displayUser = authUser
+    ? {
+        name: authUser.displayName || authUser.email || "SOLDIER",
+        unit: user?.unit ?? "",
+        ordDays: user?.ordDays ?? 0,
+      }
+    : user;
+  const handleLogout = () => {
+    logout().catch((error) => console.error("[auth] logout failed:", error));
+  };
   // URL is the source of truth for the active tab; the `active` prop is still
   // accepted for compatibility but the current path wins when present.
   const activeRoute = active ?? pathToRoute(location.pathname);
@@ -323,42 +338,85 @@ export function Sidebar({ active, onNavigate, user }) {
 
 
       {/* Signed-in soldier on the riveted plate. Rivets sit in the art's four
-          corners, so content is padded inside the painted frame. */}
-      {user && (
+          corners, so content is padded inside the painted frame. The plate is
+          also the sign-out affordance: a quiet dog-tag-style action that reveals
+          on hover (expanded) or by flipping the avatar tile (collapsed). */}
+      {displayUser && (
         <div
           className={`mt-auto ${collapsed ? "" : "relative"}`}
-          title={collapsed ? `${user.name} · ORD ${user.ordDays} DAYS` : undefined}
+          title={collapsed ? `${displayUser.name} · ORD ${displayUser.ordDays} DAYS` : undefined}
         >
           {collapsed ? (
-            <div className="flex items-center justify-center rounded-md p-2" style={{ background: C.bgHeader }}>
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded" style={{ background: C.green }}>
-                <User size={22} />
-              </div>
-            </div>
-          ) : (
-            <div
-              className="flex items-center gap-2.5"
+            // Single tile that flips from soldier → log-out glyph on hover, in
+            // step with the stamped-metal collapsed nav tabs above it.
+            <button
+              type="button"
+              aria-label="Log out"
+              title={`${displayUser.name} · Log out`}
+              onClick={handleLogout}
+              className="wgt-logout-tile group relative mx-auto flex h-11 w-11 items-center justify-center overflow-hidden rounded"
               style={{
-                backgroundImage: `url(${ASSETS.sidebar.profileBackdrop})`,
-                backgroundSize: "100% 100%",
-                backgroundRepeat: "no-repeat",
-                aspectRatio: "1536 / 1024",
-                padding: "13% 12% 13% 11%",
+                background: C.green,
+                boxShadow: "inset 0 1px 0 #ffffff22, inset 0 0 0 1px #00000033",
+                color: C.textGold,
               }}
             >
-              {/* Avatar slot — placeholder soldier glyph for now (art TBD). */}
-              <div
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded"
-                style={{ background: C.green, boxShadow: "inset 0 1px 0 #ffffff22, inset 0 0 0 1px #00000033" }}
+              <User
+                size={22}
+                className="absolute transition-all duration-200 group-hover:scale-75 group-hover:opacity-0"
+              />
+              <LogOut
+                size={20}
+                className="absolute opacity-0 transition-all duration-200 group-hover:opacity-100"
+                style={{ color: C.gold }}
+              />
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={handleLogout}
+                aria-label={`Log out ${displayUser.name}`}
+                className="wgt-logout-plate group flex w-full items-center gap-2.5 text-left"
+                style={{
+                  backgroundImage: `url(${ASSETS.sidebar.profileBackdrop})`,
+                  backgroundSize: "100% 100%",
+                  backgroundRepeat: "no-repeat",
+                  aspectRatio: "1536 / 1024",
+                  padding: "13% 12% 13% 11%",
+                }}
               >
-                <User size={26} style={{ color: C.textGold }} />
-              </div>
-              <div className="min-w-0 leading-tight">
-                <p style={{ ...pixel, color: C.textDark }} className="truncate text-[17px] font-bold">{user.name}</p>
-                <p style={{ ...pixel, color: C.inkSoft }} className="truncate text-[14px] uppercase tracking-wide">{user.unit}</p>
-                <p style={{ ...pixel, color: "#7a5a1a" }} className="mt-0.5 text-[13px] font-bold">ORD {user.ordDays} DAYS</p>
-              </div>
-            </div>
+                {/* Avatar slot — placeholder soldier glyph for now (art TBD).
+                    Cross-fades to a log-out glyph when the plate is hovered. */}
+                <div
+                  className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded"
+                  style={{ background: C.green, boxShadow: "inset 0 1px 0 #ffffff22, inset 0 0 0 1px #00000033" }}
+                >
+                  <User
+                    size={26}
+                    className="absolute transition-opacity duration-200 group-hover:opacity-0"
+                    style={{ color: C.textGold }}
+                  />
+                  <LogOut
+                    size={24}
+                    className="absolute opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                    style={{ color: C.gold }}
+                  />
+                </div>
+                <div className="min-w-0 leading-tight">
+                  {/* Name swaps to a "SIGN OUT" prompt on hover so the action is
+                      unmistakable without adding a second control. */}
+                  <p style={{ ...pixel, color: C.textDark }} className="truncate text-[17px] font-bold group-hover:hidden">{displayUser.name}</p>
+                  <p style={{ ...pixel, color: "#6b3a1a" }} className="hidden truncate text-[17px] font-bold uppercase tracking-wide group-hover:block">Sign out</p>
+                  {displayUser.unit && (
+                    <p style={{ ...pixel, color: C.inkSoft }} className="truncate text-[14px] uppercase tracking-wide group-hover:opacity-60">{displayUser.unit}</p>
+                  )}
+                  {displayUser.ordDays > 0 && (
+                    <p style={{ ...pixel, color: "#7a5a1a" }} className="mt-0.5 text-[13px] font-bold group-hover:opacity-60">ORD {displayUser.ordDays} DAYS</p>
+                  )}
+                </div>
+              </button>
+            </>
           )}
         </div>
       )}
@@ -370,6 +428,12 @@ function MobileNavDrawer({ open, onClose, user }) {
   const location = useLocation();
   const navigate = useAppNavigate();
   const activeRoute = pathToRoute(location.pathname);
+  const { user: authUser, logout } = useAuth();
+  const displayName = authUser?.displayName || authUser?.email || user?.name;
+  const handleLogout = () => {
+    logout().catch((error) => console.error("[auth] logout failed:", error));
+    onClose();
+  };
 
   useEffect(() => {
     if (!open) return undefined;
@@ -439,11 +503,28 @@ function MobileNavDrawer({ open, onClose, user }) {
           })}
         </nav>
 
-        {user && (
-          <div className="mt-auto rounded-md p-3" style={{ background: C.bgHeader }}>
-            <p style={pixel} className="truncate text-[16px]">{user.name}</p>
-            <p style={{ ...pixel, color: C.textMuted }} className="truncate text-[12px]">{user.unit}</p>
-            <p style={{ ...pixel, color: C.gold }} className="text-[12px]">ORD {user.ordDays} DAYS</p>
+        {(authUser || user) && (
+          <div className="mt-auto overflow-hidden rounded-md" style={{ background: C.bgHeader }}>
+            <div className="flex items-center gap-3 p-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded" style={{ background: C.green, color: C.textGold }}>
+                <User size={22} />
+              </div>
+              <div className="min-w-0 leading-tight">
+                <p style={pixel} className="truncate text-[16px]">{displayName}</p>
+                {user?.unit && <p style={{ ...pixel, color: C.textMuted }} className="truncate text-[12px] uppercase tracking-wide">{user.unit}</p>}
+                {user?.ordDays > 0 && <p style={{ ...pixel, color: C.gold }} className="text-[12px]">ORD {user.ordDays} DAYS</p>}
+              </div>
+            </div>
+            {/* A separated, gold-keyed row — distinct from nav, clearly an exit. */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex w-full items-center gap-2 px-3 py-2.5"
+              style={{ borderTop: `1px solid ${C.line}33`, color: C.gold }}
+            >
+              <LogOut size={16} />
+              <span style={pixel} className="text-[15px] uppercase tracking-wide">Sign out</span>
+            </button>
           </div>
         )}
       </aside>

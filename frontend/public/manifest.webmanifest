@@ -1,0 +1,18 @@
+{
+  "name": "Where Got Time",
+  "short_name": "WGT",
+  "description": "National Service companion app — training, journal, squad and more.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/assets/brand/logo_cleaned.png",
+      "sizes": "419x377",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
