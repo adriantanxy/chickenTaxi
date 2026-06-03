@@ -6,7 +6,7 @@ import { AVATAR_LAYER_ORDER, AVATAR_SLOTS_LEFT, AVATAR_SLOTS_RIGHT } from "../av
 import { ROUTES } from "../routes";
 import { C, pixel, USER as user } from "../theme";
 
-function Slot({ s, active, onClick }) {
+function Slot({ s, active, onClick, previewSrc }) {
   return (
     <button onClick={onClick} className="wgt-press w-full">
       <p style={pixel} className="mb-1 text-[14px]">
@@ -19,7 +19,16 @@ function Slot({ s, active, onClick }) {
           outline: active ? `2px solid ${C.gold}` : `1px solid ${C.line}66`,
         }}
       >
-        <span className="text-3xl">{s.glyph}</span>
+        {previewSrc ? (
+          <img
+            src={previewSrc}
+            alt={s.label}
+            className="h-12 w-12 object-contain"
+            style={{ imageRendering: "pixelated" }}
+          />
+        ) : (
+          <span className="text-3xl">{s.glyph}</span>
+        )}
       </div>
     </button>
   );
@@ -27,11 +36,24 @@ function Slot({ s, active, onClick }) {
 
 export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, setEquipped = () => {} }) {
   const [slot, setSlot] = useState("hat");
+  const [loadout, setLoadout] = useState(equipped.loadout ?? "loadout1");
   const [rotationIndex, setRotationIndex] = useState(0);
   const [isRotating, setIsRotating] = useState(true);
 
-  const rotationFrames = ASSETS.avatar.rotations ?? [];
+  const loadoutData = ASSETS.avatar.loadouts?.[loadout] ?? {};
+  const loadoutComponents = loadoutData.components ?? {};
+  const rotationFrames = loadoutData.rotations ?? ASSETS.avatar.rotations ?? [];
   const hasRotationFrames = rotationFrames.length > 0;
+
+  const resolveAvatarLayerSrc = (layerKey) => {
+    if (layerKey === "body") return ASSETS.avatar.base;
+    const configuredValue = equipped[layerKey];
+    if (typeof configuredValue === "string") {
+      if (configuredValue.startsWith("/")) return configuredValue;
+      if (ASSETS.avatar[configuredValue]) return ASSETS.avatar[configuredValue];
+    }
+    return configuredValue || loadoutComponents[layerKey] || null;
+  };
 
   useEffect(() => {
     if (!isRotating || !hasRotationFrames) return;
@@ -62,6 +84,7 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
                   <Slot
                     key={s.key}
                     s={s}
+                    previewSrc={loadoutComponents[s.key]}
                     active={slot === s.key}
                     onClick={() => setSlot(s.key)}
                   />
@@ -78,13 +101,13 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
                   />
                 ) : ASSETS.avatar.base ? (
                   AVATAR_LAYER_ORDER.map((layerKey) => {
-                    const assetName = layerKey === "body" ? "base" : equipped[layerKey];
-                    if (!assetName || !ASSETS.avatar[assetName]) return null;
+                    const src = resolveAvatarLayerSrc(layerKey);
+                    if (!src) return null;
 
                     return (
                       <img
                         key={layerKey}
-                        src={ASSETS.avatar[assetName]}
+                        src={src}
                         alt={layerKey}
                         className="absolute inset-0 h-full w-full object-contain"
                         style={{ zIndex: AVATAR_LAYER_ORDER.indexOf(layerKey), imageRendering: "pixelated" }}
@@ -103,6 +126,7 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
                   <Slot
                     key={s.key}
                     s={s}
+                    previewSrc={loadoutComponents[s.key]}
                     active={slot === s.key}
                     onClick={() => setSlot(s.key)}
                   />
@@ -118,9 +142,8 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
                 className="wgt-press rounded-lg px-4 py-1.5"
                 style={{ background: C.green }}
                 onClick={() => {
-                  if (!rotationFrames || rotationFrames.length === 0) return;
-                  // Persist the currently-previewed rotation frame into equipped.body
-                  setEquipped((prev) => ({ ...prev, body: rotationFrames[rotationIndex] }));
+                  if (!loadoutComponents || Object.keys(loadoutComponents).length === 0) return;
+                  setEquipped((prev) => ({ ...prev, loadout, ...loadoutComponents }));
                 }}
               >
                 <span style={pixel} className="text-[18px]">

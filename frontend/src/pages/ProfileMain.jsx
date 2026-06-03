@@ -72,12 +72,23 @@ const data = {
   ],
 };
 
-function MiniSlot({ s }) {
+function MiniSlot({ s, previewSrc }) {
   return (
     <div>
       <p style={{ ...pixel, color: C.textGold }} className="mb-0.5 text-center text-[11px] leading-none">{s.label}</p>
-      <div className="flex h-10 items-center justify-center rounded-md text-xl"
-        style={{ background: "#23241a", outline: `1px solid ${C.line}66` }}>{s.glyph}</div>
+      <div className="flex h-10 items-center justify-center rounded-md"
+        style={{ background: "#23241a", outline: `1px solid ${C.line}66` }}>
+        {previewSrc ? (
+          <img
+            src={previewSrc}
+            alt={s.label}
+            className="h-8 w-8 object-contain"
+            style={{ imageRendering: "pixelated" }}
+          />
+        ) : (
+          <span className="text-xl">{s.glyph}</span>
+        )}
+      </div>
     </div>
   );
 }
@@ -85,8 +96,20 @@ function MiniSlot({ s }) {
 export default function ProfileMain({ onNavigate, onInspect = () => {}, equipped = {} }) {
   const [rotationIndex, setRotationIndex] = useState(0);
 
+  const selectedLoadout = equipped.loadout ?? "loadout1";
+  const loadoutComponents = ASSETS.avatar.loadouts?.[selectedLoadout]?.components ?? {};
   const rotationFrames = ASSETS.avatar.rotations ?? [];
   const hasRotationFrames = rotationFrames.length > 0;
+
+  const getAvatarLayerSrc = (layerKey) => {
+    if (layerKey === "body") return ASSETS.avatar.base;
+    const configuredValue = equipped[layerKey];
+    if (typeof configuredValue === "string") {
+      if (configuredValue.startsWith("/")) return configuredValue;
+      if (ASSETS.avatar[configuredValue]) return ASSETS.avatar[configuredValue];
+    }
+    return configuredValue || loadoutComponents[layerKey] || null;
+  };
 
   useEffect(() => {
     if (!hasRotationFrames) return;
@@ -244,7 +267,7 @@ export default function ProfileMain({ onNavigate, onInspect = () => {}, equipped
           {/* ---- AVATAR INSPECT CARD (dark) ---- */}
           <div className="rounded-2xl p-4" style={{ background: C.bgHeader }}>
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-              <div className="space-y-2">{AVATAR_SLOTS_LEFT.map((s) => <MiniSlot key={s.key} s={s} />)}</div>
+              <div className="space-y-2">{AVATAR_SLOTS_LEFT.map((s) => <MiniSlot key={s.key} s={s} previewSrc={loadoutComponents[s.key]} />)}</div>
 
               {/* layered paper-doll avatar */}
               <div className="relative mx-auto" style={{ width: 220, height: 340 }}>
@@ -265,10 +288,8 @@ export default function ProfileMain({ onNavigate, onInspect = () => {}, equipped
                   />
                 ) : ASSETS.avatar.base ? (
                   AVATAR_LAYER_ORDER.map((layerKey) => {
-                    const assetName = layerKey === "body" ? "base" : equipped[layerKey];
-                    // allow equipped to contain direct URLs as well as keys into ASSETS.avatar
-                    const src = assetName && assetName.startsWith("/") ? assetName : ASSETS.avatar[assetName];
-                    if (!assetName || !src) return null;
+                    const src = getAvatarLayerSrc(layerKey);
+                    if (!src) return null;
                     return (
                       <img key={layerKey} src={src} alt={layerKey}
                         className="absolute inset-0 h-full w-full object-contain"
@@ -282,7 +303,7 @@ export default function ProfileMain({ onNavigate, onInspect = () => {}, equipped
                 )}
               </div>
 
-              <div className="space-y-2">{AVATAR_SLOTS_RIGHT.map((s) => <MiniSlot key={s.key} s={s} />)}</div>
+              <div className="space-y-2">{AVATAR_SLOTS_RIGHT.map((s) => <MiniSlot key={s.key} s={s} previewSrc={loadoutComponents[s.key]} />)}</div>
             </div>
 
             {/* loadout selector */}

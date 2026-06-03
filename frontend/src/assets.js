@@ -1,3 +1,23 @@
+const loadout1 = Object.freeze({
+  components: Object.freeze({
+    hat: "/assets/avatar/loadout1/components/hat.png",
+    top: "/assets/avatar/loadout1/components/shirt.png",
+    bottom: "/assets/avatar/loadout1/components/bottom.png",
+    shoe: "/assets/avatar/loadout1/components/shoe.png",
+    backpack: "/assets/avatar/loadout1/components/backpack.png",
+  }),
+  rotations: Object.freeze([
+    "/assets/avatar/loadout1/rotations/north.png",
+    "/assets/avatar/loadout1/rotations/north-east.png",
+    "/assets/avatar/loadout1/rotations/east.png",
+    "/assets/avatar/loadout1/rotations/south-east.png",
+    "/assets/avatar/loadout1/rotations/south.png",
+    "/assets/avatar/loadout1/rotations/south-west.png",
+    "/assets/avatar/loadout1/rotations/west.png",
+    "/assets/avatar/loadout1/rotations/north-west.png",
+  ]),
+});
+
 export const ASSETS = {
   brand: {
     logo: "/assets/brand/logo_cleaned.png",
@@ -187,17 +207,7 @@ export const ASSETS = {
   // Avatar paper-doll layers. Keep every PNG on the same canvas size.
   avatar: {
     base: "/assets/avatar/army_profile_picture.jpg",
-    rotations: Object.freeze([
-      "/assets/avatar/loadout1/rotations/north.png",
-      "/assets/avatar/loadout1/rotations/north-east.png",
-      "/assets/avatar/loadout1/rotations/east.png",
-      "/assets/avatar/loadout1/rotations/south-east.png",
-      "/assets/avatar/loadout1/rotations/south.png",
-      "/assets/avatar/loadout1/rotations/south-west.png",
-      "/assets/avatar/loadout1/rotations/west.png",
-      "/assets/avatar/loadout1/rotations/north-west.png",
-    ]),
-    // headwear: "/assets/avatar/helmet.png",
-    // eyewear: "/assets/avatar/goggles.png",
+    loadouts: Object.freeze({ loadout1 }),
+    rotations: loadout1.rotations,
   },
 };
