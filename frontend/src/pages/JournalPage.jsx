@@ -9,10 +9,10 @@
  * flipbook view. Each page is a React component rendered at 480x690
  * and auto-scaled by StPageFlip.
  */
-import React, { useState, useRef, forwardRef, useCallback } from "react";
+import React, { useState, useRef, forwardRef, useCallback, useEffect } from "react";
 import { storage, auth, db } from "../auth/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "firebase/firestore";
 import HTMLFlipBook from "react-pageflip";
 import {
   BookOpen, Plus, Image, FileText, Mic, Star, Mail, Lock,
@@ -1357,7 +1357,14 @@ function EntryReadModal({ entry, onClose }) {
       </div>
       <h2 style={{ ...pixel, color: C.ink }} className="text-[26px] leading-tight">{entry.title}</h2>
 
-      {entry.type === "photo" && <div className="mt-3"><PlaceholderImg label={entry.title} h={200} /></div>}
+      {entry.type === "photo" && (
+        <div className="mt-3">
+          {entry.photoURL
+            ? <img src={entry.photoURL} alt={entry.title} style={{ width: "100%", height: 200, objectFit: "cover", borderRadius: 4 }} />
+            : <PlaceholderImg label={entry.title} h={200} />
+          }
+        </div>
+      )}
       {entry.type === "voice" && (
         <div className="mt-3 flex items-center gap-3 rounded-lg px-3 py-3" style={{ background: C.cardInner }}>
           <span className="flex h-11 w-11 items-center justify-center rounded-full" style={{ background: C.green, color: C.textGold }}>
@@ -1405,13 +1412,60 @@ export default function JournalPage({ onNavigate }) {
 
   // Live, pre-ORD content + the modal interfaces over it. The book stays sealed;
   // these are the soldier's day-to-day captures, viewable any time.
-  const [entries, setEntries] = useState(data.recentEntries);
+  const [entries, setEntries] = useState([]);
+
+  // Replace the entire useEffect (lines 1410-1437) with this:
+  useEffect(function () {
+    const unsubscribeAuth = auth.onAuthStateChanged(function (currentUser) {
+      if (!currentUser) return;
+
+      const q = query(
+        collection(db, "journalEntries"),
+        where("userId", "==", currentUser.uid),
+        orderBy("createdAt", "desc")
+      );
+
+      const unsubscribeSnapshot = onSnapshot(q, function (snapshot) {
+        const fetched = snapshot.docs.map(function (doc) {
+          const d = doc.data();
+          return {
+            id: doc.id,
+            type: d.type,
+            title: d.caption || d.title || "Untitled",
+            text: d.taggedMates || d.text || "",
+            date: d.createdAt?.toDate().toLocaleDateString("en-SG", { day: "2-digit", month: "short", year: "numeric" }) || "TODAY",
+            ago: (function () {
+              if (!d.createdAt) return "now";
+              const diffMs = Date.now() - d.createdAt.toDate().getTime();
+              const diffMins = Math.floor(diffMs / 60000);
+              if (diffMins < 1) return "now";
+              if (diffMins < 60) return diffMins + "m";
+              const diffHours = Math.floor(diffMins / 60);
+              if (diffHours < 24) return diffHours + "h";
+              const diffDays = Math.floor(diffHours / 24);
+              if (diffDays < 7) return diffDays + "d";
+              return Math.floor(diffDays / 7) + "w";
+            })(),
+            photoURL: d.photoURL || null,
+          };
+        });
+        setEntries(fetched);
+      }, function (err) {
+        console.error("Firestore error:", err);
+      });
+
+      return function () { unsubscribeSnapshot(); };
+    });
+
+    return function () { unsubscribeAuth(); };
+  }, []);
+
   const [captureType, setCaptureType] = useState(null); // photo|note|voice|milestone
   const [readEntry, setReadEntry] = useState(null);
   const [lightboxPhoto, setLightboxPhoto] = useState(null);
 
-  function handleSaveEntry(entry) {
-    setEntries(function (prev) { return [entry, ...prev]; });
+  function handleSaveEntry() {
+    // entries are now driven by Firestore's onSnapshot — nothing to do here
   }
 
   if (bookOpen) {
@@ -1595,10 +1649,12 @@ export default function JournalPage({ onNavigate }) {
                       {/* Mini-polaroid thumbnail. photo/milestone use pixel art;
                           note/voice fall back to emoji until art exists. */}
                       <div className="wgt-polaroid shrink-0" style={{ transform: "rotate(-3deg)", padding: "3px 3px 9px" }}>
-                        <div className="wgt-photo-well flex h-10 w-12 items-center justify-center">
-                          {ENTRY_ART[e.type]
-                            ? <PixIcon src={ENTRY_ART[e.type]} size={22} />
-                            : <span style={{ fontSize: 18 }}>{ENTRY_GLYPH[e.type] || ENTRY_GLYPH.note}</span>}
+                        <div className="wgt-photo-well flex h-10 w-12 items-center justify-center overflow-hidden">
+                          {e.type === "photo" && e.photoURL
+                            ? <img src={e.photoURL} alt={e.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            : ENTRY_ART[e.type]
+                              ? <PixIcon src={ENTRY_ART[e.type]} size={22} />
+                              : <span style={{ fontSize: 18 }}>{ENTRY_GLYPH[e.type] || ENTRY_GLYPH.note}</span>}
                         </div>
                       </div>
                       <div className="min-w-0 flex-1 leading-tight">
