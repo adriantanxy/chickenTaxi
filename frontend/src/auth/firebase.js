@@ -15,6 +15,8 @@ import {
   browserLocalPersistence,
   GoogleAuthProvider,
 } from "firebase/auth";
+import { getStorage } from "firebase/storage";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -41,6 +43,10 @@ if (missing.length > 0) {
 export const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
+
+export const storage = getStorage(app);
+
+export const db = getFirestore(app);
 
 // LOCAL persistence: the session is kept in IndexedDB across browser restarts.
 // setPersistence returns a promise; failures (e.g. private mode) are non-fatal,
