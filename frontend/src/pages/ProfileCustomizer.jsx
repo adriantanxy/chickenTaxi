@@ -26,7 +26,7 @@ function Slot({ s, active, onClick }) {
 }
 
 export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, setEquipped = () => {} }) {
-  const [slot, setSlot] = useState("headwear");
+  const [slot, setSlot] = useState("hat");
   const [rotationIndex, setRotationIndex] = useState(0);
   const [isRotating, setIsRotating] = useState(true);
 
