@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, User } from "lucide-react";
 import { AppShell, ActionButton, Card } from "../ui";
 import { ASSETS } from "../assets";
@@ -25,9 +25,23 @@ function Slot({ s, active, onClick }) {
   );
 }
 
-export default function ProfileCustomizer({ onNavigate, onBack }) {
-  const [equipped] = useState({});
+export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, setEquipped = () => {} }) {
   const [slot, setSlot] = useState("headwear");
+  const [rotationIndex, setRotationIndex] = useState(0);
+  const [isRotating, setIsRotating] = useState(true);
+
+  const rotationFrames = ASSETS.avatar.rotations ?? [];
+  const hasRotationFrames = rotationFrames.length > 0;
+
+  useEffect(() => {
+    if (!isRotating || !hasRotationFrames) return;
+
+    const interval = window.setInterval(() => {
+      setRotationIndex((current) => (current + 1) % rotationFrames.length);
+    }, 300);
+
+    return () => window.clearInterval(interval);
+  }, [isRotating, hasRotationFrames, rotationFrames.length]);
 
   return (
     <AppShell
@@ -45,12 +59,24 @@ export default function ProfileCustomizer({ onNavigate, onBack }) {
             <div className="grid grid-cols-1 items-center gap-4 rounded-lg p-4 md:grid-cols-[1fr_auto_1fr]" style={{ background: "#1b1c14" }}>
               <div className="grid grid-cols-2 gap-3 md:block md:space-y-3">
                 {AVATAR_SLOTS_LEFT.map((s) => (
-                  <Slot key={s.key} s={s} active={slot === s.key} onClick={() => setSlot(s.key)} />
+                  <Slot
+                    key={s.key}
+                    s={s}
+                    active={slot === s.key}
+                    onClick={() => setSlot(s.key)}
+                  />
                 ))}
               </div>
 
               <div className="relative mx-auto" style={{ width: 200, height: 280 }}>
-                {ASSETS.avatar.base ? (
+                {hasRotationFrames && isRotating ? (
+                  <img
+                    src={rotationFrames[rotationIndex]}
+                    alt={`avatar rotation ${rotationIndex}`}
+                    className="absolute inset-0 h-full w-full object-contain"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                ) : ASSETS.avatar.base ? (
                   AVATAR_LAYER_ORDER.map((layerKey) => {
                     const assetName = layerKey === "body" ? "base" : equipped[layerKey];
                     if (!assetName || !ASSETS.avatar[assetName]) return null;
@@ -74,7 +100,12 @@ export default function ProfileCustomizer({ onNavigate, onBack }) {
 
               <div className="grid grid-cols-2 gap-3 md:block md:space-y-3">
                 {AVATAR_SLOTS_RIGHT.map((s) => (
-                  <Slot key={s.key} s={s} active={slot === s.key} onClick={() => setSlot(s.key)} />
+                  <Slot
+                    key={s.key}
+                    s={s}
+                    active={slot === s.key}
+                    onClick={() => setSlot(s.key)}
+                  />
                 ))}
               </div>
             </div>
@@ -83,7 +114,15 @@ export default function ProfileCustomizer({ onNavigate, onBack }) {
               <span style={pixel} className="text-[22px]">
                 <span style={{ color: C.textGold }}>◀ LOADOUT 1 ▶</span>
               </span>
-              <button className="wgt-press rounded-lg px-4 py-1.5" style={{ background: C.green }}>
+              <button
+                className="wgt-press rounded-lg px-4 py-1.5"
+                style={{ background: C.green }}
+                onClick={() => {
+                  if (!rotationFrames || rotationFrames.length === 0) return;
+                  // Persist the currently-previewed rotation frame into equipped.body
+                  setEquipped((prev) => ({ ...prev, body: rotationFrames[rotationIndex] }));
+                }}
+              >
                 <span style={pixel} className="text-[18px]">
                   <span style={{ color: C.textGold }}>SAVE LOADOUT</span>
                 </span>

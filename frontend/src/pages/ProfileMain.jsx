@@ -10,7 +10,7 @@
  * (later: Firestore). Only the decorative bits (frames/photos/avatar parts) are
  * art. Text is never baked into an image.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Award,
   CalendarDays,
@@ -82,8 +82,19 @@ function MiniSlot({ s }) {
   );
 }
 
-export default function ProfileMain({ onNavigate, onInspect = () => {} }) {
-  const [equipped] = useState({}); // keys map into ASSETS.avatar; empty => glyph fallback
+export default function ProfileMain({ onNavigate, onInspect = () => {}, equipped = {} }) {
+  const [rotationIndex, setRotationIndex] = useState(0);
+
+  const rotationFrames = ASSETS.avatar.rotations ?? [];
+  const hasRotationFrames = rotationFrames.length > 0;
+
+  useEffect(() => {
+    if (!hasRotationFrames) return;
+    const id = window.setInterval(() => {
+      setRotationIndex((n) => (n + 1) % rotationFrames.length);
+    }, 300);
+    return () => window.clearInterval(id);
+  }, [hasRotationFrames, rotationFrames.length]);
 
   return (
     <AppShell
@@ -236,13 +247,30 @@ export default function ProfileMain({ onNavigate, onInspect = () => {} }) {
               <div className="space-y-2">{AVATAR_SLOTS_LEFT.map((s) => <MiniSlot key={s.key} s={s} />)}</div>
 
               {/* layered paper-doll avatar */}
-              <div className="relative mx-auto" style={{ width: 110, height: 170 }}>
-                {ASSETS.avatar.base ? (
+              <div className="relative mx-auto" style={{ width: 220, height: 340 }}>
+                {equipped && equipped.body ? (
+                  // If a saved loadout provides a direct URL, render it
+                  <img
+                    src={equipped.body}
+                    alt="saved loadout"
+                    className="absolute inset-0 h-full w-full object-contain"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                ) : hasRotationFrames ? (
+                  <img
+                    src={rotationFrames[rotationIndex]}
+                    alt={`avatar rotation ${rotationIndex}`}
+                    className="absolute inset-0 h-full w-full object-contain"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                ) : ASSETS.avatar.base ? (
                   AVATAR_LAYER_ORDER.map((layerKey) => {
                     const assetName = layerKey === "body" ? "base" : equipped[layerKey];
-                    if (!assetName || !ASSETS.avatar[assetName]) return null;
+                    // allow equipped to contain direct URLs as well as keys into ASSETS.avatar
+                    const src = assetName && assetName.startsWith("/") ? assetName : ASSETS.avatar[assetName];
+                    if (!assetName || !src) return null;
                     return (
-                      <img key={layerKey} src={ASSETS.avatar[assetName]} alt={layerKey}
+                      <img key={layerKey} src={src} alt={layerKey}
                         className="absolute inset-0 h-full w-full object-contain"
                         style={{ zIndex: AVATAR_LAYER_ORDER.indexOf(layerKey), imageRendering: "pixelated" }} />
                     );

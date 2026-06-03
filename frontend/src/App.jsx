@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
 import RootPage from "./pages/RootPage";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import TrainingDashboard from "./pages/TrainingDashboard";
@@ -42,24 +43,26 @@ function ShopRoute() {
   return <ShopPage onNavigate={useAppNavigate()} />;
 }
 
-function ProfileRoute() {
-  const onNavigate = useAppNavigate();
-  const navigate = useNavigate();
-  const onInspect = () => navigate(routeToPath(ROUTES.PROFILE_CUSTOMIZE));
-  return <ProfileMain onNavigate={onNavigate} onInspect={onInspect} />;
-}
-
-function ProfileCustomizeRoute() {
-  const onNavigate = useAppNavigate();
-  const navigate = useNavigate();
-  const onBack = () => navigate(routeToPath(ROUTES.PROFILE));
-  return <ProfileCustomizer onNavigate={onNavigate} onBack={onBack} />;
-}
+// Profile route components are created inside `App` so they can access state.
 
 // Wraps a page element in the auth gate. Keeps the route table below readable.
 const guard = (element) => <ProtectedRoute>{element}</ProtectedRoute>;
 
 export default function App() {
+  const [equipped, setEquipped] = useState({});
+  function ProfileRoute() {
+    const onNavigate = useAppNavigate();
+    const navigate = useNavigate();
+    const onInspect = () => navigate(routeToPath(ROUTES.PROFILE_CUSTOMIZE));
+    return <ProfileMain onNavigate={onNavigate} onInspect={onInspect} equipped={equipped} />;
+  }
+
+  function ProfileCustomizeRoute() {
+    const onNavigate = useAppNavigate();
+    const navigate = useNavigate();
+    const onBack = () => navigate(routeToPath(ROUTES.PROFILE));
+    return <ProfileCustomizer onNavigate={onNavigate} onBack={onBack} equipped={equipped} setEquipped={setEquipped} />;
+  }
   return (
     <Routes>
       {/* Public: the combined login / sign-up screen. */}

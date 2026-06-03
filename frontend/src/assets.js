@@ -187,6 +187,16 @@ export const ASSETS = {
   // Avatar paper-doll layers. Keep every PNG on the same canvas size.
   avatar: {
     base: "/assets/avatar/army_profile_picture.jpg",
+    rotations: Object.freeze([
+      "/assets/avatar/main_sprite/rotations/north.png",
+      "/assets/avatar/main_sprite/rotations/north-east.png",
+      "/assets/avatar/main_sprite/rotations/east.png",
+      "/assets/avatar/main_sprite/rotations/south-east.png",
+      "/assets/avatar/main_sprite/rotations/south.png",
+      "/assets/avatar/main_sprite/rotations/south-west.png",
+      "/assets/avatar/main_sprite/rotations/west.png",
+      "/assets/avatar/main_sprite/rotations/north-west.png",
+    ]),
     // headwear: "/assets/avatar/helmet.png",
     // eyewear: "/assets/avatar/goggles.png",
   },
