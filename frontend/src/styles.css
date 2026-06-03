@@ -8,6 +8,18 @@ body,
   min-height: 100%;
 }
 
+/* Lock the document to the viewport so only the inner <main> scrolls.
+   Prevents a second (window-level) scrollbar from appearing on zoom. */
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+}
+
 body {
   margin: 0;
   background: #181911;

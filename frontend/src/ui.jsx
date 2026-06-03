@@ -549,7 +549,7 @@ export function AppShell({ active, onNavigate, user, icon, title, subtitle, acti
 
   return (
     <>
-      <div className="flex min-h-screen w-full flex-col overflow-x-hidden md:h-screen md:flex-row md:overflow-hidden" style={{ ...CANVAS_TEXTURE, color: C.textGold }}>
+      <div className="flex h-screen w-full flex-col overflow-hidden md:flex-row" style={{ ...CANVAS_TEXTURE, color: C.textGold }}>
         <Sidebar active={active} onNavigate={onNavigate} user={user} />
         <main className={`flex min-w-0 flex-1 flex-col ${fill ? "overflow-y-auto xl:overflow-hidden" : "overflow-y-auto"}`}>
           <header
