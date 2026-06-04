@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { AppShell, ActionButton, Card, Ribbon } from "../ui";
 import { ASSETS } from "../assets";
-import { AVATAR_LAYER_ORDER, AVATAR_SLOTS_LEFT, AVATAR_SLOTS_RIGHT } from "../avatarConfig";
+import { AVATAR_LAYER_ORDER } from "../avatarConfig";
 import { ROUTES } from "../routes";
 import { C, pixel, D, M, USER as user } from "../theme";
 import EnableNotificationsButton from "../components/EnableNotificationsButton";
@@ -266,16 +266,14 @@ export default function ProfileMain({ onNavigate, onInspect = () => {}, equipped
 
           {/* ---- AVATAR INSPECT CARD (dark) ---- */}
           <div className="rounded-2xl p-4" style={{ background: C.bgHeader }}>
-            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-              <div className="space-y-2">{AVATAR_SLOTS_LEFT.map((s) => <MiniSlot key={s.key} s={s} previewSrc={loadoutComponents[s.key]} />)}</div>
-
-              {/* layered paper-doll avatar */}
+            <div className="flex justify-center">
+              {/* layered paper-doll avatar (single centered sprite) */}
               <div className="relative mx-auto" style={{ width: 220, height: 340 }}>
                 {equipped && equipped.body ? (
-                  // If a saved loadout provides a direct URL, render it
+                  // If a saved look provides a direct URL, render it
                   <img
                     src={equipped.body}
-                    alt="saved loadout"
+                    alt="saved look"
                     className="absolute inset-0 h-full w-full object-contain"
                     style={{ imageRendering: "pixelated" }}
                   />
@@ -302,24 +300,14 @@ export default function ProfileMain({ onNavigate, onInspect = () => {}, equipped
                   </div>
                 )}
               </div>
-
-              <div className="space-y-2">{AVATAR_SLOTS_RIGHT.map((s) => <MiniSlot key={s.key} s={s} previewSrc={loadoutComponents[s.key]} />)}</div>
-            </div>
-
-            {/* loadout selector */}
-            <div className="mt-3 text-center">
-              <span style={{ ...pixel, color: C.textGold }} className="text-[20px]">◀ LOADOUT 1 ▶</span>
-            </div>
-            <div className="mt-2 flex items-center justify-center gap-1">
-              {[0, 1, 2].map((i) => <span key={i} className="h-2 w-2 rounded-full" style={{ background: i === 0 ? C.green : "#4a4030" }} />)}
             </div>
 
             {/* INSPECT (-> customiser) + SHARE */}
             <div className="mt-3 flex gap-2">
-              <button onClick={onInspect} className="wgt-press flex flex-1 items-center justify-center gap-2 rounded-lg border-2 py-2" style={{ borderColor: C.gold + "80", background: C.green, color: C.textGold }}>
-                <Search size={16} /><span style={pixel} className="text-[18px]">INSPECT</span>
+              <button onClick={onInspect} className="wgt-press flex flex-[3] items-center justify-center gap-2 rounded-lg border-2 py-2" style={{ borderColor: C.gold + "80", background: C.green, color: C.textGold }}>
+                <Search size={16} /><span style={pixel} className="text-[18px]">CUSTOMISE</span>
               </button>
-              <button className="wgt-press flex flex-1 items-center justify-center gap-2 rounded-lg border-2 py-2" style={{ borderColor: C.gold + "80", background: C.green, color: C.textGold }}>
+              <button className="wgt-press flex flex-[1] items-center justify-center gap-2 rounded-lg border-2 py-2" style={{ borderColor: C.gold + "80", background: C.green, color: C.textGold }}>
                 <Share2 size={16} /><span style={pixel} className="text-[18px]">SHARE</span>
               </button>
             </div>

@@ -136,8 +136,17 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
 
             <div className="mt-3 flex flex-wrap items-center justify-center gap-4">
               <span style={pixel} className="text-[22px]">
-                <span style={{ color: C.textGold }}>◀ LOADOUT 1 ▶</span>
+                <span style={{ color: C.textGold }}>◀ LOOK 1 ▶</span>
               </span>
+              <button
+                className="wgt-press rounded-lg px-4 py-1.5"
+                style={{ background: C.greenLit }}
+                onClick={() => onBack && onBack()}
+              >
+                <span style={pixel} className="text-[18px]">
+                  <span style={{ color: C.textGold}}>CANCEL</span>
+                </span>
+              </button>
               <button
                 className="wgt-press rounded-lg px-4 py-1.5"
                 style={{ background: C.green }}
@@ -147,7 +156,7 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
                 }}
               >
                 <span style={pixel} className="text-[18px]">
-                  <span style={{ color: C.textGold }}>SAVE LOADOUT</span>
+                  <span style={{ color: C.textGold }}>SAVE LOOK</span>
                 </span>
               </button>
             </div>
