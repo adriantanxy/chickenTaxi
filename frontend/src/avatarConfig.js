@@ -4,7 +4,7 @@ export const AVATAR_LAYER_ORDER = Object.freeze([
   "top",
   "hat",
   "shoe",
-  "backpack",
+  "accessory",
 ]);
 
 export const AVATAR_SLOTS_LEFT = Object.freeze([
@@ -15,5 +15,5 @@ export const AVATAR_SLOTS_LEFT = Object.freeze([
 
 export const AVATAR_SLOTS_RIGHT = Object.freeze([
   { key: "shoe", label: "SHOE", glyph: "👟" },
-  { key: "backpack", label: "BACKPACK", glyph: "🎒" },
+  { key: "accessory", label: "ACCESSORY", glyph: "🎒" },
 ]);

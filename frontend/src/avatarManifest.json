@@ -1,0 +1,17 @@
+{
+  "hat": [
+    "/assets/avatar/components/hat/hat.png"
+  ],
+  "top": [
+    "/assets/avatar/components/top/top.png"
+  ],
+  "bottom": [
+    "/assets/avatar/components/bottom/bottom.png"
+  ],
+  "shoe": [
+    "/assets/avatar/components/shoe/shoe.png"
+  ],
+  "accessory": [
+    "/assets/avatar/components/accessory/accessory.png"
+  ]
+}

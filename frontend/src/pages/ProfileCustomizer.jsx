@@ -3,6 +3,7 @@ import { ArrowLeft, User } from "lucide-react";
 import { AppShell, ActionButton, Card } from "../ui";
 import { ASSETS } from "../assets";
 import { AVATAR_LAYER_ORDER, AVATAR_SLOTS_LEFT, AVATAR_SLOTS_RIGHT } from "../avatarConfig";
+import AVATAR_MANIFEST from "../avatarManifest.json";
 import { ROUTES } from "../routes";
 import { C, pixel, USER as user } from "../theme";
 
@@ -39,6 +40,13 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
   const [loadout, setLoadout] = useState(equipped.loadout ?? "loadout1");
   const [rotationIndex, setRotationIndex] = useState(0);
   const [isRotating, setIsRotating] = useState(true);
+  const [selectedOptions, setSelectedOptions] = useState(() => {
+    const initial = {};
+    AVATAR_LAYER_ORDER.forEach((k) => {
+      initial[k] = equipped[k] || null;
+    });
+    return initial;
+  });
 
   const loadoutData = ASSETS.avatar.loadouts?.[loadout] ?? {};
   const loadoutComponents = loadoutData.components ?? {};
@@ -46,6 +54,8 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
   const hasRotationFrames = rotationFrames.length > 0;
 
   const resolveAvatarLayerSrc = (layerKey) => {
+    // prefer user-selected option for immediate preview
+    if (selectedOptions[layerKey]) return selectedOptions[layerKey];
     if (layerKey === "body") return ASSETS.avatar.base;
     const configuredValue = equipped[layerKey];
     if (typeof configuredValue === "string") {
@@ -126,7 +136,7 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
                   <Slot
                     key={s.key}
                     s={s}
-                    previewSrc={loadoutComponents[s.key]}
+                    previewSrc={selectedOptions[s.key] || loadoutComponents[s.key]}
                     active={slot === s.key}
                     onClick={() => setSlot(s.key)}
                   />
@@ -152,7 +162,12 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
                 style={{ background: C.green }}
                 onClick={() => {
                   if (!loadoutComponents || Object.keys(loadoutComponents).length === 0) return;
-                  setEquipped((prev) => ({ ...prev, loadout, ...loadoutComponents }));
+                  // persist the selected options (fallback to loadout components)
+                  const toSave = {};
+                  AVATAR_LAYER_ORDER.forEach((k) => {
+                    toSave[k] = selectedOptions[k] || loadoutComponents[k] || null;
+                  });
+                  setEquipped((prev) => ({ ...prev, loadout, ...toSave }));
                 }}
               >
                 <span style={pixel} className="text-[18px]">
@@ -162,7 +177,6 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
             </div>
           </Card>
         </div>
-
         <Card>
           <p style={pixel} className="text-[26px] leading-snug">
             <span style={{ color: C.textDark }}>
@@ -172,6 +186,26 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
           <p style={pixel} className="mt-4 text-[16px]">
             <span style={{ color: "#6b5c3e" }}>Editing slot: {slot}</span>
           </p>
+          <div className="mt-4">
+            <p style={pixel} className="text-[16px] mb-2">
+              <span style={{ color: C.textDark }}>Options</span>
+            </p>
+            <div className="grid grid-cols-4 gap-3">
+              {(AVATAR_MANIFEST[slot] || []).map((opt) => {
+                const active = selectedOptions[slot] === opt || (!selectedOptions[slot] && loadoutComponents[slot] === opt);
+                return (
+                  <button
+                    key={opt}
+                    onClick={() => setSelectedOptions((prev) => ({ ...prev, [slot]: opt }))}
+                    className="wgt-press rounded-md p-1"
+                    style={{ outline: active ? `2px solid ${C.gold}` : `1px solid ${C.line}66`, background: '#21221a' }}
+                  >
+                    <img src={opt} alt={opt} className="h-20 w-20 object-contain" style={{ imageRendering: 'pixelated' }} />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </Card>
       </div>
     </AppShell>
