@@ -14,10 +14,11 @@ import { storage, auth, db } from "../auth/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "firebase/firestore";
 import HTMLFlipBook from "react-pageflip";
+import AIMemoryModal from "./AIMemoryModal";
 import {
   BookOpen, Plus, Image, FileText, Mic, Star, Mail, Lock,
   ChevronRight, ChevronLeft, Camera, X,
-  Users as UsersIcon, Pen, Award,
+  Users as UsersIcon, Pen, Award, Sparkles,
 } from "lucide-react";
 import { AppShell, ActionButton, Ribbon, Frame } from "../ui";
 import { ASSETS } from "../assets";
@@ -60,7 +61,7 @@ const data = {
   capture: [
     { type: "photo", label: "PHOTO", icon: <Image size={20} /> },
     { type: "note", label: "NOTE", icon: <FileText size={20} /> },
-    { type: "voice", label: "VOICE", icon: <Mic size={20} /> },
+    { type: "ai", label: "AI MEMORY", icon: <Sparkles size={20} /> },
     { type: "milestone", label: "MILESTONE", icon: <Star size={20} /> },
   ],
   progress: {
@@ -1220,6 +1221,7 @@ function CaptureModal({ type, onClose, onSave }) {
     note: { label: "NOTE", icon: <FileText size={16} /> },
     voice: { label: "VOICE NOTE", icon: <Mic size={16} /> },
     milestone: { label: "MILESTONE", icon: <Star size={16} /> },
+    ai: { label: "AI MEMORY", icon: <Sparkles size={16} /> },
   }[type];
 
   function mmss(s) {
@@ -1708,13 +1710,18 @@ export default function JournalPage({ onNavigate }) {
       </div>
 
       {/* ---- modal interfaces (prototype, session state) ---- */}
-      {captureType && (
+      {captureType === "ai" ? (
+        <AIMemoryModal
+          onClose={function () { setCaptureType(null); }}
+          onSave={handleSaveEntry}
+        />
+      ) : captureType ? (
         <CaptureModal
           type={captureType}
           onClose={function () { setCaptureType(null); }}
           onSave={handleSaveEntry}
         />
-      )}
+      ) : null}
       {readEntry && (
         <EntryReadModal entry={readEntry} onClose={function () { setReadEntry(null); }} />
       )}
