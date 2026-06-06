@@ -15,135 +15,16 @@ import { AppShell, Card, Sprite } from "../ui";
 import { ROUTES } from "../routes";
 import { C, pixel, D, M, USER as user } from "../theme";
 
-/* ---- rarity is the backbone of the look; one place, reused everywhere ---- */
-const RARITY = {
-  common:    { label: "COMMON",    color: "#9a8f6e" },
-  rare:      { label: "RARE",      color: "#5b86b5" },
-  epic:      { label: "EPIC",      color: "#9069b3" },
-  legendary: { label: "LEGENDARY", color: "#cf9e44" },
-};
-
 const FILTERS = ["ALL", "NEW", "BEST SELLER", "LIMITED", "DISCOUNTED", "OWNED", "NOT OWNED"];
 
-const crates = [
-  { key: "standard", name: "STANDARD CRATE", sub: "Common to Rare",      glyph: "📦", tint: "#3d4a2a", cost: { type: "key", amt: 1 } },
-  { key: "military", name: "MILITARY SUPPLY", sub: "Common to Epic",     glyph: "🧰", tint: "#2f4038", cost: { type: "key", amt: 1 } },
-  { key: "premium",  name: "PREMIUM CRATE",  sub: "Rare to Legendary",   glyph: "🗃️", tint: "#5a4a28", cost: { type: "ticket", amt: 1 } },
-  { key: "legend",   name: "LEGENDARY CRATE", sub: "Epic to Legendary",  glyph: "🎁", tint: "#5a3326", cost: { type: "ticket", amt: 1 }, shine: true },
-  { key: "daily",    name: "DAILY FREE CRATE", sub: "1 free crate every day!", glyph: "🪖", tint: "#26331f", timer: "daily", cost: { type: "free" } },
-  { key: "bundle",   name: "10+1 SPECIAL",   sub: "Open 10, get 1 free!", glyph: "📚", tint: "#26383d", cost: { type: "key", amt: 10, open: 10 } },
-  { key: "limited",  name: "LIMITED CRATE",  sub: "Limited time only!",   glyph: "💼", tint: "#3a221c", timer: "limited", cost: { type: "ticket", amt: 1 }, limited: true },
-];
-
 const items = [
-  { key: "camocap",  name: "CAMO CAP",        slot: "HEAD",  glyph: "🧢", rarity: "common",    price: 400,  flags: ["NEW"] },
-  { key: "aviator",  name: "AVIATOR GLASSES", slot: "EYEWEAR", glyph: "🕶️", rarity: "common",  price: 350,  flags: ["BEST SELLER"] },
-  { key: "dogtags",  name: "DOG TAGS",        slot: "CHARM", glyph: "🏷️", rarity: "rare",      price: 900,  flags: ["BEST SELLER"] },
-  { key: "scarf",    name: "SHADOW SCARF",    slot: "NECK",  glyph: "🧣", rarity: "epic",      price: 1800, flags: ["NEW"] },
-  { key: "helmet",   name: "COMMANDER HELMET", slot: "HEAD", glyph: "🪖", rarity: "legendary", price: 3500, flags: ["LIMITED"] },
-  { key: "badge",    name: "GOLDEN BADGE",    slot: "PATCH", glyph: "🛡️", rarity: "legendary", price: 5000, flags: ["LIMITED", "OWNED"], owned: true },
+  { key: "camocap", img: "../../assets/training/shop/items/item1.png", rarity: "common", price: 400, flags: ["NEW"] },
+  { key: "aviator", img: "../../assets/training/shop/items/item2.png", rarity: "common", price: 350, flags: ["BEST SELLER"] },
+  { key: "dogtags", img: "../../assets/training/shop/items/item3.png", rarity: "rare", price: 900, flags: ["BEST SELLER"] },
+  { key: "scarf", img: "../../assets/training/shop/items/item4.png", rarity: "epic", price: 1800, flags: ["NEW"] },
+  { key: "helmet", img: "../../assets/training/shop/items/item5.png", rarity: "legendary", price: 3500, flags: ["LIMITED"] },
+  { key: "badge", img: "../../assets/training/shop/items/item6.png", rarity: "legendary", price: 5000, flags: ["LIMITED", "OWNED"], owned: true },
 ];
-
-function fmtTime(total) {
-  const d = Math.floor(total / 86400);
-  const h = Math.floor((total % 86400) / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
-  const p = (n) => String(n).padStart(2, "0");
-  return `${d > 0 ? `${d}D ` : ""}${p(h)}:${p(m)}:${p(s)}`;
-}
-
-function CostButton({ cost }) {
-  if (cost.type === "free")
-    return (
-      <button className="w-full rounded-md py-1.5 text-center transition hover:brightness-110" style={{ background: C.green }}>
-        <span style={{ ...pixel, color: C.textGold }} className="text-[18px]">FREE</span>
-      </button>
-    );
-  const Icon = cost.type === "key" ? Key : Ticket;
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex items-center gap-1 rounded-md px-2 py-1" style={{ background: "#00000033" }}>
-        <Icon size={14} style={{ color: C.gold }} />
-        <span style={{ ...pixel, color: C.textGold }} className="text-[16px]">{cost.amt}</span>
-      </div>
-      <button className="flex-1 rounded-md py-1 text-center transition hover:brightness-110" style={{ background: C.green }}>
-        <span style={{ ...pixel, color: C.textGold }} className="text-[16px]">OPEN {cost.open || 1}</span>
-      </button>
-    </div>
-  );
-}
-
-function CrateCard({ c, time }) {
-  return (
-    <div
-      className="group relative flex flex-col justify-between overflow-hidden rounded-xl border-2 p-3 transition-transform hover:-translate-y-1"
-      style={{
-        borderColor: (c.shine || c.limited) ? RARITY.legendary.color + "aa" : C.line + "55",
-        background: `linear-gradient(160deg, ${c.tint}, #1c1d15)`,
-        boxShadow: c.shine ? `0 0 18px ${RARITY.legendary.color}33` : "none",
-      }}
-    >
-      <div className="text-center leading-tight">
-        <p style={{ ...pixel, color: C.textGold }} className="text-[15px]">{c.name}</p>
-        <p style={{ ...pixel, color: C.textMuted }} className="text-[12px]">{c.sub}</p>
-      </div>
-
-      <div className="my-2 flex h-20 items-center justify-center text-5xl transition-transform group-hover:scale-110">
-        <Sprite name={c.key} size={64} fallback={c.glyph} />
-      </div>
-
-      {c.timer ? (
-        <div className="mb-2 rounded-md py-1 text-center" style={{ background: "#00000040" }}>
-          <p style={{ ...pixel, color: C.textMuted }} className="text-[10px] leading-none">{c.timer === "daily" ? "REFRESHES IN" : "ENDS IN"}</p>
-          <p style={{ ...pixel, color: C.gold }} className="text-[18px] leading-none">{fmtTime(time)}</p>
-        </div>
-      ) : null}
-
-      <CostButton cost={c.cost} />
-    </div>
-  );
-}
-
-function ItemCard({ it, active, onClick }) {
-  const r = RARITY[it.rarity];
-  return (
-    <button
-      onClick={onClick}
-      className="group relative flex flex-col overflow-hidden rounded-xl border-[3px] p-3 text-center transition-transform hover:-translate-y-1"
-      style={{
-        borderColor: r.color,
-        background: C.cardLight,
-        outline: active ? `2px solid ${C.gold}` : "none",
-        boxShadow: `0 0 14px ${r.color}33`,
-      }}
-    >
-      {/* rarity tag */}
-      <span className="absolute left-2 top-2 rounded px-1.5 py-0.5" style={{ background: r.color }}>
-        <span style={{ ...pixel, color: "#fff" }} className="text-[10px]">{r.label}</span>
-      </span>
-      {it.owned && <Check size={16} className="absolute right-2 top-2 text-green-700" />}
-
-      <div className="flex h-28 items-center justify-center text-6xl transition-transform group-hover:scale-110">
-        <Sprite name={it.key} size={88} fallback={it.glyph} />
-      </div>
-
-      <p style={{ ...pixel, ...D }} className="text-[19px] leading-none">{it.name}</p>
-      <p style={{ ...pixel, ...M }} className="text-[13px]">{it.slot}</p>
-
-      <div className="mt-2 flex items-center justify-center gap-1 border-t pt-2" style={{ borderColor: "#00000018" }}>
-        {it.owned ? (
-          <span style={{ ...pixel, ...M }} className="text-[14px]">OWNED</span>
-        ) : (
-          <>
-            <Star size={12} style={{ color: r.color }} className="fill-current" />
-            <span style={{ ...pixel, ...D }} className="text-[16px]">{it.price.toLocaleString()} XP</span>
-          </>
-        )}
-      </div>
-    </button>
-  );
-}
 
 export default function ShopPage({ onNavigate }) {
   const [filter, setFilter] = useState("ALL");
@@ -182,7 +63,7 @@ export default function ShopPage({ onNavigate }) {
       <div className="mx-auto w-full max-w-[1700px] space-y-5 p-3 sm:p-6">
         {/* ---- shop ribbon + tabs ---- */}
         <div className="flex items-center gap-3 rounded-lg px-4 py-2" style={{ background: C.cardLight }}>
-          <span className="text-2xl">🪖</span>
+          <img src="../../assets/journal/talking_soldier.png" className="w-10 h-10 object-contain"/>
           <span style={{ ...pixel, ...D }} className="flex-1 text-center text-[28px] leading-none">SHOP</span>
           <button className="rounded-md p-1.5" style={{ background: C.cardInner }}><ScrollText size={18} style={D} /></button>
           <button className="rounded-md p-1.5" style={{ background: C.cardInner }}><ShoppingCart size={18} style={D} /></button>
@@ -209,8 +90,14 @@ export default function ShopPage({ onNavigate }) {
         {/* ---- CRATES ---- */}
         <div>
           <h2 style={{ ...pixel, color: C.gold }} className="mb-2 text-[30px] leading-none">CRATES</h2>
-          <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-7">
-            {crates.map((c) => <CrateCard key={c.key} c={c} time={c.timer === "daily" ? t.daily : t.limited} />)}
+          <div className="grid grid-cols-4 gap-3 min-[480px]:grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 2xl:grid-cols-8">
+            <img src="..\..\assets\training\shop\crates\crate1.png" width="100%" className="cursor-pointer hover:scale-105 transition rounded-[5%]" />
+            <img src="..\..\assets\training\shop\crates\crate2.png" width="100%" className="cursor-pointer hover:scale-105 transition rounded-[5%]" />
+            <img src="..\..\assets\training\shop\crates\crate3.png" width="100%" className="cursor-pointer hover:scale-105 transition rounded-[5%]" />
+            <img src="..\..\assets\training\shop\crates\crate4.png" width="100%" className="cursor-pointer hover:scale-105 transition rounded-[5%]" />
+            <img src="..\..\assets\training\shop\crates\crate5.png" width="95%" className="cursor-pointer hover:scale-105 transition rounded-[5%]" />
+            <img src="..\..\assets\training\shop\crates\crate6.png" width="96%" className="cursor-pointer hover:scale-105 transition rounded-[5%]" />
+            <img src="..\..\assets\training\shop\crates\crate7.png" width="100%" className="cursor-pointer hover:scale-105 transition rounded-[5%]" />
           </div>
         </div>
 
@@ -221,14 +108,20 @@ export default function ShopPage({ onNavigate }) {
             <span style={{ ...pixel, color: C.textMuted }} className="text-[15px]">{shown.length} shown · {filter}</span>
           </div>
           {shown.length ? (
-            <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6">
-              {shown.map((it) => <ItemCard key={it.key} it={it} active={sel === it.key} onClick={() => setSel(it.key)} />)}
+            <div className="grid grid-cols-4 gap-3 min-[480px]:grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 2xl:grid-cols-8">
+              {shown.map((it) => (
+                <button key={it.key} onClick={() => setSel(it.key)} className="transition hover:scale-105">
+                  <img src={it.img} className="w-full rounded-[3%]" />
+                </button>
+              ))}
             </div>
           ) : (
-            <p style={{ ...pixel, color: C.textMuted }} className="py-8 text-center text-[20px]">Nothing here under “{filter}”. Try another filter.</p>
+            <p style={{ ...pixel, color: C.textMuted }} className="py-8 text-center text-[20px]">
+              Nothing here under “{filter}”. Try another filter.
+            </p>
           )}
+          </div>
         </div>
-      </div>
     </AppShell>
   );
 }
