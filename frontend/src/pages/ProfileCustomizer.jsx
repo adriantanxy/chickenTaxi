@@ -36,14 +36,18 @@ function Slot({ s, active, onClick, previewSrc }) {
 }
 
 export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, setEquipped = () => {} }) {
-  const [slot, setSlot] = useState("hat");
+  const [slot, setSlot] = useState("top");
   const [loadout, setLoadout] = useState(equipped.loadout ?? "loadout1");
   const [rotationIndex, setRotationIndex] = useState(0);
   const [isRotating, setIsRotating] = useState(true);
   const [selectedOptions, setSelectedOptions] = useState(() => {
     const initial = {};
     AVATAR_LAYER_ORDER.forEach((k) => {
-      initial[k] = equipped[k] || null;
+      if (Object.prototype.hasOwnProperty.call(equipped, k)) {
+        initial[k] = equipped[k];
+      } else if (k === "accessory2") {
+        initial[k] = null;
+      }
     });
     return initial;
   });
@@ -54,8 +58,8 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
   const hasRotationFrames = rotationFrames.length > 0;
 
   const resolveAvatarLayerSrc = (layerKey) => {
-    // prefer user-selected option for immediate preview
-    if (selectedOptions[layerKey]) return selectedOptions[layerKey];
+    // prefer a user-selected option, including explicit none
+    if (selectedOptions[layerKey] !== undefined) return selectedOptions[layerKey];
     if (layerKey === "body") return ASSETS.avatar.base;
     const configuredValue = equipped[layerKey];
     if (typeof configuredValue === "string") {
@@ -94,7 +98,7 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
                   <Slot
                     key={s.key}
                     s={s}
-                    previewSrc={loadoutComponents[s.key]}
+                    previewSrc={selectedOptions[s.key] !== undefined ? selectedOptions[s.key] : loadoutComponents[s.key]}
                     active={slot === s.key}
                     onClick={() => setSlot(s.key)}
                   />
@@ -136,7 +140,7 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
                   <Slot
                     key={s.key}
                     s={s}
-                    previewSrc={selectedOptions[s.key] || loadoutComponents[s.key]}
+                    previewSrc={selectedOptions[s.key] !== undefined ? selectedOptions[s.key] : loadoutComponents[s.key]}
                     active={slot === s.key}
                     onClick={() => setSlot(s.key)}
                   />
@@ -191,14 +195,39 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
               <span style={{ color: C.textDark }}>Options</span>
             </p>
             <div className="grid grid-cols-4 gap-3">
-              {(AVATAR_MANIFEST[slot] || []).map((opt) => {
-                const active = selectedOptions[slot] === opt || (!selectedOptions[slot] && loadoutComponents[slot] === opt);
+              <button
+                key="none"
+                onClick={() => setSelectedOptions((prev) => ({ ...prev, [slot]: null }))}
+                className="wgt-press rounded-md p-3"
+                style={{
+                  outline: selectedOptions[slot] === null ? `2px solid ${C.gold}` : `1px solid ${C.line}66`,
+                  background: selectedOptions[slot] === null ? '#2a2a26' : '#21221a',
+                  color: '#999',
+                }}
+              >
+                <span style={pixel} className="text-[26px]">Ø</span>
+                <div style={pixel} className="text-[12px] mt-1">NONE</div>
+              </button>
+              {((slot.startsWith("accessory") ? AVATAR_MANIFEST.accessory : AVATAR_MANIFEST[slot]) || []).map((opt) => {
+                const otherAccessory = slot === "accessory1" ? "accessory2" : "accessory1";
+                const otherSelected = selectedOptions[otherAccessory] !== undefined ? selectedOptions[otherAccessory] : loadoutComponents[otherAccessory];
+                const disabled = slot.startsWith("accessory") && otherSelected === opt;
+                const active = selectedOptions[slot] === opt || (selectedOptions[slot] === undefined && loadoutComponents[slot] === opt);
                 return (
                   <button
                     key={opt}
-                    onClick={() => setSelectedOptions((prev) => ({ ...prev, [slot]: opt }))}
+                    onClick={() => {
+                      if (disabled) return;
+                      setSelectedOptions((prev) => ({ ...prev, [slot]: opt }));
+                    }}
+                    disabled={disabled}
                     className="wgt-press rounded-md p-1"
-                    style={{ outline: active ? `2px solid ${C.gold}` : `1px solid ${C.line}66`, background: '#21221a' }}
+                    style={{
+                      outline: active ? `2px solid ${C.gold}` : `1px solid ${C.line}66`,
+                      background: disabled ? '#1a1b17' : '#21221a',
+                      opacity: disabled ? 0.45 : 1,
+                      cursor: disabled ? 'not-allowed' : 'pointer',
+                    }}
                   >
                     <img src={opt} alt={opt} className="h-20 w-20 object-contain" style={{ imageRendering: 'pixelated' }} />
                   </button>

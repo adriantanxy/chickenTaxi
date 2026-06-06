@@ -1,10 +1,10 @@
 const loadout1 = Object.freeze({
   components: Object.freeze({
-    hat: "/assets/avatar/loadout1/components/hat.png",
     top: "/assets/avatar/loadout1/components/top.png",
     bottom: "/assets/avatar/loadout1/components/bottom.png",
     shoe: "/assets/avatar/loadout1/components/shoe.png",
-    accessory: "/assets/avatar/loadout1/components/accessory.png",
+    accessory1: "/assets/avatar/loadout1/components/accessory.png",
+    accessory2: null,
   }),
   rotations: Object.freeze([
     "/assets/avatar/loadout1/rotations/north.png",

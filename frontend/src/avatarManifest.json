@@ -1,9 +1,7 @@
 {
-  "hat": [
-    "/assets/avatar/components/hat/hat.png"
-  ],
   "top": [
-    "/assets/avatar/components/top/top.png"
+    "/assets/avatar/components/top/top.png",
+    "/assets/avatar/components/top/red%20tank%20top.png"
   ],
   "bottom": [
     "/assets/avatar/components/bottom/bottom.png"
@@ -12,6 +10,9 @@
     "/assets/avatar/components/shoe/shoe.png"
   ],
   "accessory": [
-    "/assets/avatar/components/accessory/accessory.png"
+    "/assets/avatar/components/accessory/accessory.png",
+    "/assets/avatar/components/accessory/bottle.png",
+    "/assets/avatar/components/accessory/green%20bottle.png",
+    "/assets/avatar/components/accessory/hat.png"
   ]
 }
