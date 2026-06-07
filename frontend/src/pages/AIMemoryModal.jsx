@@ -9,9 +9,17 @@ function getAvatarDescription() {
   return "a young Singaporean guy wearing a green tactical helmet, olive green explorer uniform, outdoor boots, and a chest patch";
 }
 
-function buildPrompt(userDescription, avatarDesc) {
-  // Swapping "Singapore army camp setting" to an adventure/jungle setting
-  return `retro storybook painting, gouache and watercolor illustration, flat colors, textured paper texture, cinematic atmosphere, nostalgic mood, ${avatarDesc}, ${userDescription}, Singapore jungle training setting, anonymous figures, faceless characters seen from a distance, no facial features, back turned to camera, silhouettes, dramatic cinematic lighting, muted earthy color palette, vintage military journal art`;
+function buildPrompt(userDescription, avatarDesc, styleKey) {
+  const styles = {
+    vintage: "retro storybook painting, gouache and watercolor illustration, flat colors, textured paper texture, nostalgic mood, vintage military journal art, muted earthy color palette",
+    anime: "90s cinematic anime style, hand-drawn animation cel, vivid colors, detailed line art, nostalgic aesthetic, dramatic lighting",
+    realistic: "realistic cinematic photography, dramatic natural lighting, 35mm film grain style, highly detailed, realistic depth of field, authentic environment texture",
+    pixel: "16-bit retro pixel art, detailed pixelation textures, vintage video game cutscene style, vibrant color grading, clear pixel grid"
+  };
+
+  const selectedStyleText = styles[styleKey] || styles.vintage;
+
+  return `${selectedStyleText}, ${avatarDesc}, ${userDescription}, Singapore jungle training setting, cinematic atmosphere, anonymous figures, faceless characters seen from a distance, no facial features, back turned to camera, silhouettes`;
 }
 
 function buildPollinationsURL(prompt) {
@@ -44,7 +52,9 @@ function ModalShell({ onClose, children }) {
 }
 
 export default function AIMemoryModal({ onClose, onSave }) {
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [selectedStyle, setSelectedStyle] = useState("vintage");
   const [step, setStep] = useState(1); // 1 = Input, 2 = Live Preview
   const [imageSrc, setImageSrc] = useState("");
   const [loading, setLoading] = useState(false);
@@ -64,7 +74,7 @@ export default function AIMemoryModal({ onClose, onSave }) {
 
     try {
       const avatarDesc = getAvatarDescription();
-      const finalPrompt = buildPrompt(textDescription, avatarDesc);
+      const finalPrompt = buildPrompt(textDescription, avatarDesc, selectedStyle);
       const targetUrl = buildPollinationsURL(finalPrompt);
 
       // Fetch as blob instead of setting URL directly
@@ -87,12 +97,13 @@ export default function AIMemoryModal({ onClose, onSave }) {
     setSaving(true);
     try {
       // Package payload to send up to the parent shell
+      // Package payload to send up to the parent shell
       const entryPayload = {
-        type: "ai_memory",
-        promptDescription: description,
-        rawBlobUrl: imageSrc, // Used to upload into storage or convert to canvas blocks
+        type: "photo", // Keeps it matching your existing Firestore "type" configuration
+        caption: title.trim() || "AI Rendered Memory", // ⭐️ This maps your Title to the caption field!
+        promptDescription: description, // Passes the long paragraph safely
+        rawBlobUrl: imageSrc,
         createdAt: new Date(),
-        userId: auth.currentUser?.uid || "anonymous"
       };
 
       if (onSave) {
@@ -117,21 +128,62 @@ export default function AIMemoryModal({ onClose, onSave }) {
 
       {step === 1 ? (
         <div className="space-y-4">
-          <label className="block text-sm font-bold tracking-wide" style={{ color: C.textGold, ...pixel }}>
-            DESCRIBE THE SCENE:
-          </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="e.g., Cleaning my rifle during field camp, looking tired but determined..."
-            className="w-full h-24 p-3 rounded-lg border-2 text-sm focus:outline-none placeholder-stone-600 resize-none text-stone-100"
-            style={{ backgroundColor: "#12160d", borderColor: C.line }}
-          />
+          <div>
+            <label className="block text-xs font-bold tracking-wide mb-1.5" style={{ color: C.textGold, ...pixel }}>
+              MEMORY TITLE:
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g., Surviving Monsoon Outfield"
+              className="w-full p-2.5 rounded-lg border-2 text-xs focus:outline-none placeholder-stone-600 text-stone-100"
+              style={{ backgroundColor: "#12160d", borderColor: C.line }}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold tracking-wide mb-1.5" style={{ color: C.textGold, ...pixel }}>
+              DESCRIBE THE SCENE:
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Please input a paragraph or so, as descriptive as possible, detailing a memorable moment that happened during training that you would like to render as a visual companion."
+              className="w-full h-32 p-3 rounded-lg border-2 text-xs focus:outline-none placeholder-stone-600 resize-none text-stone-100 leading-relaxed"
+              style={{ backgroundColor: "#12160d", borderColor: C.line }}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold tracking-wide mb-1" style={{ color: C.textGold, ...pixel }}>
+              CHOOSE ARTWORK RENDERING STYLE:
+            </label>
+            <select
+              value={selectedStyle}
+              onChange={(e) => setSelectedStyle(e.target.value)}
+              className="w-full p-2.5 rounded-lg border-2 text-xs focus:outline-none text-stone-200 cursor-pointer appearance-none"
+              style={{
+                backgroundColor: "#12160d",
+                borderColor: C.line,
+                ...pixel,
+                backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23cda34f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 10px center',
+                backgroundSize: '16px'
+              }}
+            >
+              <option value="vintage">VINTAGE SCRAPBOOK PAINTING (DEFAULT)</option>
+              <option value="anime">90S CINEMATIC ANIME CEL</option>
+              <option value="realistic">REALISTIC 35MM FILM PHOTO</option>
+              <option value="pixel">16-BIT CLASSIC PIXEL ART</option>
+            </select>
+          </div>
+
           <button
             type="button"
             onClick={() => generateImage(description)}
             disabled={!description.trim()}
-            className="w-full flex items-center justify-center gap-2 rounded-lg border-2 py-3 font-bold transition-all active:scale-95"
+            className="w-full flex items-center justify-center gap-2 rounded-lg border-2 py-3 font-bold transition-all active:scale-95 mt-2"
             style={{
               borderColor: description.trim() ? C.gold : C.line,
               background: description.trim() ? C.green : "#2a3320",
