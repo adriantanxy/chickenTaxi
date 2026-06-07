@@ -11,13 +11,14 @@ function getAvatarDescription() {
 
 function buildPrompt(userDescription, avatarDesc) {
   // Swapping "Singapore army camp setting" to an adventure/jungle setting
-  return `16-bit pixel art, retro warm palette, scrapbook style, ${avatarDesc}, ${userDescription}, Singapore jungle training setting, dramatic lighting, detailed background, nostalgic feel`;
+  return `retro storybook painting, gouache and watercolor illustration, flat colors, textured paper texture, cinematic atmosphere, nostalgic mood, ${avatarDesc}, ${userDescription}, Singapore jungle training setting, anonymous figures, faceless characters seen from a distance, no facial features, back turned to camera, silhouettes, dramatic cinematic lighting, muted earthy color palette, vintage military journal art`;
 }
 
 function buildPollinationsURL(prompt) {
   const encoded = encodeURIComponent(prompt);
   const seed = Math.floor(Math.random() * 999999);
-  return `https://gen.pollinations.ai/image/${encoded}?width=512&height=512&nologo=true&seed=${seed}&referrer=my-journal-app&key=sk_4R2jqEoRaFzvr9K8uh10DPeOUGuPEohV`;
+  const apiKey = import.meta.env.VITE_POLLINATIONS_API_KEY;
+  return `https://gen.pollinations.ai/image/${encoded}?width=512&height=512&nologo=true&seed=${seed}&referrer=my-journal-app&key=${apiKey}`;
 }
 
 function ModalShell({ onClose, children }) {
