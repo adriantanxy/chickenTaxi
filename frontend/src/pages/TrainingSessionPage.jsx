@@ -665,7 +665,7 @@ function SummaryView({ stats, elapsed, onNavigate }) {
   const ss = String(elapsed % 60).padStart(2, "0");
   const xp = Math.round(stats.reps * 3.5 + stats.accuracy);
   const cal = Math.round(stats.reps * 0.32 * 10);
-  const [reflection, setReflection] = useState("");
+  // const [reflection, setReflection] = useState("");
 
   const oc = { background: C.card, border: `2px solid ${C.border}`, borderRadius: 6, padding: "5px" };
   const ib = { backgroundImage: "url('/assets/squad/bigger_board.png')", backgroundPosition: "center", backgroundSize: "auto", backgroundRepeat: "no-repeat", borderRadius: 4, padding: "10px 12px", height: "100%" };
@@ -680,7 +680,7 @@ function SummaryView({ stats, elapsed, onNavigate }) {
         "pushups   formcard  chart    chart"
         "accuracy  formcard  summary  missions"
         "duration  formcard  summary  missions"
-        "reflect   reflect   journal  journal"
+        ".         .         .        save"
       `,
     }}>
 
@@ -850,7 +850,7 @@ function SummaryView({ stats, elapsed, onNavigate }) {
       </div>
 
       {/* TODAY'S REFLECTION — spans 2 cols */}
-      <div style={{ gridArea: "reflect", ...oc }}>
+      {/* <div style={{ gridArea: "reflect", ...oc }}>
         <div style={{ backgroundImage: "url('/assets/squad/bigger_board.png')", backgroundPosition: "center", backgroundSize: "110% 120%", backgroundRepeat: "no-repeat", borderRadius: 4, padding: "10px 12px", height: "100%", display:"flex", flexDirection:"column", gap: 8 }}>
           <div className="flex justify-between items-center">
             <p style={{ ...pixel, ...D, fontSize: 20 }}>TODAY'S REFLECTION</p>
@@ -875,10 +875,10 @@ function SummaryView({ stats, elapsed, onNavigate }) {
             onChange={(e) => setReflection(e.target.value)}
           />
         </div>
-      </div>
+      </div> */}
 
       {/* SAVE TO JOURNAL — spans 2 cols */}
-      <div style={{ gridArea: "journal", ...oc }}>
+      {/* <div style={{ gridArea: "journal", ...oc }}>
         <div style={{ backgroundImage: "url('/assets/common/stickyCard.png')", backgroundPosition: "center", backgroundSize: "160% 230%", backgroundRepeat: "no-repeat", borderRadius: 6, padding: "10px 12px", height: "100%", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap: 10, textAlign:"center" }}>
           <p style={{ ...pixel, ...D, fontSize: 25 }}>SAVE THIS SESSION TO JOURNAL?</p>
           <p style={{ ...pixel, color: C.inkSoft, fontSize: 15, lineHeight: 1.6 }}>
@@ -893,8 +893,29 @@ function SummaryView({ stats, elapsed, onNavigate }) {
             <span style={{ ...pixel, fontSize: 18 }}>SAVE TO JOURNAL</span>
           </button>
         </div>
-      </div>
+      </div> */}
 
+      {/* SAVE RECORD */}
+      <div style={{ gridArea: "save", ...oc }}>
+          <button
+            className="wgt-press flex items-center justify-center gap-2 rounded-lg px-8 py-3"
+            style={{
+              border: `1px solid ${C.gold}80`,
+              backgroundImage: "url('/assets/squad/green_board.png')",
+              backgroundPosition: "center",
+              backgroundSize: "117%",
+              backgroundRepeat: "no-repeat",
+              color: C.textGold,
+              minWidth: "100%",
+            }}
+            onClick={() => onNavigate(ROUTES.TRAINING)}
+          >
+            <BookOpen size={18} />
+            <span style={{ ...pixel, fontSize: 18 }}>
+              SAVE RECORD
+            </span>
+          </button>
+      </div>
     </div>
   );
 }
