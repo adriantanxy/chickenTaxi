@@ -204,7 +204,7 @@ const journalEntries = [
    image with no cropping — otherwise percentage-based text overlays
    drift off their parchment slots and pages look inconsistent.
    552 / 690 = 0.800. */
-const PAGE_W = 505;
+const PAGE_W = 552;
 const PAGE_H = 690;
 
 /* ─────────────── placeholder image box ─────────────── */
@@ -287,13 +287,56 @@ const pageBase = {
 };
 
 // ── COVER ──
+// How far to nudge the cover art LEFT within its page box (negative = left).
+// Rendered slightly wider to keep the right edge covered. Tweak to taste.
+const COVER_SHIFT = "-12px";
 const CoverPage = forwardRef(function CoverPage(_props, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
         src="/assets/journal/coverpage.png"
         alt="Journal Cover"
-        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        /* Nudge the cover slightly LEFT: shift the image left while rendering it
+           a touch wider so the box stays fully covered (no empty edge on the
+           right). Bump COVER_SHIFT to move it further left. */
+        style={{ position: "absolute", top: 0, left: COVER_SHIFT, width: "calc(100% + " + COVER_SHIFT.replace("-", "") + ")", height: "100%", objectFit: "cover" }}
+      />
+    </div>
+  );
+});
+
+// ── CLEAN PAGES — blank parchment spread shown right after the cover ──
+// Both clean pages are 1122x1402 (aspect 0.800), the exact page-box ratio
+// (552/690), so each fills its page with NO shrinking or offset. The leather
+// binding/lacing is baked onto the OUTER edge of each as drawn (left_clean:
+// left, right_clean: right), so we render them as-is (no mirror): bindings
+// frame the outside, matching the closed cover's left spine, and the two
+// parchment inner edges meet cleanly down the center.
+// Each clean page is shifted inward (toward the spine) by SPINE_NUDGE px so the
+// two inner edges overlap slightly and combine into one continuous page with no
+// gap. Left page shifts right; right page shifts left. Bump if a sliver shows.
+const SPINE_NUDGE = 2; // px each page moves toward the center
+const CleanLeftPage = forwardRef(function CleanLeftPage(_props, ref) {
+  return (
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/left_clean.png"
+        alt="Clean Left Page"
+        /* shift right by SPINE_NUDGE so the inner (right) edge crosses the spine */
+        style={{ position: "absolute", top: 0, left: SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
+      />
+    </div>
+  );
+});
+
+const CleanRightPage = forwardRef(function CleanRightPage(_props, ref) {
+  return (
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/right_clean.png"
+        alt="Clean Right Page"
+        /* shift left by SPINE_NUDGE so the inner (left) edge crosses the spine */
+        style={{ position: "absolute", top: 0, left: -SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
     </div>
   );
@@ -947,13 +990,19 @@ function JournalFlipbook({ onClose }) {
           width={PAGE_W}
           height={PAGE_H}
           showCover={true}
-          /* Faster flip + lighter shadow so the brief mid-flip frame (where a
-             turning page's border doesn't perfectly align with the page
-             beneath it) passes quickly and is less noticeable. */
+          /* Two-page spread mode: pages render as left+right pairs like a real
+             open book (cover sits alone first, then spreads). This removes the
+             single-page (portrait) mid-flip flicker and matches the L/R page
+             design. usePortrait={false} forces the spread; minWidth/maxWidth
+             give autoSize a range to scale the two-page layout into. */
           flippingTime={550}
-          usePortrait={true}
+          usePortrait={false}
+          minWidth={PAGE_W}
+          maxWidth={PAGE_W * 2}
+          minHeight={PAGE_H}
+          maxHeight={PAGE_H}
           autoSize={true}
-          maxShadowOpacity={0.2}
+          maxShadowOpacity={0.3}
           drawShadow={true}
           mobileScrollSupport={false}
           onFlip={onFlip}
@@ -961,6 +1010,12 @@ function JournalFlipbook({ onClose }) {
           className="journal-flipbook"
         >
           <CoverPage />
+          <CleanLeftPage />
+          <CleanRightPage />
+          {/* second clean spread — so flipping the first clean spread reveals
+              another identical clean spread (preview the flip transition). */}
+          <CleanLeftPage />
+          <CleanRightPage />
           <EnlistmentLeft commanderNote={null} />
           <EnlistmentRight userNote={null} />
           <BmtChapterLeft />
