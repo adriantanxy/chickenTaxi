@@ -342,97 +342,122 @@ const CleanRightPage = forwardRef(function CleanRightPage(_props, ref) {
   );
 });
 
-// ── ENLISTMENT LEFT — official welcome message on the parchment note card ──
-const EnlistmentLeft = forwardRef(function EnlistmentLeft({ commanderNote }, ref) {
-  const displayNote = commanderNote
-    || "To our newest recruit,\n\nThe next 2 months will be the hardest you've known. You'll be scared. You'll miss home, miss sleep, miss who you used to be.\n\nBe brave. We've got you.\n\n— Your Commanders";
-
+// ── ENLISTMENT LEFT — "FIRST DAY" photo page ──
+// Same setup as the BMT/clean pages: fills the page and nudged inward by
+// SPINE_NUDGE so the inner (right) edge meets the right page at the spine.
+const EnlistmentLeft = forwardRef(function EnlistmentLeft(_props, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
         src="/assets/journal/enlistment_left.png"
         alt="Enlistment Left"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+        style={{ position: "absolute", top: 0, left: SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
-      {/* parchment note card sits lower-right; corners ~ x:40%-95%, y:44%-88% */}
+
+      {/* FIRST-DAY PHOTO — box matched to the measured frame border (vertical
+          lines at x:30%/80%, top border y:30%, bottom border y:75.5%). Inset
+          ~0.5% to sit just inside the line. The photo fills it with
+          objectFit:cover, so any image auto-crops to the frame. */}
       <div style={{
         position: "absolute",
-        top: "54%",
-        left: "40%",
+        top: "34%",
+        left: "35.5%",
+        width: "40%",
+        height: "37.5%",
+        overflow: "hidden",
+        boxShadow: "1px 2px 6px #0005",
+      }}>
+        <img
+          src="/assets/journal/database/enlistment_left_picture.jpg"
+          alt="First meal in Tekong"
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
+      </div>
+
+      {/* CAPTION box below the frame (measured ~ y:83.6%-86.4%, between x:30%-80%) */}
+      <div style={{
+        position: "absolute",
+        top: "76.8%",
+        left: "31%",
         width: "50%",
-        height: "39%",
-        transform: "rotate(5deg)",
+        height: "5%",
         display: "flex",
-        flexDirection: "column",
-        padding: "10px 12px",
+        alignItems: "center",
+        justifyContent: "center",
         boxSizing: "border-box",
       }}>
         <p style={{
-          ...pixel, fontSize: 12, color: "#7a3a2a",
-          margin: "0 0 4px", textTransform: "uppercase", letterSpacing: 1,
+          fontFamily: "'VT323', monospace",
+          fontSize: 19,
+          color: C.ink,
+          margin: 0,
+          textAlign: "center",
         }}>
-          ★ Official Message ★
+          First Meal in Tekong
         </p>
-        <div style={{ flex: 1, overflow: "hidden" }}>
-          <p style={{
-            fontFamily: "'VT323', monospace",
-            fontSize: 13,
-            color: C.ink,
-            lineHeight: "16px",
-            whiteSpace: "pre-wrap",
-            margin: 0,
-          }}>
-            {displayNote}
-          </p>
-        </div>
       </div>
     </div>
   );
 });
 
-// ── ENLISTMENT RIGHT — user's own day-1 note on the parchment note card ──
+// ── ENLISTMENT RIGHT — "LETTER TO MYSELF" written on enlistment day ──
 const EnlistmentRight = forwardRef(function EnlistmentRight({ userNote }, ref) {
+  // The soldier's own letter, written on day one — raw, scared, hopeful. Reads
+  // like a real first-day note: small fears, missing home, not knowing who
+  // you'll become. Kept human and a little unsure, not polished.
   const displayNote = userNote
-    || "Enlisted today, " + data.cover.enlisted + ".\n\nI honestly don't know what I'm in for. Saying bye to my family at the ferry terminal was harder than I thought.\n\nBut I'm here now. " + user.name + ", reporting for duty.\n\nLet's see who I become....";
+    || "Dear me,\n\nI'm writing this on my first night here and my hands won't stop shaking. I don't know why. Maybe it's the haircut, maybe it's the bed that isn't mine, maybe it's that mum cried at the ferry and I pretended I didn't see.\n\nI don't know anyone. I don't know what tomorrow is. Everyone keeps shouting and I keep getting it wrong and I already feel like I don't belong here.\n\nI'm scared. There, I said it. Scared of failing, scared of letting people down, scared of the next two years feeling this long every single day.\n\nBut I'm here. I showed up. That has to count for something.\n\nSo whoever you are when you read this — I hope you're proud of us. I hope you made some friends. I hope you stopped being so afraid.\n\nSee you on the other side.\n\n— Me, Day 1";
 
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
         src="/assets/journal/enlistment_right.png"
         alt="Enlistment Right"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+        /* Same setup as the BMT/clean pages: fills the page, nudged inward by
+           SPINE_NUDGE so the inner (left) edge meets the left page at the spine. */
+        style={{ position: "absolute", top: 0, left: -SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
-      {/* parchment note card is centered; corners ~ x:28%-85%, y:38%-83% */}
+      {/* LETTER TO MYSELF writing area — fits the lined panel below the tab and
+          above the ENLISTMENT DATE box (interior ~ x:14%-76%, y:16%-74%). */}
       <div style={{
         position: "absolute",
-        top: "43%",
-        left: "35%",
-        width: "52%",
-        height: "41%",
-        transform: "rotate(2.5deg)",
-        display: "flex",
-        flexDirection: "column",
-        padding: "10px 12px",
+        top: "24%",
+        left: "18%",
+        width: "55%",
+        height: "56%",
+        overflow: "hidden",
         boxSizing: "border-box",
       }}>
         <p style={{
-          ...pixel, fontSize: 14, color: C.inkSoft,
-          margin: "0 0 4px", textTransform: "uppercase", letterSpacing: 1,
+          fontFamily: "'VT323', monospace",
+          fontSize: 13,
+          color: C.ink,
+          lineHeight: "15px",
+          whiteSpace: "pre-wrap",
+          margin: 0,
         }}>
-          What YOU wrote on Day 1
+          {displayNote}
         </p>
-        <div style={{ flex: 1, overflow: "hidden" }}>
-          <p style={{
-            fontFamily: "'VT323', monospace",
-            fontSize: 12,
-            color: C.ink,
-            lineHeight: "18px",
-            whiteSpace: "pre-wrap",
-            margin: 0,
-          }}>
-            {displayNote}
-          </p>
-        </div>
+      </div>
+      {/* ENLISTMENT DATE — written on the dotted line in the box at the bottom
+          (line ~ y:85.5%, centered ~ x:53%). */}
+      <div style={{
+        position: "absolute",
+        top: "77%",
+        left: "45%",
+        width: "30%",
+        textAlign: "center",
+        boxSizing: "border-box",
+      }}>
+        <p style={{
+          fontFamily: "'VT323', monospace",
+          fontSize: 15,
+          letterSpacing: 1,
+          color: C.ink,
+          margin: 0,
+        }}>
+          27 / 2 / 2026
+        </p>
       </div>
     </div>
   );
@@ -1016,9 +1041,7 @@ function JournalFlipbook({ onClose }) {
           {/* BMT chapter is now the first content spread (right after the cover) */}
           <BmtChapterLeft />
           <BmtChapterRight commanderNote={null} />
-          <CleanLeftPage />
-          <CleanRightPage />
-          <EnlistmentLeft commanderNote={null} />
+          <EnlistmentLeft />
           <EnlistmentRight userNote={null} />
           <FieldCampLeft userNote={null} />
           <FieldCampRight buddyNote={null} />
