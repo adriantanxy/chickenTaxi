@@ -439,76 +439,79 @@ const EnlistmentRight = forwardRef(function EnlistmentRight({ userNote }, ref) {
 });
 
 // ── BMT CHAPTER LEFT — complete designed spread, image only ──
+// Same setup as the clean pages: image is 0.800, the exact page-box ratio, so it
+// fills the page (inset:0, 100%/100%) and is nudged inward by SPINE_NUDGE so the
+// inner edge meets the right page cleanly at the spine.
 const BmtChapterLeft = forwardRef(function BmtChapterLeft(_props, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
         src="/assets/journal/bmt_chapter_left.png"
         alt="BMT Chapter Left"
-        /* Image aspect (0.800) is wider than the page box, so cover would clip
-           the sides. Scaling to ~94% height lets the full width show (only ~1%
-           side crop) with a thin top/bottom margin that blends with the page. */
-        style={{ position: "absolute", left: 0, right: 0, top: "2%", width: "100%", height: "97%", objectFit: "cover" }}
+        style={{ position: "absolute", top: 0, left: SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
     </div>
   );
 });
 
-// ── BMT CHAPTER RIGHT — group photo spread + two handwritten notes ──
-const BmtChapterRight = forwardRef(function BmtChapterRight({ userNote, commanderNote }, ref) {
-  // Personal message from the section commander, addressed to the soldier.
+// ── BMT CHAPTER RIGHT — group photo spread + the commander's letter ──
+const BmtChapterRight = forwardRef(function BmtChapterRight({ commanderNote }, ref) {
+  // Personal letter from the section commander to the soldier, written to read
+  // like a real handwritten note — specific, warm, a little rough around the
+  // edges rather than tidy and generic.
   const cmdNote = commanderNote
-    || "Alex,\n\nAt the start of BMT, you couldn't hold a 1-min plank. Last week you carried Rafiq's load on the last 2km without being asked.\n\nThat's the soldier I'll remember.\n\nProud of you. Now go be great.\n\n— 3SG Lim";
-
-  const myNote = userNote
-    || "63 days. Came in alone, leaving with brothers. \n\nCan't believe I made it through. This was crazy...\nbut i guess it's time for round 2...";
-
-  const noteText = {
-    fontFamily: "'VT323', monospace",
-    color: C.ink,
-    whiteSpace: "pre-wrap",
-    margin: 0,
-  };
+    || "Alex,\n\nI still remember you on day one — standing too straight, eyes everywhere, trying so hard not to look scared. You were terrible at planking and you knew it but you kept trying anyways.\n\nThat's what's important. Not the IPPT score. The getting back up. The night Rafiq cramped on the road march, you took his pack without a word and you were already half-dead yourself. Nobody told you to. You just did it.\n\nThese 67 days I watched a boy who flinched at every command turn into someone his section trusts. I didn't make that happen. You did. I just had the privilege of being there for it.\n\nWherever you go next, when it gets hard — and it will — remember you've already done the thing you swore you couldn't.\n\nI'm proud of you, son. Truly.\n\n— 3SG Lim";
 
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
         src="/assets/journal/bmt_chapter_right.png"
         alt="BMT Chapter Right"
-        /* See BMT left: scaled to ~94% height so the full width shows with
-           minimal side crop and a thin blending top/bottom margin. */
-        style={{ position: "absolute", left: 0, right: 0, top: "2%", width: "100%", height: "97%", objectFit: "cover" }}
+        /* Same setup as the clean pages: fills the page and nudged inward by
+           SPINE_NUDGE so the inner (left) edge meets the left page at the spine. */
+        style={{ position: "absolute", top: 0, left: -SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
 
-      {/* COMMANDER'S NOTES lined slot (bottom-left); lines ~ x:7%-36%, y:74%-88% */}
+      {/* SECTION GROUP PHOTO — a box matched to the empty "BROTHERS IN BMT"
+          frame (measured inner bounds: L 9.8%, T 22.5%, W 72.2%, H 33.5%). The
+          photo lives INSIDE the box and fills it with objectFit:cover, so any
+          image is auto-cropped to the frame — no per-image cropping needed. */}
       <div style={{
         position: "absolute",
-        top: "74.5%",
-        left: "9%",
-        transform: "rotate(-5deg)",
-        width: "27%",
-        height: "13.5%",
+        top: "22.5%",
+        left: "9.8%",
+        width: "72.2%",
+        height: "33.5%",
         overflow: "hidden",
-        boxSizing: "border-box",
+        boxShadow: "1px 2px 6px #0005",
       }}>
-        <p style={{ ...noteText, fontSize: 11, lineHeight: "13px" }}>
-          {cmdNote}
-        </p>
+        <img
+          src="/assets/journal/database/bmt_right_picture.png"
+          alt="Section group photo"
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
       </div>
 
-      {/* MY NOTES lined slot (bottom-right); lines ~ x:64%-92%, y:74%-88% */}
+      {/* COMMANDER'S LETTER box (lower-left of the spread) ~ x:8%-64%, y:67%-91% */}
       <div style={{
         position: "absolute",
-        top: "75%",
-        left: "64.5%",
-        width: "27%",
-        transform: "rotate(5.5deg)",
-        height: "13.5%",
+        top: "63%",
+        left: "11%",
+        transform: "rotate(-1.2deg)",
+        width: "52%",
+        height: "30%",
         overflow: "hidden",
         boxSizing: "border-box",
       }}>
-        <p style={{ ...noteText, fontSize: 12, lineHeight: "13px" }}>
-          {myNote}
+        <p style={{
+          fontFamily: "'VT323', monospace",
+          fontSize: 13,
+          color: C.ink,
+          lineHeight: "11.5px",
+          whiteSpace: "pre-wrap",
+          margin: 0,
+        }}>
+          {cmdNote}
         </p>
       </div>
     </div>
@@ -1010,16 +1013,13 @@ function JournalFlipbook({ onClose }) {
           className="journal-flipbook"
         >
           <CoverPage />
-          <CleanLeftPage />
-          <CleanRightPage />
-          {/* second clean spread — so flipping the first clean spread reveals
-              another identical clean spread (preview the flip transition). */}
+          {/* BMT chapter is now the first content spread (right after the cover) */}
+          <BmtChapterLeft />
+          <BmtChapterRight commanderNote={null} />
           <CleanLeftPage />
           <CleanRightPage />
           <EnlistmentLeft commanderNote={null} />
           <EnlistmentRight userNote={null} />
-          <BmtChapterLeft />
-          <BmtChapterRight userNote={null} commanderNote={null} />
           <FieldCampLeft userNote={null} />
           <FieldCampRight buddyNote={null} />
           <PopLeft />
