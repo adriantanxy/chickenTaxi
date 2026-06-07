@@ -522,7 +522,7 @@ const BmtChapterRight = forwardRef(function BmtChapterRight({ commanderNote }, r
         position: "absolute",
         top: "63%",
         left: "11%",
-        transform: "rotate(-1.2deg)",
+        transform: "rotate(-1.1deg)",
         width: "52%",
         height: "30%",
         overflow: "hidden",
@@ -674,12 +674,51 @@ const PopLeft = forwardRef(function PopLeft(_props, ref) {
       <img
         src="/assets/journal/pop_left.png"
         alt="POP Left"
-        /* Image has a book-spine/binding crease baked into its right edge.
-           objectPosition:"left" anchors the image to the LEFT edge so the
-           horizontal crop comes entirely off the RIGHT (removing the crease)
-           and the left book border stays fully visible / uncropped. */
-        style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "99%", objectFit: "cover", objectPosition: "left" }}
+        /* Same setup as the other pages: nudged inward by SPINE_NUDGE so the
+           inner (right) edge meets the right page cleanly at the spine. */
+        style={{ position: "absolute", top: 0, left: SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
+
+      {/* POP PHOTO — box matched to the empty frame (grid-read interior
+          ~ x:31%-91%, y:46%-77%). Photo fills it with objectFit:cover. */}
+      <div style={{
+        position: "absolute",
+        top: "45.7%",
+        left: "37.7%",
+        width: "56%",
+        height: "27.7%",
+        overflow: "hidden",
+        boxShadow: "1px 2px 6px #0005",
+      }}>
+        <img
+          src="/assets/journal/database/pop_left_picture.png"
+          alt="Section on POP day"
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
+      </div>
+
+      {/* CAPTION box below the frame (~ y:80%-86%, x:31%-91%) */}
+      <div style={{
+        position: "absolute",
+        top: "75.5%",
+        left: "35.5%",
+        width: "60%",
+        height: "5%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        boxSizing: "border-box",
+      }}>
+        <p style={{
+          fontFamily: "'VT323', monospace",
+          fontSize: 18,
+          color: C.ink,
+          margin: 0,
+          textAlign: "center",
+        }}>
+          SCORPION PLATOON 2 SECTION 1
+        </p>
+      </div>
     </div>
   );
 });
@@ -690,29 +729,75 @@ const PopRight = forwardRef(function PopRight({ commanderNote }, ref) {
   // (proud-of-your-progress) notes: this one is a farewell as the soldier
   // graduates BMT and moves on to their vocation.
   const displayNote = commanderNote
-    || "Alex,\n\nMy job was to take a scared recruit and hand back a soldier. Today I'm done. You don't need me anymore.\n\nWherever you post out to, lead the way you marched: heart first. Make us proud.\n\n— 3SG Lim";
+    || "Hi Alex,\n\nMy job was to take a scared recruit and hand back a soldier. Today I'm done. You don't need me anymore.\n\nWherever you post out to, lead the way you marched: heart first. Make us proud.\n\nIt was truly an honour to have you as part of my section and I wish you all the best!!!\n\n— 3SG Lim";
 
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
         src="/assets/journal/pop_right.png"
         alt="POP Right"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "99%", objectFit: "cover" }}
+        /* Same setup as the other pages: nudged inward by SPINE_NUDGE so the
+           inner (left) edge meets the left page cleanly at the spine. */
+        style={{ position: "absolute", top: 0, left: -SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
-      {/* COMMANDER'S NOTE lined slot (center-right); card ~ x:57%-91%, y:55%-79% */}
+
+      {/* POP PHOTO — box matched to the top-right frame (grid-read interior
+          ~ x:31%-84%, y:8%-36%). Photo fills it with objectFit:cover. */}
       <div style={{
         position: "absolute",
-        top: "53%",
-        left: "57.5%",
-        transform: "rotate(6deg)",
-        width: "32%",
+        top: "9.7%",
+        left: "30.4%",
+        width: "51%",
+        height: "25%",
+        transform: "rotate(3.7deg)",
+        overflow: "hidden",
+        boxShadow: "1px 2px 6px #0005",
+      }}>
+        <img
+          src="/assets/journal/database/pop_right_picture.png"
+          alt="Caps thrown at POP"
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
+      </div>
+
+      {/* CAPTION strip below the frame (~ y:39%-43%, x:31%-84%) */}
+      <div style={{
+        position: "absolute",
+        top: "35.7%",
+        left: "28.4%",
+        width: "53%",
+        height: "4%",
+        transform: "rotate(3.8deg)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        boxSizing: "border-box",
+      }}>
+        <p style={{
+          fontFamily: "'VT323', monospace",
+          fontSize: 15,
+          color: C.ink,
+          margin: 0,
+          textAlign: "center",
+        }}>
+          POP LOH!
+        </p>
+      </div>
+
+      {/* COMMANDER'S LETTER lined card (left side; writing area below the tab
+          ~ x:11%-56%, y:57%-87%, grid-measured). */}
+      <div style={{
+        position: "absolute",
+        top: "51%",
+        left: "10%",
+        width: "40%",
         height: "30%",
         overflow: "hidden",
         boxSizing: "border-box",
       }}>
         <p style={{
           fontFamily: "'VT323', monospace",
-          fontSize: 12,
+          fontSize: 14,
           color: C.ink,
           lineHeight: "14px",
           whiteSpace: "pre-wrap",
@@ -721,116 +806,6 @@ const PopRight = forwardRef(function PopRight({ commanderNote }, ref) {
           {displayNote}
         </p>
       </div>
-    </div>
-  );
-});
-
-// ── NEW POSTING LEFT — unit posting spread + new section commander's welcome ──
-const NewPostingLeft = forwardRef(function NewPostingLeft({ commanderNote }, ref) {
-  // The NEW section commander welcoming Alex into Alpha 3-1. Purpose: a
-  // fresh-start welcome to a new unit — short, since the slot is a wide,
-  // shallow card.
-  const displayNote = commanderNote
-    || "Welcome to Alpha 3-1, Alex. You show me what you've got. It was fun doing this with you\n\n  — 2SG Faizal";
-
-  return (
-    <div ref={ref} style={{ ...pageBase }}>
-      <img
-        src="/assets/journal/new_posting_left.png"
-        alt="New Posting Left"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "99.5%", objectFit: "cover" }}
-      />
-      {/* COMMANDER'S NOTE card — write below the baked-in label, clear of the
-          plant sprig at the card's right; writable ~ x:46%-75%, y:45%-50% */}
-      <div style={{
-        position: "absolute",
-        top: "43.5%",
-        left: "46%",
-        transform: "rotate(-1deg)",
-        width: "29%",
-        height: "10%",
-        overflow: "hidden",
-        boxSizing: "border-box",
-      }}>
-        <p style={{
-          fontFamily: "'VT323', monospace",
-          fontSize: 11,
-          color: C.ink,
-          lineHeight: "12px",
-          whiteSpace: "pre-wrap",
-          margin: 0,
-        }}>
-          {displayNote}
-        </p>
-      </div>
-    </div>
-  );
-});
-
-// ── NEW POSTING RIGHT — new team spread + the CO's mission charge ──
-const NewPostingRight = forwardRef(function NewPostingRight({ commanderNote }, ref) {
-  // LTC Lim is the Commanding Officer — a senior officer, not a section
-  // commander. Purpose: a bigger-picture mission charge to the whole unit,
-  // distinct in rank and voice from the section-level welcomes/send-offs.
-  const displayNote = commanderNote
-    || "You guys were amazing, wouldn't have asked for another group of people to do this with. Don't avoid me when you see me next time >.<\n— LTC Lim, CO";
-
-  return (
-    <div ref={ref} style={{ ...pageBase }}>
-      <img
-        src="/assets/journal/new_posting_right.png"
-        alt="New Posting Right"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "101%", objectFit: "cover" }}
-      />
-      {/* LTC LIM'S NOTE lined slot (bottom-left); card ~ x:11%-42%, y:81%-93% */}
-      <div style={{
-        position: "absolute",
-        top: "82.5%",
-        left: "11.5%",
-        width: "30%",
-        height: "11%",
-        overflow: "hidden",
-        boxSizing: "border-box",
-      }}>
-        <p style={{
-          fontFamily: "'VT323', monospace",
-          fontSize: 11,
-          color: C.ink,
-          lineHeight: "12px",
-          whiteSpace: "pre-wrap",
-          margin: 0,
-        }}>
-          {displayNote}
-        </p>
-      </div>
-    </div>
-  );
-});
-
-// ── ORD LEFT — ORD milestone spread, image only (self-contained) ──
-const OrdLeft = forwardRef(function OrdLeft(_props, ref) {
-  return (
-    <div ref={ref} style={{ ...pageBase }}>
-      <img
-        src="/assets/journal/ord_left.png"
-        alt="ORD Left"
-        /* cover crops the taller image top+bottom; objectPosition:top anchors
-           the crop to the bottom so the top banner/border stays visible. */
-        style={{ position: "absolute", left: 0, right: 0, top: "1%", width: "100%", height: "98%", objectFit: "cover", objectPosition: "top" }}
-      />
-    </div>
-  );
-});
-
-// ── ORD RIGHT — closing spread, image only (self-contained) ──
-const OrdRight = forwardRef(function OrdRight(_props, ref) {
-  return (
-    <div ref={ref} style={{ ...pageBase }}>
-      <img
-        src="/assets/journal/ord_right.png"
-        alt="ORD Right"
-        style={{ position: "absolute", left: 1, right: 0, top: "0%", width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }}
-      />
     </div>
   );
 });
@@ -1094,10 +1069,12 @@ function JournalFlipbook({ onClose }) {
           <FieldCampRight buddyNote={null} />
           <PopLeft />
           <PopRight commanderNote={null} />
-          <NewPostingLeft commanderNote={null} />
-          <NewPostingRight commanderNote={null} />
-          <OrdLeft />
-          <OrdRight />
+          {/* Blank clean spreads — placeholders for future content (these used to
+              be the New Posting and ORD spreads). */}
+          <CleanLeftPage />
+          <CleanRightPage />
+          <CleanLeftPage />
+          <CleanRightPage />
           <LastPage />
         </HTMLFlipBook>
       </div>
