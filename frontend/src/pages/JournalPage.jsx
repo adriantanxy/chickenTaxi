@@ -543,10 +543,12 @@ const BmtChapterRight = forwardRef(function BmtChapterRight({ commanderNote }, r
   );
 });
 
-// ── FIELD CAMP LEFT — outfield spread + my own reflection in MY REFLECTION slot ──
+// ── FIELD CAMP LEFT — photo in the frame + my own note in "LETTER TO MYSELF" ──
 const FieldCampLeft = forwardRef(function FieldCampLeft({ userNote }, ref) {
+  // My own field-camp memory: the late-night Maggi with my buddy, the half-raw
+  // noodles, sharing it anyway. Small, specific, fond.
   const displayNote = userNote
-    || "5 days. Honestly the worst week of my life.\n\nSoaked to the bone, no sleep, ration packs for every meal...\n\nThere were nights I wanted to give up. But Hao Jie kept me going when I wanted to give up.\n\nSomehow we survived it. Together.";
+    || "Best part of field camp wasn't the training. It was 2am, remember how you and Hao Jie was hunched over one mess tin of Maggi we cooked on the small fire we started. Half the noodles were still crunchy, the soup was lukewarm, and we only had one spoon between us. Didn't matter. Worst Maggi I've ever eaten.\nBest meal of the whole camp.";
 
   return (
     <div ref={ref} style={{ ...pageBase }}>
@@ -555,14 +557,54 @@ const FieldCampLeft = forwardRef(function FieldCampLeft({ userNote }, ref) {
         alt="Field Camp Left"
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
       />
-      {/* MY REFLECTION lined slot (right, mid-lower); lines ~ x:63%-93%, y:64%-88% */}
+
+      {/* FIELD-CAMP PHOTO — box matched to the empty frame (grid-read interior
+          ~ x:20%-82%, y:27%-51%). Photo fills it with objectFit:cover so any
+          image auto-crops to the frame — same pattern as the BMT photo. */}
       <div style={{
         position: "absolute",
-        top: "60.5%",
-        left: "60%",
-        transform: "rotate(6.2deg)",
-        width: "30%",
-        height: "24%",
+        top: "31.3%",
+        left: "22.6%",
+        width: "60%",
+        height: "27.1%",
+        overflow: "hidden",
+        boxShadow: "1px 2px 6px #0005",
+      }}>
+        <img
+          src="/assets/journal/database/fieldcamp_left_picture.png"
+          alt="Late-night campfire"
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
+      </div>
+
+      {/* PHOTO CAPTION — centered on the parchment just below the photo frame
+          (frame bottom ~ y:58.4%), above the LETTER TO MYSELF card. */}
+      <div style={{
+        position: "absolute",
+        top: "59.7%",
+        left: "21.5%",
+        width: "60%",
+        textAlign: "center",
+        boxSizing: "border-box",
+      }}>
+        <p style={{
+          fontFamily: "'VT323', monospace",
+          fontSize: 22,
+          color: C.ink,
+          margin: 0,
+        }}>
+          Late Night Maggi
+        </p>
+      </div>
+
+      {/* MY NOTE — "LETTER TO MYSELF" lined card (lower-right; writing area
+          ~ x:50%-90%, y:70%-89%, below the tab). */}
+      <div style={{
+        position: "absolute",
+        top: "69.2%",
+        left: "53.3%",
+        width: "40%",
+        height: "30%",
         overflow: "hidden",
         boxSizing: "border-box",
       }}>
@@ -570,7 +612,7 @@ const FieldCampLeft = forwardRef(function FieldCampLeft({ userNote }, ref) {
           fontFamily: "'VT323', monospace",
           fontSize: 12,
           color: C.ink,
-          lineHeight: "13px",
+          lineHeight: "16px",
           whiteSpace: "pre-wrap",
           margin: 0,
         }}>
@@ -581,11 +623,12 @@ const FieldCampLeft = forwardRef(function FieldCampLeft({ userNote }, ref) {
   );
 });
 
-// ── FIELD CAMP RIGHT — group photo spread + buddy's handwritten note ──
+// ── FIELD CAMP RIGHT — buddy's handwritten note in the "BUDDY'S NOTE" card ──
 const FieldCampRight = forwardRef(function FieldCampRight({ buddyNote }, ref) {
-  // A note the soldier's buddy (Hao Jie) wrote to them.
+  // A note Hao Jie wrote to the soldier: he wouldn't have made it without the
+  // late-night talks and the jokes that made field camp bearable, even fun.
   const displayNote = buddyNote
-    || "Bro,\n\n5 days of hell and we made it. I still can't believe we slept in that flooded shellscrape.\n\nWhen I was about to break, you cheered me up. I won't forget that. Whatever comes next, I wish you all the best.\n\n— Hao Jie";
+    || "Bro, Honestly? I don't think I would've made it through this camp without you. Those late-night talks when neither of us could sleep, sharing that sad cup of Maggi — that's what got me through. Every time I was ready to give up, you'd crack some dumb joke and somehow it didn't feel so bad anymore.\n\nField camp was hell. But with you around it was actually... fun. Thanks for that. I mean it.";
 
   return (
     <div ref={ref} style={{ ...pageBase }}>
@@ -594,22 +637,22 @@ const FieldCampRight = forwardRef(function FieldCampRight({ buddyNote }, ref) {
         alt="Field Camp Right"
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
       />
-      {/* BUDDY'S NOTE lined slot (bottom-left); lines ~ x:9%-37%, y:57%-79% */}
+      {/* BUDDY'S NOTE lined card (center; writing area below the tab
+          ~ x:16%-72%, y:42%-68%, grid-measured). */}
       <div style={{
         position: "absolute",
-        top: "57%",
-        left: "16%",
-        transform: "rotate(-2.5deg)",
-        width: "29%",
-        height: "40%",
+        top: "43%",
+        left: "20%",
+        width: "54%",
+        height: "26%",
         overflow: "hidden",
         boxSizing: "border-box",
       }}>
         <p style={{
           fontFamily: "'VT323', monospace",
-          fontSize: 13,
+          fontSize: 14,
           color: C.ink,
-          lineHeight: "13px",
+          lineHeight: "14px",
           whiteSpace: "pre-wrap",
           margin: 0,
         }}>
