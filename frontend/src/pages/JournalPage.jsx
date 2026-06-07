@@ -555,7 +555,9 @@ const FieldCampLeft = forwardRef(function FieldCampLeft({ userNote }, ref) {
       <img
         src="/assets/journal/fieldcamp_left.png"
         alt="Field Camp Left"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+        /* Same setup as the other pages: nudged inward by SPINE_NUDGE so the
+           inner (right) edge meets the right page cleanly at the spine. */
+        style={{ position: "absolute", top: 0, left: SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
 
       {/* FIELD-CAMP PHOTO — box matched to the empty frame (grid-read interior
@@ -564,7 +566,7 @@ const FieldCampLeft = forwardRef(function FieldCampLeft({ userNote }, ref) {
       <div style={{
         position: "absolute",
         top: "31.3%",
-        left: "22.6%",
+        left: "23%",
         width: "60%",
         height: "27.1%",
         overflow: "hidden",
@@ -635,7 +637,9 @@ const FieldCampRight = forwardRef(function FieldCampRight({ buddyNote }, ref) {
       <img
         src="/assets/journal/fieldcamp_right.png"
         alt="Field Camp Right"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+        /* Same setup as the other pages: nudged inward by SPINE_NUDGE so the
+           inner (left) edge meets the left page cleanly at the spine. */
+        style={{ position: "absolute", top: 0, left: -SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
       {/* BUDDY'S NOTE lined card (center; writing area below the tab
           ~ x:16%-72%, y:42%-68%, grid-measured). */}
