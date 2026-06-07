@@ -5,6 +5,7 @@ import TrainingDashboard from "./pages/TrainingDashboard";
 import TrainingSessionPage from "./pages/TrainingSessionPage";
 import CalendarPage from "./pages/CalendarPage";
 import JournalPage from "./pages/JournalPage";
+import JournalLab from "./pages/JournalLab";
 import SquadPage from "./pages/SquadPage";
 import ShopPage from "./pages/ShopPage";
 import ProfileMain from "./pages/ProfileMain";
@@ -32,6 +33,10 @@ function CalendarRoute() {
 
 function JournalRoute() {
   return <JournalPage onNavigate={useAppNavigate()} />;
+}
+
+function JournalLabRoute() {
+  return <JournalLab onNavigate={useAppNavigate()} />;
 }
 
 function SquadRoute() {
@@ -77,6 +82,7 @@ export default function App() {
       <Route path={routeToPath(ROUTES.TRAINING_SESSION)} element={guard(<TrainingSessionRoute />)} />
       <Route path={routeToPath(ROUTES.CALENDAR)} element={guard(<CalendarRoute />)} />
       <Route path={routeToPath(ROUTES.JOURNAL)} element={guard(<JournalRoute />)} />
+      <Route path={routeToPath(ROUTES.JOURNAL_LAB)} element={guard(<JournalLabRoute />)} />
       <Route path={routeToPath(ROUTES.SQUAD)} element={guard(<SquadRoute />)} />
       <Route path={routeToPath(ROUTES.SHOP)} element={guard(<ShopRoute />)} />
       <Route path={routeToPath(ROUTES.PROFILE)} element={guard(<ProfileRoute />)} />
