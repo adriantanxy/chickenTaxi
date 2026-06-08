@@ -14,10 +14,11 @@ import { storage, auth, db } from "../auth/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "firebase/firestore";
 import HTMLFlipBook from "react-pageflip";
+import AIMemoryModal from "./AIMemoryModal";
 import {
   BookOpen, Plus, Image, FileText, Mic, Star, Mail, Lock,
   ChevronRight, ChevronLeft, Camera, X,
-  Users as UsersIcon, Pen, Award,
+  Users as UsersIcon, Pen, Award, Sparkles,
 } from "lucide-react";
 import { AppShell, ActionButton, Ribbon, Frame } from "../ui";
 import { ASSETS } from "../assets";
@@ -60,7 +61,7 @@ const data = {
   capture: [
     { type: "photo", label: "PHOTO", icon: <Image size={20} /> },
     { type: "note", label: "NOTE", icon: <FileText size={20} /> },
-    { type: "voice", label: "VOICE", icon: <Mic size={20} /> },
+    { type: "ai", label: "AI MEMORY", icon: <Sparkles size={20} /> },
     { type: "milestone", label: "MILESTONE", icon: <Star size={20} /> },
   ],
   progress: {
@@ -203,7 +204,7 @@ const journalEntries = [
    image with no cropping — otherwise percentage-based text overlays
    drift off their parchment slots and pages look inconsistent.
    552 / 690 = 0.800. */
-const PAGE_W = 505;
+const PAGE_W = 552;
 const PAGE_H = 690;
 
 /* ─────────────── placeholder image box ─────────────── */
@@ -286,211 +287,326 @@ const pageBase = {
 };
 
 // ── COVER ──
+// How far to nudge the cover art LEFT within its page box (negative = left).
+// Rendered slightly wider to keep the right edge covered. Tweak to taste.
+const COVER_SHIFT = "-12px";
 const CoverPage = forwardRef(function CoverPage(_props, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
         src="/assets/journal/coverpage.png"
         alt="Journal Cover"
-        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        /* Nudge the cover slightly LEFT: shift the image left while rendering it
+           a touch wider so the box stays fully covered (no empty edge on the
+           right). Bump COVER_SHIFT to move it further left. */
+        style={{ position: "absolute", top: 0, left: COVER_SHIFT, width: "calc(100% + " + COVER_SHIFT.replace("-", "") + ")", height: "100%", objectFit: "cover" }}
       />
     </div>
   );
 });
 
-// ── ENLISTMENT LEFT — official welcome message on the parchment note card ──
-const EnlistmentLeft = forwardRef(function EnlistmentLeft({ commanderNote }, ref) {
-  const displayNote = commanderNote
-    || "To our newest recruit,\n\nThe next 2 months will be the hardest you've known. You'll be scared. You'll miss home, miss sleep, miss who you used to be.\n\nBe brave. We've got you.\n\n— Your Commanders";
+// ── CLEAN PAGES — blank parchment spread shown right after the cover ──
+// Both clean pages are 1122x1402 (aspect 0.800), the exact page-box ratio
+// (552/690), so each fills its page with NO shrinking or offset. The leather
+// binding/lacing is baked onto the OUTER edge of each as drawn (left_clean:
+// left, right_clean: right), so we render them as-is (no mirror): bindings
+// frame the outside, matching the closed cover's left spine, and the two
+// parchment inner edges meet cleanly down the center.
+// Each clean page is shifted inward (toward the spine) by SPINE_NUDGE px so the
+// two inner edges overlap slightly and combine into one continuous page with no
+// gap. Left page shifts right; right page shifts left. Bump if a sliver shows.
+const SPINE_NUDGE = 2; // px each page moves toward the center
+const CleanLeftPage = forwardRef(function CleanLeftPage(_props, ref) {
+  return (
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/left_clean.png"
+        alt="Clean Left Page"
+        /* shift right by SPINE_NUDGE so the inner (right) edge crosses the spine */
+        style={{ position: "absolute", top: 0, left: SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
+      />
+    </div>
+  );
+});
 
+const CleanRightPage = forwardRef(function CleanRightPage(_props, ref) {
+  return (
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/right_clean.png"
+        alt="Clean Right Page"
+        /* shift left by SPINE_NUDGE so the inner (left) edge crosses the spine */
+        style={{ position: "absolute", top: 0, left: -SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
+      />
+    </div>
+  );
+});
+
+// ── ENLISTMENT LEFT — "FIRST DAY" photo page ──
+// Same setup as the BMT/clean pages: fills the page and nudged inward by
+// SPINE_NUDGE so the inner (right) edge meets the right page at the spine.
+const EnlistmentLeft = forwardRef(function EnlistmentLeft(_props, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
         src="/assets/journal/enlistment_left.png"
         alt="Enlistment Left"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+        style={{ position: "absolute", top: 0, left: SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
-      {/* parchment note card sits lower-right; corners ~ x:40%-95%, y:44%-88% */}
+
+      {/* FIRST-DAY PHOTO — box matched to the measured frame border (vertical
+          lines at x:30%/80%, top border y:30%, bottom border y:75.5%). Inset
+          ~0.5% to sit just inside the line. The photo fills it with
+          objectFit:cover, so any image auto-crops to the frame. */}
       <div style={{
         position: "absolute",
-        top: "54%",
-        left: "40%",
+        top: "34%",
+        left: "35.5%",
+        width: "40%",
+        height: "37.5%",
+        overflow: "hidden",
+        boxShadow: "1px 2px 6px #0005",
+      }}>
+        <img
+          src="/assets/journal/database/enlistment_left_picture.jpg"
+          alt="First meal in Tekong"
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
+      </div>
+
+      {/* CAPTION box below the frame (measured ~ y:83.6%-86.4%, between x:30%-80%) */}
+      <div style={{
+        position: "absolute",
+        top: "76.8%",
+        left: "31%",
         width: "50%",
-        height: "39%",
-        transform: "rotate(5deg)",
+        height: "5%",
         display: "flex",
-        flexDirection: "column",
-        padding: "10px 12px",
+        alignItems: "center",
+        justifyContent: "center",
         boxSizing: "border-box",
       }}>
         <p style={{
-          ...pixel, fontSize: 12, color: "#7a3a2a",
-          margin: "0 0 4px", textTransform: "uppercase", letterSpacing: 1,
+          fontFamily: "'VT323', monospace",
+          fontSize: 19,
+          color: C.ink,
+          margin: 0,
+          textAlign: "center",
         }}>
-          ★ Official Message ★
+          First Meal in Tekong
         </p>
-        <div style={{ flex: 1, overflow: "hidden" }}>
-          <p style={{
-            fontFamily: "'VT323', monospace",
-            fontSize: 13,
-            color: C.ink,
-            lineHeight: "16px",
-            whiteSpace: "pre-wrap",
-            margin: 0,
-          }}>
-            {displayNote}
-          </p>
-        </div>
       </div>
     </div>
   );
 });
 
-// ── ENLISTMENT RIGHT — user's own day-1 note on the parchment note card ──
+// ── ENLISTMENT RIGHT — "LETTER TO MYSELF" written on enlistment day ──
 const EnlistmentRight = forwardRef(function EnlistmentRight({ userNote }, ref) {
+  // The soldier's own letter, written on day one — raw, scared, hopeful. Reads
+  // like a real first-day note: small fears, missing home, not knowing who
+  // you'll become. Kept human and a little unsure, not polished.
   const displayNote = userNote
-    || "Enlisted today, " + data.cover.enlisted + ".\n\nI honestly don't know what I'm in for. Saying bye to my family at the ferry terminal was harder than I thought.\n\nBut I'm here now. " + user.name + ", reporting for duty.\n\nLet's see who I become....";
+    || "Dear me,\n\nI'm writing this on my first night here and my hands won't stop shaking. I don't know why. Maybe it's the haircut, maybe it's the bed that isn't mine, maybe it's that mum cried at the ferry and I pretended I didn't see.\n\nI don't know anyone. I don't know what tomorrow is. Everyone keeps shouting and I keep getting it wrong and I already feel like I don't belong here.\n\nI'm scared. There, I said it. Scared of failing, scared of letting people down, scared of the next two years feeling this long every single day.\n\nBut I'm here. I showed up. That has to count for something.\n\nSo whoever you are when you read this — I hope you're proud of us. I hope you made some friends. I hope you stopped being so afraid.\n\nSee you on the other side.\n\n— Me, Day 1";
 
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
         src="/assets/journal/enlistment_right.png"
         alt="Enlistment Right"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+        /* Same setup as the BMT/clean pages: fills the page, nudged inward by
+           SPINE_NUDGE so the inner (left) edge meets the left page at the spine. */
+        style={{ position: "absolute", top: 0, left: -SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
-      {/* parchment note card is centered; corners ~ x:28%-85%, y:38%-83% */}
+      {/* LETTER TO MYSELF writing area — fits the lined panel below the tab and
+          above the ENLISTMENT DATE box (interior ~ x:14%-76%, y:16%-74%). */}
       <div style={{
         position: "absolute",
-        top: "43%",
-        left: "35%",
-        width: "52%",
-        height: "41%",
-        transform: "rotate(2.5deg)",
-        display: "flex",
-        flexDirection: "column",
-        padding: "10px 12px",
+        top: "24%",
+        left: "18%",
+        width: "55%",
+        height: "56%",
+        overflow: "hidden",
         boxSizing: "border-box",
       }}>
         <p style={{
-          ...pixel, fontSize: 14, color: C.inkSoft,
-          margin: "0 0 4px", textTransform: "uppercase", letterSpacing: 1,
+          fontFamily: "'VT323', monospace",
+          fontSize: 13,
+          color: C.ink,
+          lineHeight: "15px",
+          whiteSpace: "pre-wrap",
+          margin: 0,
         }}>
-          What YOU wrote on Day 1
+          {displayNote}
         </p>
-        <div style={{ flex: 1, overflow: "hidden" }}>
-          <p style={{
-            fontFamily: "'VT323', monospace",
-            fontSize: 12,
-            color: C.ink,
-            lineHeight: "18px",
-            whiteSpace: "pre-wrap",
-            margin: 0,
-          }}>
-            {displayNote}
-          </p>
-        </div>
+      </div>
+      {/* ENLISTMENT DATE — written on the dotted line in the box at the bottom
+          (line ~ y:85.5%, centered ~ x:53%). */}
+      <div style={{
+        position: "absolute",
+        top: "77%",
+        left: "45%",
+        width: "30%",
+        textAlign: "center",
+        boxSizing: "border-box",
+      }}>
+        <p style={{
+          fontFamily: "'VT323', monospace",
+          fontSize: 15,
+          letterSpacing: 1,
+          color: C.ink,
+          margin: 0,
+        }}>
+          27 / 2 / 2026
+        </p>
       </div>
     </div>
   );
 });
 
 // ── BMT CHAPTER LEFT — complete designed spread, image only ──
+// Same setup as the clean pages: image is 0.800, the exact page-box ratio, so it
+// fills the page (inset:0, 100%/100%) and is nudged inward by SPINE_NUDGE so the
+// inner edge meets the right page cleanly at the spine.
 const BmtChapterLeft = forwardRef(function BmtChapterLeft(_props, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
         src="/assets/journal/bmt_chapter_left.png"
         alt="BMT Chapter Left"
-        /* Image aspect (0.800) is wider than the page box, so cover would clip
-           the sides. Scaling to ~94% height lets the full width show (only ~1%
-           side crop) with a thin top/bottom margin that blends with the page. */
-        style={{ position: "absolute", left: 0, right: 0, top: "2%", width: "100%", height: "97%", objectFit: "cover" }}
+        style={{ position: "absolute", top: 0, left: SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
     </div>
   );
 });
 
-// ── BMT CHAPTER RIGHT — group photo spread + two handwritten notes ──
-const BmtChapterRight = forwardRef(function BmtChapterRight({ userNote, commanderNote }, ref) {
-  // Personal message from the section commander, addressed to the soldier.
+// ── BMT CHAPTER RIGHT — group photo spread + the commander's letter ──
+const BmtChapterRight = forwardRef(function BmtChapterRight({ commanderNote }, ref) {
+  // Personal letter from the section commander to the soldier, written to read
+  // like a real handwritten note — specific, warm, a little rough around the
+  // edges rather than tidy and generic.
   const cmdNote = commanderNote
-    || "Alex,\n\nAt the start of BMT, you couldn't hold a 1-min plank. Last week you carried Rafiq's load on the last 2km without being asked.\n\nThat's the soldier I'll remember.\n\nProud of you. Now go be great.\n\n— 3SG Lim";
-
-  const myNote = userNote
-    || "63 days. Came in alone, leaving with brothers. \n\nCan't believe I made it through. This was crazy...\nbut i guess it's time for round 2...";
-
-  const noteText = {
-    fontFamily: "'VT323', monospace",
-    color: C.ink,
-    whiteSpace: "pre-wrap",
-    margin: 0,
-  };
+    || "Alex,\n\nI still remember you on day one — standing too straight, eyes everywhere, trying so hard not to look scared. You were terrible at planking and you knew it but you kept trying anyways.\n\nThat's what's important. Not the IPPT score. The getting back up. The night Rafiq cramped on the road march, you took his pack without a word and you were already half-dead yourself. Nobody told you to. You just did it.\n\nThese 67 days I watched a boy who flinched at every command turn into someone his section trusts. I didn't make that happen. You did. I just had the privilege of being there for it.\n\nWherever you go next, when it gets hard — and it will — remember you've already done the thing you swore you couldn't.\n\nI'm proud of you, son. Truly.\n\n— 3SG Lim";
 
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
         src="/assets/journal/bmt_chapter_right.png"
         alt="BMT Chapter Right"
-        /* See BMT left: scaled to ~94% height so the full width shows with
-           minimal side crop and a thin blending top/bottom margin. */
-        style={{ position: "absolute", left: 0, right: 0, top: "2%", width: "100%", height: "97%", objectFit: "cover" }}
+        /* Same setup as the clean pages: fills the page and nudged inward by
+           SPINE_NUDGE so the inner (left) edge meets the left page at the spine. */
+        style={{ position: "absolute", top: 0, left: -SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
 
-      {/* COMMANDER'S NOTES lined slot (bottom-left); lines ~ x:7%-36%, y:74%-88% */}
+      {/* SECTION GROUP PHOTO — a box matched to the empty "BROTHERS IN BMT"
+          frame (measured inner bounds: L 9.8%, T 22.5%, W 72.2%, H 33.5%). The
+          photo lives INSIDE the box and fills it with objectFit:cover, so any
+          image is auto-cropped to the frame — no per-image cropping needed. */}
       <div style={{
         position: "absolute",
-        top: "74.5%",
-        left: "9%",
-        transform: "rotate(-5deg)",
-        width: "27%",
-        height: "13.5%",
+        top: "22.5%",
+        left: "9.8%",
+        width: "72.2%",
+        height: "33.5%",
         overflow: "hidden",
-        boxSizing: "border-box",
+        boxShadow: "1px 2px 6px #0005",
       }}>
-        <p style={{ ...noteText, fontSize: 11, lineHeight: "13px" }}>
-          {cmdNote}
-        </p>
+        <img
+          src="/assets/journal/database/bmt_right_picture.png"
+          alt="Section group photo"
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
       </div>
 
-      {/* MY NOTES lined slot (bottom-right); lines ~ x:64%-92%, y:74%-88% */}
+      {/* COMMANDER'S LETTER box (lower-left of the spread) ~ x:8%-64%, y:67%-91% */}
       <div style={{
         position: "absolute",
-        top: "75%",
-        left: "64.5%",
-        width: "27%",
-        transform: "rotate(5.5deg)",
-        height: "13.5%",
+        top: "63%",
+        left: "11%",
+        transform: "rotate(-1.1deg)",
+        width: "52%",
+        height: "30%",
         overflow: "hidden",
         boxSizing: "border-box",
       }}>
-        <p style={{ ...noteText, fontSize: 12, lineHeight: "13px" }}>
-          {myNote}
+        <p style={{
+          fontFamily: "'VT323', monospace",
+          fontSize: 13,
+          color: C.ink,
+          lineHeight: "11.5px",
+          whiteSpace: "pre-wrap",
+          margin: 0,
+        }}>
+          {cmdNote}
         </p>
       </div>
     </div>
   );
 });
 
-// ── FIELD CAMP LEFT — outfield spread + my own reflection in MY REFLECTION slot ──
+// ── FIELD CAMP LEFT — photo in the frame + my own note in "LETTER TO MYSELF" ──
 const FieldCampLeft = forwardRef(function FieldCampLeft({ userNote }, ref) {
+  // My own field-camp memory: the late-night Maggi with my buddy, the half-raw
+  // noodles, sharing it anyway. Small, specific, fond.
   const displayNote = userNote
-    || "5 days. Honestly the worst week of my life.\n\nSoaked to the bone, no sleep, ration packs for every meal...\n\nThere were nights I wanted to give up. But Hao Jie kept me going when I wanted to give up.\n\nSomehow we survived it. Together.";
+    || "Best part of field camp wasn't the training. It was 2am, remember how you and Hao Jie was hunched over one mess tin of Maggi we cooked on the small fire we started. Half the noodles were still crunchy, the soup was lukewarm, and we only had one spoon between us. Didn't matter. Worst Maggi I've ever eaten.\nBest meal of the whole camp.";
 
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
         src="/assets/journal/fieldcamp_left.png"
         alt="Field Camp Left"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+        /* Same setup as the other pages: nudged inward by SPINE_NUDGE so the
+           inner (right) edge meets the right page cleanly at the spine. */
+        style={{ position: "absolute", top: 0, left: SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
-      {/* MY REFLECTION lined slot (right, mid-lower); lines ~ x:63%-93%, y:64%-88% */}
+
+      {/* FIELD-CAMP PHOTO — box matched to the empty frame (grid-read interior
+          ~ x:20%-82%, y:27%-51%). Photo fills it with objectFit:cover so any
+          image auto-crops to the frame — same pattern as the BMT photo. */}
       <div style={{
         position: "absolute",
-        top: "60.5%",
-        left: "60%",
-        transform: "rotate(6.2deg)",
-        width: "30%",
-        height: "24%",
+        top: "31.3%",
+        left: "23%",
+        width: "60%",
+        height: "27.1%",
+        overflow: "hidden",
+        boxShadow: "1px 2px 6px #0005",
+      }}>
+        <img
+          src="/assets/journal/database/fieldcamp_left_picture.png"
+          alt="Late-night campfire"
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
+      </div>
+
+      {/* PHOTO CAPTION — centered on the parchment just below the photo frame
+          (frame bottom ~ y:58.4%), above the LETTER TO MYSELF card. */}
+      <div style={{
+        position: "absolute",
+        top: "59.7%",
+        left: "21.5%",
+        width: "60%",
+        textAlign: "center",
+        boxSizing: "border-box",
+      }}>
+        <p style={{
+          fontFamily: "'VT323', monospace",
+          fontSize: 22,
+          color: C.ink,
+          margin: 0,
+        }}>
+          Late Night Maggi
+        </p>
+      </div>
+
+      {/* MY NOTE — "LETTER TO MYSELF" lined card (lower-right; writing area
+          ~ x:50%-90%, y:70%-89%, below the tab). */}
+      <div style={{
+        position: "absolute",
+        top: "69.2%",
+        left: "53.3%",
+        width: "40%",
+        height: "30%",
         overflow: "hidden",
         boxSizing: "border-box",
       }}>
@@ -498,7 +614,7 @@ const FieldCampLeft = forwardRef(function FieldCampLeft({ userNote }, ref) {
           fontFamily: "'VT323', monospace",
           fontSize: 12,
           color: C.ink,
-          lineHeight: "13px",
+          lineHeight: "16px",
           whiteSpace: "pre-wrap",
           margin: 0,
         }}>
@@ -509,35 +625,38 @@ const FieldCampLeft = forwardRef(function FieldCampLeft({ userNote }, ref) {
   );
 });
 
-// ── FIELD CAMP RIGHT — group photo spread + buddy's handwritten note ──
+// ── FIELD CAMP RIGHT — buddy's handwritten note in the "BUDDY'S NOTE" card ──
 const FieldCampRight = forwardRef(function FieldCampRight({ buddyNote }, ref) {
-  // A note the soldier's buddy (Hao Jie) wrote to them.
+  // A note Hao Jie wrote to the soldier: he wouldn't have made it without the
+  // late-night talks and the jokes that made field camp bearable, even fun.
   const displayNote = buddyNote
-    || "Bro,\n\n5 days of hell and we made it. I still can't believe we slept in that flooded shellscrape.\n\nWhen I was about to break, you cheered me up. I won't forget that. Whatever comes next, I wish you all the best.\n\n— Hao Jie";
+    || "Bro, Honestly? I don't think I would've made it through this camp without you. Those late-night talks when neither of us could sleep, sharing that sad cup of Maggi — that's what got me through. Every time I was ready to give up, you'd crack some dumb joke and somehow it didn't feel so bad anymore.\n\nField camp was hell. But with you around it was actually... fun. Thanks for that. I mean it.";
 
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
         src="/assets/journal/fieldcamp_right.png"
         alt="Field Camp Right"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+        /* Same setup as the other pages: nudged inward by SPINE_NUDGE so the
+           inner (left) edge meets the left page cleanly at the spine. */
+        style={{ position: "absolute", top: 0, left: -SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
-      {/* BUDDY'S NOTE lined slot (bottom-left); lines ~ x:9%-37%, y:57%-79% */}
+      {/* BUDDY'S NOTE lined card (center; writing area below the tab
+          ~ x:16%-72%, y:42%-68%, grid-measured). */}
       <div style={{
         position: "absolute",
-        top: "57%",
-        left: "16%",
-        transform: "rotate(-2.5deg)",
-        width: "29%",
-        height: "40%",
+        top: "43%",
+        left: "20%",
+        width: "54%",
+        height: "26%",
         overflow: "hidden",
         boxSizing: "border-box",
       }}>
         <p style={{
           fontFamily: "'VT323', monospace",
-          fontSize: 13,
+          fontSize: 14,
           color: C.ink,
-          lineHeight: "13px",
+          lineHeight: "14px",
           whiteSpace: "pre-wrap",
           margin: 0,
         }}>
@@ -555,12 +674,51 @@ const PopLeft = forwardRef(function PopLeft(_props, ref) {
       <img
         src="/assets/journal/pop_left.png"
         alt="POP Left"
-        /* Image has a book-spine/binding crease baked into its right edge.
-           objectPosition:"left" anchors the image to the LEFT edge so the
-           horizontal crop comes entirely off the RIGHT (removing the crease)
-           and the left book border stays fully visible / uncropped. */
-        style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "99%", objectFit: "cover", objectPosition: "left" }}
+        /* Same setup as the other pages: nudged inward by SPINE_NUDGE so the
+           inner (right) edge meets the right page cleanly at the spine. */
+        style={{ position: "absolute", top: 0, left: SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
+
+      {/* POP PHOTO — box matched to the empty frame (grid-read interior
+          ~ x:31%-91%, y:46%-77%). Photo fills it with objectFit:cover. */}
+      <div style={{
+        position: "absolute",
+        top: "45.7%",
+        left: "37.7%",
+        width: "56%",
+        height: "27.7%",
+        overflow: "hidden",
+        boxShadow: "1px 2px 6px #0005",
+      }}>
+        <img
+          src="/assets/journal/database/pop_left_picture.png"
+          alt="Section on POP day"
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
+      </div>
+
+      {/* CAPTION box below the frame (~ y:80%-86%, x:31%-91%) */}
+      <div style={{
+        position: "absolute",
+        top: "75.5%",
+        left: "35.5%",
+        width: "60%",
+        height: "5%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        boxSizing: "border-box",
+      }}>
+        <p style={{
+          fontFamily: "'VT323', monospace",
+          fontSize: 18,
+          color: C.ink,
+          margin: 0,
+          textAlign: "center",
+        }}>
+          SCORPION PLATOON 2 SECTION 1
+        </p>
+      </div>
     </div>
   );
 });
@@ -571,29 +729,75 @@ const PopRight = forwardRef(function PopRight({ commanderNote }, ref) {
   // (proud-of-your-progress) notes: this one is a farewell as the soldier
   // graduates BMT and moves on to their vocation.
   const displayNote = commanderNote
-    || "Alex,\n\nMy job was to take a scared recruit and hand back a soldier. Today I'm done. You don't need me anymore.\n\nWherever you post out to, lead the way you marched: heart first. Make us proud.\n\n— 3SG Lim";
+    || "Hi Alex,\n\nMy job was to take a scared recruit and hand back a soldier. Today I'm done. You don't need me anymore.\n\nWherever you post out to, lead the way you marched: heart first. Make us proud.\n\nIt was truly an honour to have you as part of my section and I wish you all the best!!!\n\n— 3SG Lim";
 
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
         src="/assets/journal/pop_right.png"
         alt="POP Right"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "99%", objectFit: "cover" }}
+        /* Same setup as the other pages: nudged inward by SPINE_NUDGE so the
+           inner (left) edge meets the left page cleanly at the spine. */
+        style={{ position: "absolute", top: 0, left: -SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
-      {/* COMMANDER'S NOTE lined slot (center-right); card ~ x:57%-91%, y:55%-79% */}
+
+      {/* POP PHOTO — box matched to the top-right frame (grid-read interior
+          ~ x:31%-84%, y:8%-36%). Photo fills it with objectFit:cover. */}
       <div style={{
         position: "absolute",
-        top: "53%",
-        left: "57.5%",
-        transform: "rotate(6deg)",
-        width: "32%",
+        top: "9.7%",
+        left: "30.4%",
+        width: "51%",
+        height: "25%",
+        transform: "rotate(3.7deg)",
+        overflow: "hidden",
+        boxShadow: "1px 2px 6px #0005",
+      }}>
+        <img
+          src="/assets/journal/database/pop_right_picture.png"
+          alt="Caps thrown at POP"
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
+      </div>
+
+      {/* CAPTION strip below the frame (~ y:39%-43%, x:31%-84%) */}
+      <div style={{
+        position: "absolute",
+        top: "35.7%",
+        left: "28.4%",
+        width: "53%",
+        height: "4%",
+        transform: "rotate(3.8deg)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        boxSizing: "border-box",
+      }}>
+        <p style={{
+          fontFamily: "'VT323', monospace",
+          fontSize: 15,
+          color: C.ink,
+          margin: 0,
+          textAlign: "center",
+        }}>
+          POP LOH!
+        </p>
+      </div>
+
+      {/* COMMANDER'S LETTER lined card (left side; writing area below the tab
+          ~ x:11%-56%, y:57%-87%, grid-measured). */}
+      <div style={{
+        position: "absolute",
+        top: "51%",
+        left: "10%",
+        width: "40%",
         height: "30%",
         overflow: "hidden",
         boxSizing: "border-box",
       }}>
         <p style={{
           fontFamily: "'VT323', monospace",
-          fontSize: 12,
+          fontSize: 14,
           color: C.ink,
           lineHeight: "14px",
           whiteSpace: "pre-wrap",
@@ -602,116 +806,6 @@ const PopRight = forwardRef(function PopRight({ commanderNote }, ref) {
           {displayNote}
         </p>
       </div>
-    </div>
-  );
-});
-
-// ── NEW POSTING LEFT — unit posting spread + new section commander's welcome ──
-const NewPostingLeft = forwardRef(function NewPostingLeft({ commanderNote }, ref) {
-  // The NEW section commander welcoming Alex into Alpha 3-1. Purpose: a
-  // fresh-start welcome to a new unit — short, since the slot is a wide,
-  // shallow card.
-  const displayNote = commanderNote
-    || "Welcome to Alpha 3-1, Alex. You show me what you've got. It was fun doing this with you\n\n  — 2SG Faizal";
-
-  return (
-    <div ref={ref} style={{ ...pageBase }}>
-      <img
-        src="/assets/journal/new_posting_left.png"
-        alt="New Posting Left"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "99.5%", objectFit: "cover" }}
-      />
-      {/* COMMANDER'S NOTE card — write below the baked-in label, clear of the
-          plant sprig at the card's right; writable ~ x:46%-75%, y:45%-50% */}
-      <div style={{
-        position: "absolute",
-        top: "43.5%",
-        left: "46%",
-        transform: "rotate(-1deg)",
-        width: "29%",
-        height: "10%",
-        overflow: "hidden",
-        boxSizing: "border-box",
-      }}>
-        <p style={{
-          fontFamily: "'VT323', monospace",
-          fontSize: 11,
-          color: C.ink,
-          lineHeight: "12px",
-          whiteSpace: "pre-wrap",
-          margin: 0,
-        }}>
-          {displayNote}
-        </p>
-      </div>
-    </div>
-  );
-});
-
-// ── NEW POSTING RIGHT — new team spread + the CO's mission charge ──
-const NewPostingRight = forwardRef(function NewPostingRight({ commanderNote }, ref) {
-  // LTC Lim is the Commanding Officer — a senior officer, not a section
-  // commander. Purpose: a bigger-picture mission charge to the whole unit,
-  // distinct in rank and voice from the section-level welcomes/send-offs.
-  const displayNote = commanderNote
-    || "You guys were amazing, wouldn't have asked for another group of people to do this with. Don't avoid me when you see me next time >.<\n— LTC Lim, CO";
-
-  return (
-    <div ref={ref} style={{ ...pageBase }}>
-      <img
-        src="/assets/journal/new_posting_right.png"
-        alt="New Posting Right"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "101%", objectFit: "cover" }}
-      />
-      {/* LTC LIM'S NOTE lined slot (bottom-left); card ~ x:11%-42%, y:81%-93% */}
-      <div style={{
-        position: "absolute",
-        top: "82.5%",
-        left: "11.5%",
-        width: "30%",
-        height: "11%",
-        overflow: "hidden",
-        boxSizing: "border-box",
-      }}>
-        <p style={{
-          fontFamily: "'VT323', monospace",
-          fontSize: 11,
-          color: C.ink,
-          lineHeight: "12px",
-          whiteSpace: "pre-wrap",
-          margin: 0,
-        }}>
-          {displayNote}
-        </p>
-      </div>
-    </div>
-  );
-});
-
-// ── ORD LEFT — ORD milestone spread, image only (self-contained) ──
-const OrdLeft = forwardRef(function OrdLeft(_props, ref) {
-  return (
-    <div ref={ref} style={{ ...pageBase }}>
-      <img
-        src="/assets/journal/ord_left.png"
-        alt="ORD Left"
-        /* cover crops the taller image top+bottom; objectPosition:top anchors
-           the crop to the bottom so the top banner/border stays visible. */
-        style={{ position: "absolute", left: 0, right: 0, top: "1%", width: "100%", height: "98%", objectFit: "cover", objectPosition: "top" }}
-      />
-    </div>
-  );
-});
-
-// ── ORD RIGHT — closing spread, image only (self-contained) ──
-const OrdRight = forwardRef(function OrdRight(_props, ref) {
-  return (
-    <div ref={ref} style={{ ...pageBase }}>
-      <img
-        src="/assets/journal/ord_right.png"
-        alt="ORD Right"
-        style={{ position: "absolute", left: 1, right: 0, top: "0%", width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }}
-      />
     </div>
   );
 });
@@ -946,13 +1040,19 @@ function JournalFlipbook({ onClose }) {
           width={PAGE_W}
           height={PAGE_H}
           showCover={true}
-          /* Faster flip + lighter shadow so the brief mid-flip frame (where a
-             turning page's border doesn't perfectly align with the page
-             beneath it) passes quickly and is less noticeable. */
+          /* Two-page spread mode: pages render as left+right pairs like a real
+             open book (cover sits alone first, then spreads). This removes the
+             single-page (portrait) mid-flip flicker and matches the L/R page
+             design. usePortrait={false} forces the spread; minWidth/maxWidth
+             give autoSize a range to scale the two-page layout into. */
           flippingTime={550}
-          usePortrait={true}
+          usePortrait={false}
+          minWidth={PAGE_W}
+          maxWidth={PAGE_W * 2}
+          minHeight={PAGE_H}
+          maxHeight={PAGE_H}
           autoSize={true}
-          maxShadowOpacity={0.2}
+          maxShadowOpacity={0.3}
           drawShadow={true}
           mobileScrollSupport={false}
           onFlip={onFlip}
@@ -960,18 +1060,21 @@ function JournalFlipbook({ onClose }) {
           className="journal-flipbook"
         >
           <CoverPage />
-          <EnlistmentLeft commanderNote={null} />
-          <EnlistmentRight userNote={null} />
+          {/* BMT chapter is now the first content spread (right after the cover) */}
           <BmtChapterLeft />
-          <BmtChapterRight userNote={null} commanderNote={null} />
+          <BmtChapterRight commanderNote={null} />
+          <EnlistmentLeft />
+          <EnlistmentRight userNote={null} />
           <FieldCampLeft userNote={null} />
           <FieldCampRight buddyNote={null} />
           <PopLeft />
           <PopRight commanderNote={null} />
-          <NewPostingLeft commanderNote={null} />
-          <NewPostingRight commanderNote={null} />
-          <OrdLeft />
-          <OrdRight />
+          {/* Blank clean spreads — placeholders for future content (these used to
+              be the New Posting and ORD spreads). */}
+          <CleanLeftPage />
+          <CleanRightPage />
+          <CleanLeftPage />
+          <CleanRightPage />
           <LastPage />
         </HTMLFlipBook>
       </div>
@@ -1220,6 +1323,7 @@ function CaptureModal({ type, onClose, onSave }) {
     note: { label: "NOTE", icon: <FileText size={16} /> },
     voice: { label: "VOICE NOTE", icon: <Mic size={16} /> },
     milestone: { label: "MILESTONE", icon: <Star size={16} /> },
+    ai: { label: "AI MEMORY", icon: <Sparkles size={16} /> },
   }[type];
 
   function mmss(s) {
@@ -1464,9 +1568,57 @@ export default function JournalPage({ onNavigate }) {
   const [readEntry, setReadEntry] = useState(null);
   const [lightboxPhoto, setLightboxPhoto] = useState(null);
 
-  function handleSaveEntry() {
-    // entries are now driven by Firestore's onSnapshot — nothing to do here
-  }
+  const handleSaveEntry = async (payload) => {
+    try {
+      if (!payload) return;
+
+      // 1. Handle AI Memory Engine Saves (Check for explicit payload properties)
+      if (payload.promptDescription || payload.rawBlobUrl) {
+        try {
+          console.log("1. payload received:", payload);
+
+          const blobResponse = await fetch(payload.rawBlobUrl);
+          const blob = await blobResponse.blob();
+
+          const userId = auth.currentUser?.uid || "anonymous";
+          const storageRef = ref(storage, `ai-memories/${userId}/${Date.now()}.png`);
+
+          await uploadBytes(storageRef, blob);
+          const downloadURL = await getDownloadURL(storageRef);
+
+          await addDoc(collection(db, "journalEntries"), {
+            userId: userId,
+            type: "photo", // Forces it to render nicely as a regular photo type in feeds
+            caption: payload.caption || "AI Rendered Memory",
+            photoURL: downloadURL, // ✅ Fixed: uses the actual download URL string variable
+            createdAt: serverTimestamp(),
+            taggedMates: "Generated by AI",
+            aiPromptDescription: payload.promptDescription || ""
+          });
+
+          console.log("Firestore doc saved successfully!");
+        } catch (err) {
+          console.error("AI memory save failed:", err);
+        }
+        return;
+      }
+
+      // 2. Handle standard captures passed from CaptureModal (Note, Milestone, Voice)
+      // Note: Standard 'photo' type is already handled directly inside CaptureModal
+      if (payload.type !== "photo") {
+        await addDoc(collection(db, "journalEntries"), {
+          userId: auth.currentUser?.uid || "anonymous",
+          type: payload.type,
+          caption: payload.title || "Untitled", // ✅ Maps title to caption for uniform reading
+          taggedMates: payload.text || "",     // ✅ Maps text to taggedMates for uniform reading
+          photoURL: payload.photoURL || null,
+          createdAt: serverTimestamp()
+        });
+      }
+    } catch (error) {
+      console.error("Ecosystem sync exception:", error);
+    }
+  };
 
   if (bookOpen) {
     return (
@@ -1708,13 +1860,18 @@ export default function JournalPage({ onNavigate }) {
       </div>
 
       {/* ---- modal interfaces (prototype, session state) ---- */}
-      {captureType && (
+      {captureType === "ai" ? (
+        <AIMemoryModal
+          onClose={function () { setCaptureType(null); }}
+          onSave={function (payload) { handleSaveEntry(payload); }}
+        />
+      ) : captureType ? (
         <CaptureModal
           type={captureType}
           onClose={function () { setCaptureType(null); }}
           onSave={handleSaveEntry}
         />
-      )}
+      ) : null}
       {readEntry && (
         <EntryReadModal entry={readEntry} onClose={function () { setReadEntry(null); }} />
       )}

@@ -1,10 +1,10 @@
 /**
  * TrainingDashboard.jsx — Training screen using the shared AppShell + Frame/Sprite.
- * (This supersedes the standalone /TrainingDashboard.jsx first draft; this one
- *  is consistent with the other pages and the asset system.)
- *
- * Demonstrates: text-as-data, chart-as-library (Recharts), art slots via Sprite.
+ * Tracks dynamic real-time data from Firestore separating single best sets from daily sums.
  */
+import { useEffect, useState } from "react";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db, auth } from "../auth/firebase";
 import { Dumbbell, Plus, Check, Flag, Bookmark, ShoppingCart, Heart, Clock } from "lucide-react";
 import { AreaChart, Area, XAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { AppShell, ActionButton, Card, Frame } from "../ui";
@@ -20,8 +20,6 @@ const MISSION_ART = ASSETS.training.missions;
 const REWARD_ART = ASSETS.training.rewards;
 
 // --- Today's date, derived live -------------------------------------------
-// The header of TODAY'S TRAINING tracks the real calendar day rather than a
-// baked-in string, so the card always reads as "today".
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 const DAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 const now = new Date();
@@ -30,9 +28,8 @@ const TODAY = {
   day: DAYS[now.getDay()],
 };
 
-const data = {
+const STATIC_DATA = {
   stats: [
-    { key: "pushups", label: "PUSH-UPS", value: 60, caption: "TODAY", best: "BEST 64" },
     { key: "situps", label: "SIT-UPS", value: 60, caption: "TODAY", best: "BEST 62" },
     { key: "run", label: "2.4KM RUN", value: "11:32", caption: "TODAY", best: "BEST 10:58" },
     { key: "streak", label: "STREAK", value: 14, caption: "DAYS IN A ROW", best: "BEST 21" },
@@ -40,42 +37,29 @@ const data = {
     { key: "score", label: "IPPT SCORE", value: "GOLD", caption: "85 POINTS", best: "BEST GOLD", medal: "gold" },
   ],
   today: {
-    note: "GOOD EFFORT TODAY!",
     rows: [
-      { label: "PUSH-UPS", result: "42 / 50", pass: true, icon: "pushups" },
-      { label: "SIT-UPS", result: "51 / 55", pass: true, icon: "situps" },
+      { label: "TOTAL SIT-UPS", result: "51 / 55", pass: true, icon: "situps" },
       { label: "2.4KM TIME", result: "11:32 / 10:30", pass: false, icon: "run" },
     ],
   },
-  recent: [
-    { date: "23 MAY 2024", day: "FRI", name: "4-MIN EMOM", exercise: "PUSH-UPS", icon: "run",
-      stats: [{ v: "40", l: "TOTAL REPS" }, { v: "4/4", l: "SETS" }, { v: "08:02", l: "DURATION" }] },
-    { date: "22 MAY 2024", day: "THU", name: "FORM TRAINING", exercise: "PUSH-UPS", icon: "pushups",
-      stats: [{ v: "46", l: "TOTAL REPS" }, { v: "92%", l: "FORM ACC." }, { v: "10:15", l: "DURATION" }] },
-    { date: "21 MAY 2024", day: "WED", name: "100 SIT-UP TARGET", exercise: "SIT-UPS", icon: "situps",
-      stats: [{ v: "102", l: "TOTAL REPS" }, { v: "5", l: "SETS" }, { v: "11:32", l: "DURATION" }] },
-  ],
   missions: [
-    { tier: "DAILY MISSION", title: "Complete 3", task: "To Failure sets", icon: "toFailure",
-      progress: 2, goal: 3, xp: 150, coin: 50, timerLabel: "REFRESHES IN", timer: "08:24:15" },
-    { tier: "WEEKLY MISSION", title: "Finish 10 workouts", task: "", icon: "weekly",
-      progress: 6, goal: 10, xp: 500, coin: 150, timerLabel: "RESETS IN", timer: "3D 08:24:15" },
-    { tier: "CHALLENGE CARD", title: "PLANK CHALLENGE", task: "Hold 3 planks over 90 seconds", icon: "plank",
-      // plank.png is a 1254² canvas with the figure small inside heavy padding,
-      // so it needs a bigger render height to optically match the cropped icons.
-      iconScale: 1.85, progress: 0, goal: 3, xp: 300, coin: 100, timerLabel: "ENDS IN", timer: "20 12:48:09" },
+    {
+      tier: "DAILY MISSION", title: "Complete 3", task: "To Failure sets", icon: "toFailure",
+      progress: 2, goal: 3, xp: 150, coin: 50, timerLabel: "REFRESHES IN", timer: "08:24:15"
+    },
+    {
+      tier: "WEEKLY MISSION", title: "Finish 10 workouts", task: "", icon: "weekly",
+      progress: 6, goal: 10, xp: 500, coin: 150, timerLabel: "RESETS IN", timer: "3D 08:24:15"
+    },
+    {
+      tier: "CHALLENGE CARD", title: "PLANK CHALLENGE", task: "Hold 3 planks over 90 seconds", icon: "plank",
+      iconScale: 1.85, progress: 0, goal: 3, xp: 300, coin: 100, timerLabel: "ENDS IN", timer: "20 12:48:09"
+    },
   ],
   medals: ["gold", "bronze"],
-  progress: [2, 3, 3, 4, 5, 5, 6, 6, 7, 8].map((v, i) => ({ d: i, v })),
   xp: 157,
 };
 
-/**
- * A single TRAINING OVERVIEW tile on the shared parchment art. Everything is
- * centred in one tight column: LABEL → icon → big VALUE → caption → BEST chip.
- * Icon PNGs are auto-trimmed, so we size by a fixed HEIGHT and let width follow
- * the art — no reserved square box, so no empty space pushing the text away.
- */
 function StatCard({ stat }) {
   const iconSrc = stat.medal ? OVERVIEW.medals[stat.medal] : OVERVIEW.icons[stat.key];
 
@@ -96,10 +80,6 @@ function StatCard({ stat }) {
       )}
       <span style={{ ...pixel, color: C.green }} className="text-[38px] font-bold leading-none">{stat.value}</span>
       <span style={{ ...pixel, ...D }} className="mt-0.5 text-[14px] font-bold uppercase leading-none tracking-wider">{stat.caption}</span>
-
-      {/* Personal record, inline under the value. Kept short and centred so the
-          whole stat reads as one tidy block; the heart baked into the art's
-          bottom-right corner stays as its own decoration. */}
       {stat.best && (
         <span style={{ ...pixel, ...M }} className="mt-1 mb-0 text-[13px] uppercase leading-none tracking-wider">
           {stat.best}
@@ -121,13 +101,6 @@ function TrainingSessionCard({ mode, onStart }) {
   );
 }
 
-/**
- * One MISSION/CHALLENGE card, built to read like a collectible game card rather
- * than a dashboard cell. The parchment card art (card_background.png) IS the
- * surface — drawn via the 9-slice `missionCard` frame so its wooden border and
- * corners stay crisp at any height — and text is dark ink so it belongs on the
- * paper. The CHALLENGE CARD is the "rare" one: a gilt ring + brass tier plate.
- */
 function MissionCard({ mission }) {
   const challenge = mission.tier === "CHALLENGE CARD";
   const iconSrc = MISSION_ART.icons[mission.icon];
@@ -140,32 +113,24 @@ function MissionCard({ mission }) {
       border={12}
       className={`wgt-press relative flex flex-1 flex-col gap-1.5 p-2 ${challenge ? "wgt-card-rare" : ""}`}
     >
-      {/* Tier ribbon — card title banner. Challenge = brass plate. */}
       <span
         className="w-full rounded py-[3px] text-center"
         style={{
           ...pixel,
           fontSize: 14,
           letterSpacing: "0.12em",
-          background: challenge
-            ? "linear-gradient(180deg, #4a3a18 0%, #2a2110 100%)"
-            : C.green,
+          background: challenge ? "linear-gradient(180deg, #4a3a18 0%, #2a2110 100%)" : C.green,
           color: challenge ? C.gold : C.textGold,
-          boxShadow: challenge
-            ? `inset 0 0 0 1px ${C.gold}88, inset 0 1px 0 #ffffff2a`
-            : "inset 0 1px 0 #ffffff2a, inset 0 -1px 0 #00000028",
+          boxShadow: challenge ? `inset 0 0 0 1px ${C.gold}88, inset 0 1px 0 #ffffff2a` : "inset 0 1px 0 #ffffff2a, inset 0 -1px 0 #00000028",
         }}
       >
         {mission.tier}
       </span>
 
-      {/* Card-art window — a fixed, compact illustration box. Fixed height keeps
-          the sprite small so the card no longer drives the whole row tall. */}
       <div
         className="relative flex h-[68px] shrink-0 items-center justify-center overflow-hidden rounded"
         style={{
-          background:
-            "radial-gradient(75% 70% at 50% 38%, #ffffff22 0%, #ffffff00 60%), linear-gradient(180deg, #00000010 0%, #00000000 40%, #0000001f 100%)",
+          background: "radial-gradient(75% 70% at 50% 38%, #ffffff22 0%, #ffffff00 60%), linear-gradient(180deg, #00000010 0%, #00000000 40%, #0000001f 100%)",
           boxShadow: "inset 0 0 0 1px #3a2f1c2a, inset 0 1px 3px #2a201033",
         }}
       >
@@ -185,13 +150,11 @@ function MissionCard({ mission }) {
         )}
       </div>
 
-      {/* Title + objective */}
       <div className="min-h-[34px] text-center leading-[1.1]">
         <p style={{ ...pixel, ...D }} className="text-[16px] font-bold">{mission.title}</p>
         {mission.task && <p style={{ ...pixel, color: C.inkSoft }} className="text-[12px]">{mission.task}</p>}
       </div>
 
-      {/* Progress gauge */}
       <div className="mt-auto">
         <div className="mb-0.5 flex items-baseline justify-between">
           <span style={{ ...pixel, ...D }} className="text-[13px] font-bold">{mission.progress} / {mission.goal}</span>
@@ -207,24 +170,18 @@ function MissionCard({ mission }) {
             className="h-full rounded-full transition-[width] duration-500"
             style={{
               width: `${pct}%`,
-              background: challenge
-                ? "linear-gradient(90deg, #cca661, #e6c47e)"
-                : "linear-gradient(90deg, #3d4a2a, #5a6e3a)",
+              background: challenge ? "linear-gradient(90deg, #cca661, #e6c47e)" : "linear-gradient(90deg, #3d4a2a, #5a6e3a)",
               boxShadow: "inset 0 1px 0 #ffffff40",
             }}
           />
         </div>
       </div>
 
-      {/* Countdown — its own centred line above the reward, clear of the heart
-          painted into the card art's bottom-right corner. */}
       <div className="flex items-center justify-center gap-1">
         <Clock size={10} className="shrink-0" style={{ color: C.inkSoft }} />
         <span style={{ ...pixel, color: C.inkSoft }} className="text-[11px] tracking-wide">{mission.timer}</span>
       </div>
 
-      {/* Reward — centred XP chip, with right padding so it clears the corner
-          heart on the parchment art. */}
       <div className="flex items-center justify-center border-t pt-1.5 pr-5" style={{ borderColor: C.ink + "22" }}>
         <span
           style={{ ...pixel, color: C.textGold, background: C.green, boxShadow: "inset 0 1px 0 #ffffff2a" }}
@@ -237,7 +194,121 @@ function MissionCard({ mission }) {
   );
 }
 
-export default function TrainingDashboard({ onNavigate, onStartTraining = () => {} }) {
+export default function TrainingDashboard({ onNavigate, onStartTraining = () => { } }) {
+  // UI Reactive states
+  const [pushupTodaySum, setPushupTodaySum] = useState(0); // For right panel checklist sum
+  const [pushupTodayBest, setPushupTodayBest] = useState(0); // For left overview panel single max set today
+  const [pushupAllTimeBest, setPushupAllTimeBest] = useState(0); // All time record metric
+  const [recentWorkouts, setRecentWorkouts] = useState([]);
+  const [chartData, setChartData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchFirebaseData() {
+      const user = auth.currentUser;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const q = query(
+          collection(db, "trainingSessions"),
+          where("userId", "==", user.uid)
+        );
+
+        const snapshot = await getDocs(q);
+        const sessions = [];
+        let todaySum = 0;
+        let todayMaxSet = 0;
+        let overallBest = 0;
+
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const timestamp = data.timestamp?.toDate() || new Date();
+          const reps = data.stats?.reps || 0;
+
+          // Process today's separate session parameters
+          if (timestamp >= startOfToday) {
+            todaySum += reps; // Add to overall daily sum list
+            if (reps > todayMaxSet) {
+              todayMaxSet = reps; // Extract single highest attempt from today
+            }
+          }
+
+          // Process all-time milestones
+          if (reps > overallBest) {
+            overallBest = reps;
+          }
+
+          sessions.push({
+            id: doc.id,
+            timestamp,
+            mode: data.mode || "pushup",
+            duration: data.duration || 0,
+            reps: reps,
+            accuracy: data.stats?.accuracy || 100,
+          });
+        });
+
+        // Update application hooks
+        setPushupTodaySum(todaySum);
+        setPushupTodayBest(todayMaxSet);
+        setPushupAllTimeBest(overallBest);
+
+        // Sort data descending natively on client to avoid composite index configuration dependencies
+        sessions.sort((a, b) => b.timestamp - a.timestamp);
+
+        const structuredRecent = sessions.slice(0, 3).map((s) => {
+          const formattedDate = s.timestamp.toLocaleDateString("en-GB", {
+            day: "2-digit", month: "short", year: "numeric"
+          }).toUpperCase();
+
+          return {
+            name: "FORM TRAINING",
+            exercise: s.mode.toUpperCase(),
+            date: formattedDate,
+            icon: "pushups",
+            stats: [
+              { v: String(s.reps), l: "TOTAL REPS" },
+              { v: `${s.accuracy}%`, l: "FORM ACC." },
+              { v: typeof s.duration === "number" ? `${Math.floor(s.duration / 60)}:${String(s.duration % 60).padStart(2, '0')}` : s.duration, l: "DURATION" }
+            ]
+          };
+        });
+        setRecentWorkouts(structuredRecent);
+
+        const timeline = [...sessions].slice(0, 10).reverse().map((s, idx) => ({
+          d: idx,
+          v: s.reps
+        }));
+        setChartData(timeline.length ? timeline : [2, 3, 3, 4, 5, 5, 6, 6, 7, 8].map((v, i) => ({ d: i, v })));
+
+      } catch (err) {
+        console.error("Error evaluating training metrics snapshot:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchFirebaseData();
+  }, []);
+
+  // Assemble Left panel Overview metrics block
+  const liveStats = [
+    {
+      key: "pushups",
+      label: "PUSH-UPS",
+      value: pushupTodayBest, // 1-Time single best set completed today
+      caption: "TODAY'S BEST",
+      best: `BEST ${pushupAllTimeBest}` // Personal continuous lifetime high score
+    },
+    ...STATIC_DATA.stats
+  ];
+
   return (
     <AppShell
       active={ROUTES.TRAINING} onNavigate={onNavigate} user={user}
@@ -248,11 +319,11 @@ export default function TrainingDashboard({ onNavigate, onStartTraining = () => 
         <Card
           title="TRAINING OVERVIEW"
           className="overflow-hidden py-2 px-2 xl:col-span-7"
-          action={<span style={{ ...pixel, ...M }} className="text-[14px]">TODAY'S RESULTS VS YOUR BEST</span>}
+          action={<span style={{ ...pixel, ...M }} className="text-[14px]">TODAY'S BEST VS YOUR BEST</span>}
         >
           <div className="overflow-x-auto">
             <div className="flex min-w-[756px] gap-0 xl:min-w-0">
-              {data.stats.map((s) => (
+              {liveStats.map((s) => (
                 <StatCard key={s.key} stat={s} />
               ))}
             </div>
@@ -260,51 +331,41 @@ export default function TrainingDashboard({ onNavigate, onStartTraining = () => 
         </Card>
 
         <Card title="TODAY'S TRAINING" className="flex flex-col xl:col-span-5 xl:row-span-2">
-          {/* Date stamp — reads like a duty-log heading, with a hairline rule. */}
           <div className="mb-3 flex items-baseline gap-2 border-b pb-2" style={{ borderColor: C.ink + "22" }}>
             <span style={{ ...pixel, ...D }} className="text-[20px] font-bold leading-none tracking-wide">{TODAY.date}</span>
             <span style={{ ...pixel, color: C.green }} className="text-[16px] leading-none">· {TODAY.day}</span>
           </div>
 
-          {/* Result roster — each line is a pressed-leather plate with a colour
-              status spine on the left (pass = olive, miss = rust) so the whole
-              column scans at a glance without three heavy frames fighting. */}
           <div className="space-y-2">
-            {data.today.rows.map((r) => {
-              // Met = olive; not-yet = warm ochre (encouraging, not an error red).
+            {/* Dynamic Total Accumulated Push-up list item entry */}
+            <div className="wgt-plate relative flex items-center gap-3 overflow-hidden py-2 pl-4 pr-3" style={{ background: C.cardInner }}>
+              <span className="absolute inset-y-0 left-0 w-[5px]" style={{ background: pushupTodaySum >= 50 ? C.green : "#a8742a" }} />
+              <img src={TODAY_ART.icons["pushups"]} alt="" className="h-10 w-10 shrink-0 object-contain" style={{ imageRendering: "pixelated" }} />
+              <span style={{ ...pixel, ...D }} className="flex-1 text-[18px] font-bold leading-none tracking-wide">TOTAL PUSH-UPS</span>
+              <span className="flex items-baseline gap-1 leading-none">
+                <span style={{ ...pixel, color: pushupTodaySum >= 50 ? C.green : "#a8742a" }} className="text-[28px] font-bold">{pushupTodaySum}</span>
+                <span style={{ ...pixel, ...M }} className="text-[18px]">/ 50</span>
+              </span>
+              <span className="flex shrink-0 items-center justify-center gap-1 rounded-full px-2.5 py-0.5" style={{ background: pushupTodaySum >= 50 ? C.green : "#a8742a", color: C.textGold }}>
+                {pushupTodaySum >= 50 ? <Check size={14} strokeWidth={3.5} /> : <Flag size={12} strokeWidth={3} />}
+                <span style={pixel} className="text-[13px] leading-none whitespace-nowrap">{pushupTodaySum >= 50 ? "GOAL MET" : "ALMOST"}</span>
+              </span>
+            </div>
+
+            {/* Static Legacy Accumulator placeholders */}
+            {STATIC_DATA.today.rows.map((r) => {
               const accent = r.pass ? C.green : "#a8742a";
               const [done, target] = r.result.split(" / ");
               return (
-                <div
-                  key={r.label}
-                  className="wgt-plate relative flex items-center gap-3 overflow-hidden py-2 pl-4 pr-3"
-                  style={{ background: C.cardInner }}
-                >
-                  {/* status spine */}
+                <div key={r.label} className="wgt-plate relative flex items-center gap-3 overflow-hidden py-2 pl-4 pr-3" style={{ background: C.cardInner }}>
                   <span className="absolute inset-y-0 left-0 w-[5px]" style={{ background: accent }} />
-
-                  {/* icon — sprite sits on the parchment so the green uniform
-                      doesn't camouflage against a green chit. */}
-                  <img
-                    src={TODAY_ART.icons[r.icon]}
-                    alt=""
-                    className="h-10 w-10 shrink-0 object-contain"
-                    style={{ imageRendering: "pixelated" }}
-                  />
-
+                  <img src={TODAY_ART.icons[r.icon]} alt="" className="h-10 w-10 shrink-0 object-contain" style={{ imageRendering: "pixelated" }} />
                   <span style={{ ...pixel, ...D }} className="flex-1 text-[18px] font-bold leading-none tracking-wide">{r.label}</span>
-
-                  {/* result — done is the hero, target stays muted */}
                   <span className="flex items-baseline gap-1 leading-none">
                     <span style={{ ...pixel, color: accent }} className="text-[28px] font-bold">{done}</span>
                     <span style={{ ...pixel, ...M }} className="text-[18px]">/ {target}</span>
                   </span>
-
-                  {/* status pill — both states framed positively. */}
-                  <span
-                    className="flex shrink-0 items-center justify-center gap-1 rounded-full px-2.5 py-0.5"
-                    style={{ background: accent, color: C.textGold, boxShadow: "inset 0 1px 0 #ffffff22" }}
-                  >
+                  <span className="flex shrink-0 items-center justify-center gap-1 rounded-full px-2.5 py-0.5" style={{ background: accent, color: C.textGold }}>
                     {r.pass ? <Check size={14} strokeWidth={3.5} /> : <Flag size={12} strokeWidth={3} />}
                     <span style={pixel} className="text-[13px] leading-none whitespace-nowrap">{r.pass ? "GOAL MET" : "ALMOST"}</span>
                   </span>
@@ -320,7 +381,7 @@ export default function TrainingDashboard({ onNavigate, onStartTraining = () => 
             </div>
             <div className="wgt-plate mt-1.5 flex-1 overflow-hidden px-1 pt-2" style={{ background: C.cardInner, minHeight: 120 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data.progress} margin={{ top: 5, right: 6, left: 6, bottom: 4 }}>
+                <AreaChart data={chartData} margin={{ top: 5, right: 6, left: 6, bottom: 4 }}>
                   <defs>
                     <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor={C.green} stopOpacity={0.7} />
@@ -351,69 +412,52 @@ export default function TrainingDashboard({ onNavigate, onStartTraining = () => 
         </Card>
 
         <Card title="RECENT WORKOUTS" className="flex flex-col xl:col-span-5">
-          {/* Mirrors the Today roster: pressed-leather plates with a gold spine
-              (these are saved entries) and a fixed stats grid so columns line up
-              row-to-row. Each row is flex-1 so the three GROW to fill the card
-              height evenly — comfortable tall rows, never short rows floating in
-              a void. */}
           <div className="flex flex-1 flex-col gap-2.5">
-            {data.recent.map((w, i) => (
-              <div
-                key={i}
-                className="wgt-plate relative flex flex-1 items-center gap-3 overflow-hidden px-4"
-                style={{ background: C.cardInner, minHeight: 64 }}
-              >
-                <span className="absolute inset-y-0 left-0 w-[5px]" style={{ background: C.gold }} />
-
-                <img
-                  src={RECENT_ART.icons[w.icon]}
-                  alt=""
-                  className="h-12 w-12 shrink-0 object-contain"
-                  style={{ imageRendering: "pixelated" }}
-                />
-
-                {/* name + date — the identity block, kept narrow for the tighter
-                    column; name wraps to two lines rather than truncating. */}
-                <div className="w-[124px] shrink-0 leading-tight">
-                  <p style={{ ...pixel, ...D }} className="text-[18px] font-bold leading-[1.05]">{w.name}</p>
-                  <p style={{ ...pixel, ...M }} className="mt-0.5 text-[13px] uppercase tracking-wide">{w.exercise} · {w.date}</p>
-                </div>
-
-                {/* fixed 3-column stat grid so every row aligns */}
-                <div className="grid flex-1 grid-cols-3 gap-1">
-                  {w.stats.map((s, j) => (
-                    <div key={j} className="text-center leading-none">
-                      <p style={{ ...pixel, color: C.green }} className="text-[24px] font-bold">{s.v}</p>
-                      <p style={{ ...pixel, ...M }} className="mt-1 text-[12px] uppercase tracking-wide">{s.l}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex shrink-0 items-center gap-2 pl-1">
-                  <Heart size={17} className="text-red-700" />
-                  <Bookmark size={17} style={M} />
-                </div>
+            {loading ? (
+              <div className="flex flex-1 items-center justify-center p-6" style={{ ...pixel, ...M }}>
+                LOADING RECORDS...
               </div>
-            ))}
+            ) : recentWorkouts.length === 0 ? (
+              <div className="flex flex-1 flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 text-center" style={{ borderColor: C.border + "44", background: C.cardInner }}>
+                <p style={{ ...pixel, ...D }} className="text-[16px] font-bold">NO WORKOUTS RECORDED YET</p>
+                <p style={{ ...pixel, ...M }} className="mt-1 text-[13px]">Complete your first form session to view entries here.</p>
+              </div>
+            ) : (
+              recentWorkouts.map((w, i) => (
+                <div key={i} className="wgt-plate relative flex flex-1 items-center gap-3 overflow-hidden px-4" style={{ background: C.cardInner, minHeight: 64 }}>
+                  <span className="absolute inset-y-0 left-0 w-[5px]" style={{ background: C.gold }} />
+                  <img src={RECENT_ART.icons[w.icon]} alt="" className="h-12 w-12 shrink-0 object-contain" style={{ imageRendering: "pixelated" }} />
+                  <div className="w-[124px] shrink-0 leading-tight">
+                    <p style={{ ...pixel, ...D }} className="text-[18px] font-bold leading-[1.05]">{w.name}</p>
+                    <p style={{ ...pixel, ...M }} className="mt-0.5 text-[13px] uppercase tracking-wide">{w.exercise} · {w.date}</p>
+                  </div>
+                  <div className="grid flex-1 grid-cols-3 gap-1">
+                    {w.stats.map((s, j) => (
+                      <div key={j} className="text-center leading-none">
+                        <p style={{ ...pixel, color: C.green }} className="text-[24px] font-bold">{s.v}</p>
+                        <p style={{ ...pixel, ...M }} className="mt-1 text-[12px] uppercase tracking-wide">{s.l}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2 pl-1">
+                    <Heart size={17} className="text-red-700" />
+                    <Bookmark size={17} style={M} />
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </Card>
 
         <Card title="MISSIONS" className="flex flex-col xl:col-span-5">
-          {/* Three portrait cards side by side. Each card's art window is flex-1,
-              so when the cards stretch to the row height it's the illustration
-              box that grows — never an empty band in the text — keeping them
-              looking intentional at whatever height RECENT WORKOUTS sets. */}
           <div className="flex flex-1 items-stretch gap-2">
-            {data.missions.map((m, i) => (
+            {STATIC_DATA.missions.map((m, i) => (
               <MissionCard key={i} mission={m} />
             ))}
           </div>
         </Card>
 
         <Card title="REWARDS" className="flex flex-col xl:col-span-2">
-          {/* Slimmed down to keep the card short: just the current XP on its
-              board, then the SHOP button. (Medals moved out so this column
-              doesn't tower over RECENT WORKOUTS.) */}
           <div
             className="flex flex-1 flex-col items-center justify-center px-2 py-4"
             style={{
@@ -424,7 +468,7 @@ export default function TrainingDashboard({ onNavigate, onStartTraining = () => 
             }}
           >
             <span style={{ ...pixel, color: C.textGold }} className="text-[16px] tracking-[0.25em]">CURRENT XP</span>
-            <span style={{ ...pixel, color: C.gold }} className="text-[60px] font-bold leading-none">{data.xp}</span>
+            <span style={{ ...pixel, color: C.gold }} className="text-[60px] font-bold leading-none">{STATIC_DATA.xp}</span>
           </div>
 
           <Frame frame="shopWide" border={14} className="mt-3 w-full">
