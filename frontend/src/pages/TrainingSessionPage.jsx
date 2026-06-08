@@ -97,56 +97,128 @@ function calcAngle(a, b, c) {
   return deg;
 }
 
-// ─── Push-up rep + form analyser ──────────────────────────────────────────
+// ─── Push-up rep + form analyser — mirrors ippt.py exactly ───────────────
+//
+// Python reference (ippt.py):
+//   angle  = calculate_angle(shoulder, elbow, wrist)   ← LEFT side only
+//   angle2 = calculate_angle(shoulder, hip, knee)       ← LEFT side only
+//   stage "up"   when angle > 170
+//   rep counted  when angle < 65 AND stage=="up" AND angle2 > 150
+//   feedback:    "MAINTAIN FORM" if angle<65 AND angle2>150, else "GO LOWER"
+//
+// On top of that we add:
+//   - visibility gates so bad detections don't silently count
+//   - shoulder-width proximity check ("move back")
+//   - visibility-based accuracy score with form deductions
+//
 function analysePushup(landmarks, stateRef) {
   const LM = window.POSE_LANDMARKS || {};
 
-  const ls = landmarks[LM.LEFT_SHOULDER ?? 11];
-  const le = landmarks[LM.LEFT_ELBOW ?? 13];
-  const lw = landmarks[LM.LEFT_WRIST ?? 15];
+  // ── Left-side only (matches Python) ──────────────────────────────────
+  const shoulder = landmarks[LM.LEFT_SHOULDER ?? 11]; // ls
+  const elbow    = landmarks[LM.LEFT_ELBOW    ?? 13]; // le
+  const wrist    = landmarks[LM.LEFT_WRIST    ?? 15]; // lw
+  const hip      = landmarks[LM.LEFT_HIP      ?? 23]; // lh
+  const knee     = landmarks[LM.LEFT_KNEE     ?? 25]; // lk
+
+  // Also grab right-side + ankles for visibility checks and framing only
   const rs = landmarks[LM.RIGHT_SHOULDER ?? 12];
-  const re = landmarks[LM.RIGHT_ELBOW ?? 14];
-  const rw = landmarks[LM.RIGHT_WRIST ?? 16];
-  const lh = landmarks[LM.LEFT_HIP ?? 23];
-  const rh = landmarks[LM.RIGHT_HIP ?? 24];
-  const lk = landmarks[LM.LEFT_KNEE ?? 25];
-  const rk = landmarks[LM.RIGHT_KNEE ?? 26];
+  const re = landmarks[LM.RIGHT_ELBOW    ?? 14];
+  const rh = landmarks[LM.RIGHT_HIP      ?? 24];
+  const la = landmarks[LM.LEFT_ANKLE     ?? 27];
+  const ra = landmarks[LM.RIGHT_ANKLE    ?? 28];
 
-  if (!ls || !le || !lw || !rs || !re || !rw || !lh || !rh) return null;
+  const vis = (lm) => lm?.visibility ?? 0;
 
-  const leftElbowAngle = calcAngle(ls, le, lw);
-  const rightElbowAngle = calcAngle(rs, re, rw);
-  const elbowAngle = (leftElbowAngle + rightElbowAngle) / 2;
+  // Average visibility across both sides for robustness
+  const shoulderVis = (vis(shoulder) + vis(rs)) / 2;
+  const elbowVis    = (vis(elbow)    + vis(re)) / 2;
+  const hipVis      = (vis(hip)      + vis(rh)) / 2;
+  const ankleVis    = (vis(la)       + vis(ra)) / 2;
 
-  // Hip alignment (body should be straight)
-  const midShoulder = { x: (ls.x + rs.x) / 2, y: (ls.y + rs.y) / 2 };
-  const midHip = { x: (lh.x + rh.x) / 2, y: (lh.y + rh.y) / 2 };
-  const midKnee = lk && rk ? { x: (lk.x + rk.x) / 2, y: (lk.y + rk.y) / 2 } : null;
-  const bodyAngle = midKnee
-    ? calcAngle(midShoulder, midHip, midKnee)
-    : null;
+  const { reps, phase } = stateRef.current;
 
-  // Rep counting: down = elbow < 90°, up = elbow > 160°
-  const s = stateRef.current;
-  if (elbowAngle < 90 && s.phase !== "down") {
-    stateRef.current = { ...s, phase: "down" };
-  } else if (elbowAngle > 160 && s.phase === "down") {
-    stateRef.current = { ...s, phase: "up", reps: s.reps + 1 };
+  // ── Framing gates: visibility too low → return actionable message ────
+  if (shoulderVis < 0.5)
+    return { status: "no_body",   issues: ["No body detected — step into frame"], accuracy: 0,  reps, elbowAngle: null, bodyAngle: null, phase };
+  if (elbowVis < 0.4)
+    return { status: "too_close", issues: ["Move back — arms are cut off"],        accuracy: 10, reps, elbowAngle: null, bodyAngle: null, phase };
+  if (hipVis < 0.35)
+    return { status: "too_close", issues: ["Move back — show full body"],           accuracy: 20, reps, elbowAngle: null, bodyAngle: null, phase };
+  if (!shoulder || !elbow || !wrist || !hip)
+    return null;
+
+  // ── Orientation gate: must be horizontal (lying in push-up position) ──
+  // MediaPipe y increases downward. Standing = large shoulder-to-hip y gap.
+  // Lying horizontal = shoulder.y ≈ hip.y (gap < 0.2 in normalised coords).
+  const bodyVerticalDiff = Math.abs(shoulder.y - hip.y);
+  if (bodyVerticalDiff >= 0.2) {
+    return {
+      status: "not_ready",
+      issues: ["Get into push-up position"],
+      accuracy: 0,
+      reps: stateRef.current.reps,
+      elbowAngle: null,
+      bodyAngle: null,
+      phase: stateRef.current.phase,
+    };
   }
 
-  // Form feedback
-  const issues = [];
-  if (elbowAngle < 60) issues.push("Go lower slowly");
-  if (bodyAngle !== null && bodyAngle < 155) issues.push("Keep hips level");
-  if (leftElbowAngle - rightElbowAngle > 20) issues.push("Balance arm push");
+  // ── Angles — exact Python formula, left side only ────────────────────
+  const angle  = calcAngle(shoulder, elbow, wrist);
+  const angle2 = knee ? calcAngle(shoulder, hip, knee) : null;
 
-  const accuracy =
-    issues.length === 0 ? 98 : issues.length === 1 ? 85 : 70;
+  // ── Rep counting — exact Python thresholds ───────────────────────────
+  const s = stateRef.current;
+  if (angle > 170 && s.phase !== "up") {
+    stateRef.current = { ...s, phase: "up" };
+  }
+  if (angle < 65 && s.phase === "up" && angle2 !== null && angle2 > 150) {
+    stateRef.current = { ...s, phase: "down", reps: s.reps + 1 };
+  }
+
+  // ── Feedback ─────────────────────────────────────────────────────────
+  const atBottom     = angle < 65;
+  const atTop        = angle > 150;
+  const bodyStr      = angle2 !== null && angle2 > 150;
+  const maintainForm = atBottom && bodyStr;
+
+  const issues = [];
+
+  if (maintainForm) {
+    // Perfect bottom — green badge
+  } else if (atBottom && !bodyStr) {
+    issues.push("Keep hips level");
+  } else if (!atTop && !atBottom) {
+    issues.push("Go lower");
+  }
+  // atTop between reps → no issues → green
+
+  // ── Additional framing cues (beyond Python) ───────────────────────────
+  // Shoulder width in normalised coords — how far back the user is
+  const shoulderWidth = rs ? Math.abs(shoulder.x - rs.x) : null;
+  if (shoulderWidth !== null && shoulderWidth < 0.12)
+    issues.unshift("Move backward — too close");
+  else if (shoulderWidth !== null && shoulderWidth > 0.55)
+    issues.unshift("Move closer to camera");
+
+  if (ankleVis < 0.2 && hipVis > 0.5)
+    issues.push("Move back — legs cut off");
+
+  // ── Accuracy: visibility base − form deductions ───────────────────────
+  const visScore = Math.round(
+    (shoulderVis * 0.3 + elbowVis * 0.4 + hipVis * 0.3) * 100
+  );
+  let deductions = 0;
+  if (angle2 !== null && angle2 < 160) deductions += Math.round((160 - angle2) * 1.2); // hip sag
+  if (shoulderWidth !== null && shoulderWidth < 0.15) deductions += 20;                 // too close
+  const accuracy = Math.max(0, Math.min(99, visScore - deductions));
 
   return {
+    status: maintainForm ? "maintain" : "go_lower",
     reps: stateRef.current.reps,
-    elbowAngle: Math.round(elbowAngle),
-    bodyAngle: bodyAngle ? Math.round(bodyAngle) : null,
+    elbowAngle: Math.round(angle),
+    bodyAngle: angle2 !== null ? Math.round(angle2) : null,
     issues,
     accuracy,
     phase: stateRef.current.phase,
@@ -166,24 +238,30 @@ function HeartSignalIcon({ size = 14, color = "#ff4444" }) {
 
 // ─── Sub-components ────────────────────────────────────────────────────────
 
-function FeedbackBadge({ issues }) {
+function FeedbackBadge({ issues, status }) {
   if (!issues || issues.length === 0)
     return (
-      <div
-        className="rounded px-3 py-1 text-center"
-        style={{ background: "#2d4a1e", border: "1px solid #4caf50" }}
-      >
-        <span style={{ ...pixel, color: "#7dde5b", fontSize: 12 }}>
-          ✓ GOOD FORM
+      <div className="rounded px-3 py-1 text-center"
+        style={{ background: "#2d4a1e", border: "1px solid #4caf50" }}>
+        <span style={{ ...pixel, color: "#7dde5b", fontSize: 20 }}>
+          {status === "maintain" ? "✓ MAINTAIN FORM" : "✓ GOOD FORM"}
+        </span>
+      </div>
+    );
+  // Neutral amber for positional/setup cues (not form errors)
+  if (status === "not_ready")
+    return (
+      <div className="rounded px-3 py-1 text-center"
+        style={{ background: "#3a2e08", border: "1px solid #cc9900" }}>
+        <span style={{ ...pixel, color: "#ffd040", fontSize: 25 }}>
+          ⬇ {issues[0].toUpperCase()}
         </span>
       </div>
     );
   return (
-    <div
-      className="rounded px-3 py-1 text-center"
-      style={{ background: "#4a1e1e", border: "1px solid #cc4444" }}
-    >
-      <span style={{ ...pixel, color: "#ff6b6b", fontSize: 11 }}>
+    <div className="rounded px-3 py-1 text-center"
+      style={{ background: "#4a1e1e", border: "1px solid #cc4444" }}>
+      <span style={{ ...pixel, color: "#ff6b6b", fontSize: 25 }}>
         ⚠ {issues[0].toUpperCase()}
       </span>
     </div>
@@ -542,7 +620,7 @@ function ActiveView({ videoRef, canvasRef, stats, elapsed, onPause, onEnd, isPau
 
           {/* Form feedback */}
           <div className="absolute bottom-3 left-0 right-0 z-20 flex justify-center">
-            <FeedbackBadge issues={stats.issues} />
+            <FeedbackBadge issues={stats.issues} status={stats.status} />
           </div>
 
           <video
@@ -960,10 +1038,11 @@ export default function TrainingSessionPage({ mode, onNavigate }) {
   const [elapsed, setElapsed] = useState(0);
   const [stats, setStats] = useState({
     reps: 0,
-    accuracy: 100,
+    accuracy: 0,
     elbowAngle: null,
     bodyAngle: null,
-    issues: [],
+    issues: ["Waiting for detection..."],
+    status: "no_body",
     phase: "up",
   });
 
@@ -1037,9 +1116,19 @@ export default function TrainingSessionPage({ mode, onNavigate }) {
             return { x: lm.x * canvas.width, y: lm.y * canvas.height };
           };
 
-          // Gate: require at least one shoulder visible → body is in frame, not just face
+          // Gate: require at least one shoulder visible
           const bodyInFrame = pt(11, 0.5) || pt(12, 0.5);
-          if (!bodyInFrame) return;
+          if (!bodyInFrame) {
+            setStats((prev) => ({
+              ...prev,
+              accuracy: 0,
+              issues: ["No body detected — step into frame"],
+              status: "no_body",
+              elbowAngle: null,
+              bodyAngle: null,
+            }));
+            return;
+          }
 
           // Draw connections
           ctx.lineWidth = 2;
@@ -1082,8 +1171,19 @@ export default function TrainingSessionPage({ mode, onNavigate }) {
               elbowAngle: analysis.elbowAngle,
               bodyAngle: analysis.bodyAngle,
               issues: analysis.issues,
+              status: analysis.status ?? "ok",
             });
           }
+        } else {
+          // No landmarks at all — camera sees nothing
+          setStats((prev) => ({
+            ...prev,
+            accuracy: 0,
+            issues: ["No body detected — step into frame"],
+            status: "no_body",
+            elbowAngle: null,
+            bodyAngle: null,
+          }));
         }
       });
 
@@ -1131,7 +1231,7 @@ export default function TrainingSessionPage({ mode, onNavigate }) {
     setIsPaused(false);
     setElapsed(0);
     repStateRef.current = { phase: "up", reps: 0 };
-    setStats({ reps: 0, accuracy: 100, elbowAngle: null, bodyAngle: null, issues: [] });
+    setStats({ reps: 0, accuracy: 0, elbowAngle: null, bodyAngle: null, issues: ["Step into frame and get into push-up position"], status: "no_body" });
     await startCamera();
     startTimer();
   }, [startCamera, startTimer]);
