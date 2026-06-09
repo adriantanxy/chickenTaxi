@@ -21,17 +21,12 @@ import {
   Users as UsersIcon, Pen, Award, Sparkles,
   Check, CheckCircle2, Clock, Flag, Square,
 } from "lucide-react";
-import { AppShell, ActionButton, Ribbon } from "../ui";
+import { AppShell, Ribbon } from "../ui";
 import { ASSETS } from "../assets";
 import { ROUTES } from "../routes";
 import { C, pixel, M, USER as user } from "../theme";
 
 const JOURNAL_ART = ASSETS.journal;
-
-// ORD plate text position. The count text is centered, then nudged by these to
-// sit in the plate's empty area (clear of the baked-in soldier on the right).
-// Tweak these two numbers to slide the text — units are % of the plate.
-const ORD_TEXT_OFFSET = { x: -8, y: 0 }; // x: negative = left, y: negative = up
 
 // How far (px) to drop the pep-talk mascot below the speech bubble's baseline.
 // Bigger = lower (he dips toward the UNLOCK button). 0 = aligned with bubble.
@@ -59,21 +54,14 @@ const data = {
     enlisted: "20 APR 2024",
   },
   ord: { daysLeft: 143 },
-  capture: [
-    { type: "photo", label: "PHOTO", icon: <Image size={20} /> },
-    { type: "note", label: "NOTE", icon: <FileText size={20} /> },
-    { type: "ai", label: "AI MEMORY", icon: <Sparkles size={20} /> },
-    { type: "milestone", label: "MILESTONE", icon: <Star size={20} /> },
-  ],
   progress: {
     percent: 27,
     days: 143,
     total: 730,
     stats: [
-      { label: "MEMORIES", value: 42, art: "memories" },
-      { label: "PHOTOS", value: 31, art: "photo" },
-      { label: "MATES TAGGED", value: 18, art: "mates" },
-      { label: "MILESTONES", value: 8, art: "milestone" },
+      { label: "MEMORIES", value: 9, art: "memories" },
+      { label: "PHOTOS", value: 12, art: "photo" },
+      { label: "MATES TAGGED", value: 7, art: "mates" },
     ],
   },
 };
@@ -1124,26 +1112,6 @@ function JournalFlipbook({ onClose }) {
    LANDING VIEW
    ═══════════════════════════════════════════════════════════ */
 
-// A Quick Capture button: a gold-on-green lucide icon + label, each on its OWN
-// green leather backboard plate.
-function CaptureButton({ icon, label, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className="wgt-press flex flex-1 items-center justify-center gap-2 rounded-lg px-2 py-4"
-      style={{
-        color: C.textGold,
-        maxWidth: 230,
-        backgroundImage: "url(" + JOURNAL_ART.quickCaptureBoard + ")",
-        backgroundSize: "100% 100%",
-        backgroundRepeat: "no-repeat",
-      }}
-    >
-      <span className="shrink-0" style={{ color: C.gold }}>{icon}</span>
-      <span style={pixel} className="text-[15px] leading-none">{label}</span>
-    </button>
-  );
-}
 
 /* ═══════════════════════════════════════════════════════════
    KEEPSAKE UI — small scrapbook pieces used across the landing.
@@ -1564,24 +1532,27 @@ function TaskRow({ task, locked, onOpen }) {
       type="button"
       onClick={clickable ? onOpen : undefined}
       disabled={!clickable}
-      className={(clickable ? "wgt-press " : "") + "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left"}
+      className={(clickable ? "wgt-press " : "") + "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left"}
       style={{
-        background: task.done ? "transparent" : "#00000010",
+        // A clearly recessed well so rows read as distinct from the card.
+        background: task.done ? "#0000000a" : "#fdf6e6",
+        border: "1px solid " + (task.done ? "#00000012" : "#c2ab7e"),
+        boxShadow: clickable ? "inset 0 1px 0 #fff8, 0 1px 2px #0001" : "none",
         cursor: clickable ? "pointer" : "default",
-        opacity: locked ? 0.6 : 1,
+        opacity: locked ? 0.85 : 1,
       }}
     >
       {task.done
-        ? <CheckCircle2 size={16} style={{ color: C.green, flexShrink: 0 }} />
-        : <Square size={16} style={{ color: C.inkSoft, flexShrink: 0 }} />}
-      <Icon size={13} style={{ color: C.inkSoft, flexShrink: 0 }} />
+        ? <CheckCircle2 size={17} style={{ color: C.green, flexShrink: 0 }} />
+        : <Square size={17} style={{ color: clickable ? C.green : C.inkSoft, flexShrink: 0 }} />}
+      <Icon size={14} style={{ color: C.ink, opacity: 0.7, flexShrink: 0 }} />
       <span
-        style={{ ...pixel, color: C.ink, textDecoration: task.done ? "line-through" : "none", opacity: task.done ? 0.65 : 1 }}
-        className="flex-1 truncate text-[14px]"
+        style={{ ...pixel, color: C.ink, textDecoration: task.done ? "line-through" : "none", opacity: task.done ? 0.6 : 1 }}
+        className="flex-1 truncate text-[15px]"
       >
         {task.label}
       </span>
-      {clickable && <ChevronRight size={14} style={{ color: C.inkSoft, flexShrink: 0 }} />}
+      {clickable && <ChevronRight size={15} style={{ color: C.green, flexShrink: 0 }} />}
     </button>
   );
 }
@@ -1596,38 +1567,47 @@ function EventCard({ event, deadline, onOpenTask }) {
     <div
       className="rounded-lg p-2.5"
       style={{
-        background: C.cardInner,
-        border: isActive ? "2px solid " + C.gold : "2px solid transparent",
+        // Locked cards are visibly muted (cooler, darker tan) but still legible;
+        // active gets the gold border, done/active sit on the lighter card.
+        background: isLocked ? "#cbb88f" : C.cardInner,
+        border: "2px solid " + (isActive ? C.gold : isLocked ? "#a8916a" : "#c2ab7e"),
         boxShadow: isActive
-          ? "0 0 0 1px " + C.gold + "44, inset 0 1px 0 #fff4, 0 2px 6px #0003"
-          : "inset 0 1px 0 #fff4, 0 1px 2px #0002",
-        opacity: isLocked ? 0.7 : 1,
+          ? "0 0 0 1px " + C.gold + "55, inset 0 1px 0 #fff5, 0 2px 8px #0004"
+          : "inset 0 1px 0 #fff5, 0 1px 3px #0002",
       }}
     >
-      <div className="mb-1.5 flex items-center gap-2">
+      {/* Header. For DONE events this is the whole card — the tasks are hidden,
+          since a completed milestone just needs its name + a done mark. */}
+      <div className={(isDone ? "" : "mb-2 ") + "flex items-center gap-2"}>
         {/* status badge */}
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full" style={{ background: isDone ? C.green : isActive ? C.gold : "#0000001f" }}>
-          {isDone ? <Check size={14} style={{ color: C.textGold }} />
-            : isLocked ? <Lock size={13} style={{ color: C.inkSoft }} />
-            : <Flag size={13} style={{ color: C.bgHeader }} />}
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full" style={{ background: isDone ? C.green : isActive ? C.gold : "#8a7a55", boxShadow: "inset 0 1px 0 #fff4, 0 1px 2px #0003" }}>
+          {isDone ? <Check size={15} style={{ color: C.textGold }} />
+            : isLocked ? <Lock size={14} style={{ color: "#efe3c4" }} />
+            : <Flag size={14} style={{ color: C.bgHeader }} />}
         </span>
-        <span style={{ ...pixel, color: C.ink }} className="flex-1 truncate text-[17px]">{event.title}</span>
+        <span style={{ ...pixel, color: C.ink }} className="flex-1 truncate text-[18px]">{event.title}</span>
         {isActive && <CountdownChip deadline={deadline} />}
-        {isDone && <span style={{ ...pixel, ...M }} className="text-[11px]">DONE</span>}
-        {isLocked && <span style={{ ...pixel, ...M }} className="text-[11px]">LOCKED</span>}
+        {isDone && <span style={{ ...pixel, color: C.green }} className="text-[12px] font-bold">DONE</span>}
+        {isLocked && (
+          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5" style={{ ...pixel, fontSize: 11, color: "#efe3c4", background: "#6b5c3e" }}>
+            <Lock size={10} /> LOCKED
+          </span>
+        )}
       </div>
-      <div className="space-y-1">
-        {event.tasks.map(function (t) {
-          return (
-            <TaskRow
-              key={t.id}
-              task={t}
-              locked={isLocked}
-              onOpen={function () { onOpenTask(event, t); }}
-            />
-          );
-        })}
-      </div>
+      {!isDone && (
+        <div className="space-y-1">
+          {event.tasks.map(function (t) {
+            return (
+              <TaskRow
+                key={t.id}
+                task={t}
+                locked={isLocked}
+                onOpen={function () { onOpenTask(event, t); }}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -1649,23 +1629,23 @@ function LettersEventCard({ event, letters, onWriteLetter, onOpenLetter }) {
           : "0 0 0 1px " + C.gold + "44, inset 0 1px 0 #fff4, 0 2px 6px #0003",
       }}
     >
-      <div className="mb-1.5 flex items-center gap-2">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full" style={{ background: complete ? C.green : C.gold }}>
-          {complete ? <Check size={14} style={{ color: C.textGold }} /> : <Mail size={13} style={{ color: C.bgHeader }} />}
+      <div className="mb-2 flex items-center gap-2">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full" style={{ background: complete ? C.green : C.gold, boxShadow: "inset 0 1px 0 #fff4, 0 1px 2px #0003" }}>
+          {complete ? <Check size={15} style={{ color: C.textGold }} /> : <Mail size={14} style={{ color: C.bgHeader }} />}
         </span>
-        <span style={{ ...pixel, color: C.ink }} className="flex-1 truncate text-[17px]">{event.title}</span>
+        <span style={{ ...pixel, color: C.ink }} className="flex-1 truncate text-[18px]">{event.title}</span>
         {/* counter chip — X/10 written */}
         <span
-          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
-          style={{ ...pixel, fontSize: 11, color: C.textGold, background: complete ? C.green : C.bgHeader, border: "1px solid " + C.gold + "66" }}
+          className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5"
+          style={{ ...pixel, fontSize: 11, color: C.textGold, background: complete ? C.green : C.bgHeader, border: "1px solid " + C.gold + "88", boxShadow: "inset 0 1px 0 #fff2" }}
         >
           {done}/{LETTERS_TOTAL} WRITTEN
         </span>
       </div>
 
       {/* progress bar */}
-      <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full" style={{ background: "#0000002a" }}>
-        <div className="h-full rounded-full" style={{ width: (done / LETTERS_TOTAL) * 100 + "%", background: "linear-gradient(90deg," + C.gold + "," + C.greenLit + ")" }} />
+      <div className="mb-2.5 h-2 w-full overflow-hidden rounded-full" style={{ background: "#00000033", boxShadow: "inset 0 1px 2px #0004" }}>
+        <div className="h-full rounded-full" style={{ width: (done / LETTERS_TOTAL) * 100 + "%", background: "linear-gradient(90deg," + C.gold + "," + C.greenLit + ")", boxShadow: "inset 0 1px 0 #fff4" }} />
       </div>
 
       {/* write-a-letter row (disabled once 10 are done) */}
@@ -1673,33 +1653,38 @@ function LettersEventCard({ event, letters, onWriteLetter, onOpenLetter }) {
         type="button"
         onClick={complete ? undefined : onWriteLetter}
         disabled={complete}
-        className={(complete ? "" : "wgt-press ") + "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left"}
-        style={{ background: complete ? "transparent" : "#00000010", cursor: complete ? "default" : "pointer", opacity: complete ? 0.6 : 1 }}
+        className={(complete ? "" : "wgt-press ") + "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left"}
+        style={{
+          background: complete ? "#0000000a" : "#fdf6e6",
+          border: "1px solid " + (complete ? "#00000012" : "#c2ab7e"),
+          boxShadow: complete ? "none" : "inset 0 1px 0 #fff8, 0 1px 2px #0001",
+          cursor: complete ? "default" : "pointer",
+        }}
       >
-        <Plus size={16} style={{ color: complete ? C.inkSoft : C.green, flexShrink: 0 }} />
-        <span style={{ ...pixel, color: C.ink }} className="flex-1 text-[14px]">
+        <Plus size={17} style={{ color: complete ? C.inkSoft : C.green, flexShrink: 0 }} />
+        <span style={{ ...pixel, color: C.ink, opacity: complete ? 0.6 : 1 }} className="flex-1 text-[15px]">
           {complete ? "All 10 letters written" : "Write a letter to yourself"}
         </span>
-        {!complete && <ChevronRight size={14} style={{ color: C.inkSoft, flexShrink: 0 }} />}
+        {!complete && <ChevronRight size={15} style={{ color: C.green, flexShrink: 0 }} />}
       </button>
 
       {/* letters written so far */}
       {letters.length > 0 && (
-        <div className="mt-1.5 space-y-1">
+        <div className="mt-2 space-y-1">
           {letters.map(function (lt, i) {
             return (
               <button
                 key={lt.id}
                 type="button"
                 onClick={function () { onOpenLetter(lt); }}
-                className="wgt-press flex w-full items-center gap-2 rounded-md px-2 py-1 text-left"
-                style={{ background: "#0000000d" }}
+                className="wgt-press flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left"
+                style={{ background: "#fdf6e6", border: "1px solid #c2ab7e" }}
               >
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full" style={{ background: C.green }}>
                   <span style={{ ...pixel, fontSize: 11, color: C.textGold }}>{i + 1}</span>
                 </span>
-                <span style={{ ...pixel, color: C.ink }} className="flex-1 truncate text-[13px]">{lt.title}</span>
-                {lt.isDraft && <span style={{ ...pixel, ...M }} className="text-[10px]">DRAFT</span>}
+                <span style={{ ...pixel, color: C.ink }} className="flex-1 truncate text-[14px]">{lt.title}</span>
+                {lt.isDraft && <span style={{ ...pixel, fontSize: 10, color: "#efe3c4", background: "#8a7a55" }} className="rounded px-1.5 py-0.5">DRAFT</span>}
               </button>
             );
           })}
@@ -1856,7 +1841,6 @@ export default function JournalPage({ onNavigate }) {
     return function () { unsubscribeAuth(); };
   }, []);
 
-  const [captureType, setCaptureType] = useState(null); // photo|note|voice|milestone
   const [readEntry, setReadEntry] = useState(null);
 
   // KEY EVENTS — the NS-journey task checklist. Session-only: completing a task
@@ -2005,7 +1989,6 @@ export default function JournalPage({ onNavigate }) {
     <AppShell
       active={ROUTES.JOURNAL} onNavigate={onNavigate} user={user}
       icon={<BookOpen size={36} />} title="JOURNAL" subtitle="CAPTURE MOMENTS · REFLECT · GROW"
-      action={<ActionButton icon={<Plus size={20} />} onClick={function () { setCaptureType("note"); }}>NEW MEMORY</ActionButton>}
       fill
     >
       {/* No-scroll desk: the whole landing is laid out to fit one viewport on a
@@ -2017,9 +2000,9 @@ export default function JournalPage({ onNavigate }) {
           {/* ═══════════════ LEFT — the book + capture ═══════════════ */}
           <section className="flex min-h-0 flex-col gap-4 lg:col-span-7">
 
-            {/* ---- COVER (sealed) + ORD dog-tag + quick capture ---- */}
-            <div className="wgt-paper flex min-h-0 flex-1 flex-col p-3">
-              <div className="flex min-h-0 flex-1 items-stretch">
+            {/* ---- COVER (sealed) + ORD dog-tag ---- */}
+            <div className="wgt-paper flex min-h-0 flex-1 flex-col justify-center p-4">
+              <div className="flex min-h-0 flex-1 items-center">
 
                 {/* Closed-journal cover — the hero. Grows to fill the card so
                     there's no dead space. Sealed until ORD: darkened, not
@@ -2067,16 +2050,22 @@ export default function JournalPage({ onNavigate }) {
                       backgroundImage: "url(" + JOURNAL_ART.ordBackdrop + ")",
                       backgroundSize: "100% 100%",
                       backgroundRepeat: "no-repeat",
-                      aspectRatio: "600 / 300",
+                      aspectRatio: "1774 / 887",
+                      containerType: "inline-size",
                     }}
                   >
+                    {/* Text sits in the plate's LEFT clear area (the soldier is
+                        baked into the right ~24%). The box is bounded to that
+                        area and the content centered inside it, so nothing spills
+                        over the leather edges. Sizes use container-query units so
+                        they scale with the plate width. */}
                     <div
-                      className="absolute inset-0 flex flex-col items-center justify-center text-center"
-                      style={{ transform: "translate(" + ORD_TEXT_OFFSET.x + "%, " + ORD_TEXT_OFFSET.y + "%)" }}
+                      className="absolute flex flex-col items-center justify-center overflow-hidden text-center"
+                      style={{ top: "9%", bottom: "8%", left: "21%", right: "26%" }}
                     >
-                      <p style={{ ...pixel, color: C.gold }} className="text-[12px] leading-none tracking-wide">LOCKED UNTIL ORD</p>
-                      <p style={{ ...pixel, color: "#efe3c4", textShadow: "0 2px 0 #00000055" }} className="text-[52px] leading-none">{data.ord.daysLeft}</p>
-                      <p style={{ ...pixel, color: C.gold }} className="text-[13px] leading-none tracking-[0.2em]">DAYS LEFT</p>
+                      <p style={{ ...pixel, color: C.gold, fontSize: "clamp(8px, 6cqw, 12px)" }} className="max-w-full truncate leading-none tracking-wide">LOCKED UNTIL ORD</p>
+                      <p style={{ ...pixel, color: "#efe3c4", textShadow: "0 2px 0 #00000055", fontSize: "clamp(30px, 26cqw, 50px)" }} className="leading-none">{data.ord.daysLeft}</p>
+                      <p style={{ ...pixel, color: C.gold, fontSize: "clamp(8px, 5.5cqw, 13px)" }} className="max-w-full truncate leading-none tracking-[0.18em]">DAYS LEFT</p>
                     </div>
                   </div>
 
@@ -2092,24 +2081,6 @@ export default function JournalPage({ onNavigate }) {
                     {unlocked ? <BookOpen size={15} style={{ color: C.gold }} /> : <Lock size={15} style={{ color: C.gold }} />}
                     <span style={{ ...pixel, fontSize: 13 }}>{unlocked ? "LOCK (TEST)" : "UNLOCK (TEST)"}</span>
                   </button>
-                </div>
-              </div>
-
-              {/* QUICK CAPTURE — the daily-use hook. Each button rides on its own
-                  green leather backboard plate. */}
-              <div className="mt-3 shrink-0">
-                <StarTitle>QUICK CAPTURE</StarTitle>
-                <div className="flex items-stretch justify-between gap-3">
-                  {data.capture.map(function (c) {
-                    return (
-                      <CaptureButton
-                        key={c.label}
-                        icon={c.icon}
-                        label={c.label}
-                        onClick={function () { setCaptureType(c.type); }}
-                      />
-                    );
-                  })}
                 </div>
               </div>
             </div>
@@ -2132,7 +2103,7 @@ export default function JournalPage({ onNavigate }) {
                   <p style={{ ...pixel, ...M }} className="mt-0.5 text-center text-[16px]">{data.progress.days} / {data.progress.total} DAYS</p>
                 </div>
               </div>
-              <div className="mt-3 grid grid-cols-2 gap-2 xl:grid-cols-4">
+              <div className="mt-3 grid grid-cols-3 gap-2">
                 {data.progress.stats.map(function (s) {
                   return (
                     <div key={s.label} className="wgt-plate flex items-center gap-2 px-3 py-2.5" style={{ background: C.cardInner }}>
@@ -2167,18 +2138,6 @@ export default function JournalPage({ onNavigate }) {
       </div>
 
       {/* ---- modal interfaces (prototype, session state) ---- */}
-      {captureType === "ai" ? (
-        <AIMemoryModal
-          onClose={function () { setCaptureType(null); }}
-          onSave={function (payload) { handleSaveEntry(payload); }}
-        />
-      ) : captureType ? (
-        <CaptureModal
-          type={captureType}
-          onClose={function () { setCaptureType(null); }}
-          onSave={handleSaveEntry}
-        />
-      ) : null}
       {readEntry && (
         <EntryReadModal entry={readEntry} onClose={function () { setReadEntry(null); }} />
       )}
