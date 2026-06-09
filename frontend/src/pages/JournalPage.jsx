@@ -316,19 +316,6 @@ const CoverPage = forwardRef(function CoverPage(_props, ref) {
 // two inner edges overlap slightly and combine into one continuous page with no
 // gap. Left page shifts right; right page shifts left. Bump if a sliver shows.
 const SPINE_NUDGE = 2; // px each page moves toward the center
-const CleanLeftPage = forwardRef(function CleanLeftPage(_props, ref) {
-  return (
-    <div ref={ref} style={{ ...pageBase }}>
-      <img
-        src="/assets/journal/left_clean.png"
-        alt="Clean Left Page"
-        /* shift right by SPINE_NUDGE so the inner (right) edge crosses the spine */
-        style={{ position: "absolute", top: 0, left: SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
-      />
-    </div>
-  );
-});
-
 const CleanRightPage = forwardRef(function CleanRightPage(_props, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
@@ -810,6 +797,34 @@ const PopRight = forwardRef(function PopRight({ commanderNote }, ref) {
   );
 });
 
+// ── MEMORIES LEFT — "Memories you've been part of" photo wall, image only ──
+// Same setup as the other left pages: fills the page, nudged inward by
+// SPINE_NUDGE so the inner (right) edge meets the right page at the spine.
+const MemoriesLeft = forwardRef(function MemoriesLeft(_props, ref) {
+  return (
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/memories_left.png"
+        alt="Memories you've been part of"
+        style={{ position: "absolute", top: 0, left: SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
+      />
+    </div>
+  );
+});
+
+// ── MEMORIES RIGHT — second half of the photo-wall spread, image only ──
+const MemoriesRight = forwardRef(function MemoriesRight(_props, ref) {
+  return (
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/memories_right.png"
+        alt="More memories"
+        style={{ position: "absolute", top: 0, left: -SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
+      />
+    </div>
+  );
+});
+
 // ── LAST PAGE — final back cover, image only (self-contained) ──
 const LastPage = forwardRef(function LastPage(_props, ref) {
   return (
@@ -839,50 +854,65 @@ const LastPage = forwardRef(function LastPage(_props, ref) {
    ═══════════════════════════════════════════════════════════ */
 
 // Placeholder letters — the soldier writing to their FUTURE self at different
-// points across the two years. Replace text (and later art) with real entries.
+// points across the two years. `photo` fills the polaroid frame on the card;
+// reuses the existing journal database photos (cycled). Replace text/photo with
+// real entries later.
 const STACK_LETTERS = [
   {
     id: "L1",
     from: "TO FUTURE ME",
     date: "WEEK 1",
-    text: "Dear me,\n\nFirst night here and my hands won't stop shaking. I don't know anyone. I keep getting everything wrong.\n\nIf you're reading this — I hope you stopped being so scared. I hope you made it.\n\n— Day 1",
+    photo: "/assets/journal/database/letter1.png",
+    caption: "First light, ankle-deep",
+    text: "Dear future me,\n\nWe were crouched in the water before sunrise, rifles raised, nobody saying a word. The sky turned orange over the treeline and I forgot how cold my boots were.\n\nI don't know any of these guys yet. My hands won't stop shaking and I keep getting everything wrong.\n\nBut kneeling there in the dark with all of them, I felt like maybe I could belong here.\n\nI hope you remember this morning. I hope you stopped being so afraid.",
   },
   {
     id: "L2",
     from: "TO FUTURE ME",
     date: "WEEK 4",
-    text: "Hey,\n\nFirst route march done. Legs gone, but the whole section finished together and I've never felt anything like it.\n\nMaybe I belong here after all. Don't forget this feeling.\n\n— Still standing",
+    photo: "/assets/journal/database/letter2.png",
+    caption: "Night watch on the hill",
+    text: "Hey,\n\nTook this on the hill during night sentry. Hao Jie and I sat in the long grass under more stars than I've ever seen, reading old letters from home by torchlight.\n\nIt was freezing and we were dead tired, but neither of us wanted to move. We just talked until our shift ended.\n\nFour weeks in and these strangers already feel like brothers. The quiet moments are the ones I want to keep.\n\nDon't ever forget how this felt.",
   },
   {
     id: "L3",
     from: "TO FUTURE ME",
     date: "WEEK 9",
-    text: "Me again,\n\nField camp. Mud everywhere, slept in a shellscrape, ate cold rations. Somehow I loved it.\n\nWho even am I now? Whoever you are reading this — I think we turned out okay.\n\n— From the jungle",
+    photo: "/assets/journal/database/letter3.png",
+    caption: "Caught in the rain",
+    text: "Me again,\n\nField camp. The rain came down in sheets and didn't stop for two days. We stood there soaked to the bone, watching the sun set through the downpour, too tired to even complain.\n\nMud everywhere, slept in a shellscrape, ate cold rations. And somehow, against all odds, I loved every miserable minute of it.\n\nThere's something about being wet and freezing alongside the people you'd do anything for.\n\nWho even am I now? Whoever you are, I think we turned out okay.",
   },
   {
     id: "L4",
     from: "TO FUTURE ME",
     date: "WEEK 13",
-    text: "Halfway through BMT.\n\nThe guy who cried at the ferry feels like a stranger. I carried someone's pack today without being asked. I'd never have done that before.\n\nKeep going. We're closer than we think.\n\n— Getting there",
+    photo: "/assets/journal/database/letter4.png",
+    caption: "Crossing alone",
+    text: "Halfway through now.\n\nWe were moving through the woods when I had to wade across this stream alone, water up to my knees, rifle held high, the section already on the far bank.\n\nFor a second it was completely silent. Just me, the cold water, and the trees. The boy who cried at the ferry would never have made it this far.\n\nToday I carried someone's pack without being asked. I'd never have done that before.\n\nKeep going. You've crossed worse than this. Getting there, one step at a time.",
   },
   {
     id: "L5",
     from: "TO FUTURE ME",
     date: "WEEK 17",
-    text: "POP soon.\n\nI passed. Actually passed. The commander said he was proud and I had to look away.\n\nRemember this when civilian life gets soft — you did the thing you swore you couldn't.\n\n— Almost a soldier",
+    photo: "/assets/journal/database/letter5.png",
+    caption: "The boar incident",
+    text: "You will not believe this one.\n\nWe were on the move at dusk when a wild boar came charging out of the grass. The whole section scattered, packs flying, everyone yelling. I've never run so fast in my life.\n\nNobody got hurt, and once we caught our breath we couldn't stop laughing. That photo is pure chaos, the thing barrelling past while we ran.\n\nPOP is close now. I passed. The commander said he was proud and I had to look away.\n\nRemember this when civilian life gets soft. You did it all, boar and all. yippieee",
   },
   {
     id: "L6",
     from: "TO FUTURE ME",
     date: "ORD",
-    text: "Last one.\n\nTwo years. Done. If you're reading this as a civilian — don't let it fade. The brothers, the tiredness, the small proud moments.\n\nWe grew up here. Don't forget us.\n\n— Me, at the end",
+    photo: "/assets/journal/database/letter6.png",
+    caption: "The last one",
+    text: "The last letter.\n\nThis is us at the end, standing by the vehicle as the light went down, kitted up and ready, not a scared recruit among us anymore.\n\nTwo years. Done. The marches, the rain, the boar, the cold night watches, the brothers who became family. If you're reading this as a civilian, please don't let it fade.\n\nWe walked in not knowing who we'd become. We're walking out knowing exactly.\n\nThank you for not giving up on us. We grew up in here.\n\nDon't forget any of it.",
   },
 ];
 
-// One letter sheet. The card art (card.png — a postcard back, 2032x1347) is the
-// background; the same image is shared by every letter, with each letter's own
-// text laid over the LEFT message area of the postcard. The right half (divider,
-// "POSTCARD" header, stamp box, address lines) is part of the art.
+// One letter sheet. The card art (card.png — a lined notebook page, 2032x1347)
+// is the shared background: an empty polaroid frame sits TOP-LEFT, with ruled
+// lines to its right and full-width below. We drop the letter's photo into the
+// frame, a caption under it, and the handwritten text over the lines (beside
+// the frame, then carrying on full-width below it).
 function LetterSheet({ letter }) {
   return (
     <div
@@ -900,33 +930,78 @@ function LetterSheet({ letter }) {
         alt=""
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "fill", display: "block" }}
       />
-      {/* Message area — left half of the postcard. */}
+
+      {/* PHOTO — fills the baked polaroid frame top-left (frame interior
+          ~ x:6.5%-37%, y:9%-46%). objectFit:cover auto-crops any image. */}
+      <div style={{
+        position: "absolute",
+        top: "9.5%",
+        left: "7%",
+        width: "29%",
+        height: "37%",
+        overflow: "hidden",
+        boxShadow: "1px 2px 5px #0004",
+      }}>
+        <img
+          src={letter.photo}
+          alt=""
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
+      </div>
+
+      {/* CAPTION — centered under the polaroid frame (~ y:48%). */}
+      <div style={{
+        position: "absolute",
+        top: "46.2%",
+        left: "6%",
+        width: "31%",
+        textAlign: "center",
+      }}>
+        <span style={{ fontFamily: "'VT323', monospace", fontSize: 16, color: C.inkSoft }}>
+          {letter.caption}
+        </span>
+      </div>
+
+      {/* HEADER — the "TO FUTURE ME · WEEK" line, on the top ruled lines to the
+          right of the photo (~ x:41%-95%). */}
       <div
-        style={{
-          position: "absolute",
-          top: "16%",
-          left: "7%",
-          width: "40%",
-          height: "74%",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
+        className="flex items-baseline justify-between"
+        style={{ position: "absolute", top: "12%", left: "41%", width: "52%" }}
       >
-        <div className="flex items-baseline justify-between" style={{ marginBottom: 8 }}>
-          <span style={{ ...pixel, fontSize: 20, color: C.ink }}>{letter.from}</span>
-          <span style={{ ...pixel, fontSize: 16, color: C.inkSoft }}>{letter.date}</span>
-        </div>
+        <span style={{ ...pixel, fontSize: 17, color: C.ink }}>{letter.from}</span>
+        <span style={{ ...pixel, fontSize: 14, color: C.inkSoft }}>{letter.date}</span>
+      </div>
+
+      {/* BODY — handwriting over the lines: starts beside the photo (top band,
+          right of the frame) and carries on full-width below it. A left-side
+          float the height of the photo keeps the first lines clear of the
+          frame, then the text wraps full width underneath. */}
+      <div style={{
+        position: "absolute",
+        top: "22.5%",
+        left: "10%",
+        width: "86%",
+        height: "73%",
+        overflow: "hidden",
+      }}>
+        {/* spacer that clears the polaroid AND its caption for the opening lines,
+            so text only wraps back to full width once it's fully below them. The
+            body starts at 22.5% (≈104px); the photo+caption bottom is ≈232px, so
+            the spacer must span ≈128px. Rounded UP to a whole multiple of the
+            21.8px line pitch (6 lines ≈ 131px) so the resuming line lands on a
+            rule. */}
+        <div style={{ float: "left", width: "35%", height: 131 }} aria-hidden="true" />
         <p
           style={{
             fontFamily: "'VT323', monospace",
             fontSize: 19,
-            lineHeight: "21px",
+            /* Locked to the card's ruled-line spacing so each wrapped line lands
+               on a rule. The art has rules every 51px at native 1086px height,
+               which is 51 * 464/1086 ≈ 21.8px at the rendered CARD_H. */
+            lineHeight: "21.8px",
             color: C.ink,
             whiteSpace: "pre-wrap",
             margin: 0,
-            flex: 1,
-            overflow: "hidden",
           }}
         >
           {letter.text}
@@ -936,7 +1011,7 @@ function LetterSheet({ letter }) {
   );
 }
 
-// Card matches the postcard art aspect (2032 x 1347 ≈ 1.508), landscape.
+// Card matches the notebook art aspect (2032 x 1347 ≈ 1.508), landscape.
 const CARD_W = 700;
 const CARD_H = 464;
 
@@ -1288,16 +1363,17 @@ export function LetterStack({ letters = STACK_LETTERS, onClose }) {
   );
 }
 
-// ── ENVELOPE PLACEHOLDER — the on-page trigger that opens the letters overlay.
-// A simple closed-envelope box for now; later this becomes the real envelope
-// (flap-open animation, wax seal, etc.). Clicking it opens the focal overlay.
-function EnvelopePlaceholder({ onOpen }) {
+// ── ENVELOPE HOTSPOT — the on-page trigger that opens the letters overlay.
+// The envelope, title, and "Click to look at your letters" are all baked into
+// letters_left.png, so this is just an INVISIBLE clickable region positioned
+// over the painted envelope. Clicking it opens the focal overlay.
+function EnvelopeHotspot({ onOpen }) {
   const btnRef = useRef(null);
 
   // StPageFlip binds NATIVE mousedown/touchstart listeners on its own wrapper and
   // flips the page based on where you click (left side → previous page). React's
   // synthetic stopPropagation can't reliably stop a native listener on a parent,
-  // so we attach our own NATIVE capture-phase listeners on the envelope and stop
+  // so we attach our own NATIVE capture-phase listeners on the hotspot and stop
   // the event there — before it ever reaches StPageFlip's handler.
   React.useEffect(function () {
     const el = btnRef.current;
@@ -1318,69 +1394,28 @@ function EnvelopePlaceholder({ onOpen }) {
     };
   }, []);
 
+  // Sits over the painted envelope (roughly the lower-center of the art). The
+  // box is transparent; cursor:pointer is the only affordance, on top of the
+  // baked-in "Click to look at your letters" prompt.
   return (
     <button
       type="button"
       ref={btnRef}
       onClick={function (e) { e.stopPropagation(); onOpen(); }}
-      className="wgt-press"
       aria-label="Open letters to yourself"
       style={{
-        position: "relative",
-        width: 220,
-        height: 150,
-        background: "linear-gradient(#e8d6ac,#dcc491)",
-        border: "2px solid " + C.line,
-        borderRadius: 8,
-        boxShadow: "0 8px 22px #0005, inset 0 1px 0 #fff8",
+        position: "absolute",
+        top: "30%",
+        left: "20%",
+        width: "60%",
+        height: "66%",
+        background: "transparent",
+        border: "none",
+        padding: 0,
         cursor: "pointer",
+        zIndex: 3,
       }}
-    >
-      {/* Flap — a triangle folded down over the top half. */}
-      <span
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: 0,
-          height: 0,
-          borderLeft: "110px solid transparent",
-          borderRight: "110px solid transparent",
-          borderTop: "76px solid #d8c39a",
-          filter: "drop-shadow(0 2px 2px #0003)",
-        }}
-      />
-      {/* Wax seal — placeholder dot where the flap meets. */}
-      <span
-        style={{
-          position: "absolute",
-          top: 56,
-          left: "50%",
-          transform: "translateX(-50%)",
-          width: 34,
-          height: 34,
-          borderRadius: "50%",
-          background: "radial-gradient(circle at 38% 32%, #7a3a2a, #4a1f16)",
-          border: "2px solid " + C.gold,
-          boxShadow: "0 3px 8px #0007, inset 0 2px 3px #fff3",
-          zIndex: 2,
-        }}
-      />
-      <span
-        style={{
-          position: "absolute",
-          bottom: 14,
-          left: 0,
-          right: 0,
-          ...pixel,
-          fontSize: 15,
-          color: C.ink,
-          textAlign: "center",
-        }}
-      >
-        TAP TO OPEN
-      </span>
-    </button>
+    />
   );
 }
 
@@ -1439,43 +1474,43 @@ function LettersOverlay({ onClose }) {
   );
 }
 
-// ── LETTERS PAGE — clean parchment page holding the envelope trigger. In a
-// SHARED (public) view the letters-to-yourself are private, so the envelope is
-// replaced with a small "kept private" note instead of being openable. ──
+// ── LETTERS PAGE — the "Letters to My Future Self" page. The envelope, title,
+// and "Click to look at your letters" prompt are all baked into letters_left.png;
+// we overlay an invisible hotspot over the envelope that opens the overlay. In a
+// SHARED (public) view the letters are private, so the hotspot is replaced with
+// a small "kept private" note instead of being openable. ──
 const LettersPage = forwardRef(function LettersPage({ onOpenLetters, shared = false }, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
-        src="/assets/journal/left_clean.png"
-        alt=""
+        src="/assets/journal/letters_left.png"
+        alt="Letters to My Future Self"
+        /* Left page: nudged inward by SPINE_NUDGE so the inner (right) edge meets
+           the right page cleanly at the spine. */
         style={{ position: "absolute", top: 0, left: SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 24,
-          boxSizing: "border-box",
-        }}
-      >
-        <p style={{ ...pixel, fontSize: 22, color: C.ink, marginBottom: 22, letterSpacing: 1 }}>
-          LETTERS FROM YOURSELF
-        </p>
-        {shared ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, opacity: 0.7 }}>
-            <Lock size={34} style={{ color: C.inkSoft }} />
-            <p style={{ ...pixel, fontSize: 16, color: C.inkSoft, textAlign: "center", maxWidth: 220 }}>
-              These letters are private to the writer.
-            </p>
-          </div>
-        ) : (
-          <EnvelopePlaceholder onOpen={onOpenLetters} />
-        )}
-      </div>
+      {shared ? (
+        <div
+          style={{
+            position: "absolute",
+            top: "38%",
+            left: 0,
+            right: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 10,
+            opacity: 0.85,
+          }}
+        >
+          <Lock size={34} style={{ color: C.inkSoft }} />
+          <p style={{ ...pixel, fontSize: 16, color: C.inkSoft, textAlign: "center", maxWidth: 220 }}>
+            These letters are private to the writer.
+          </p>
+        </div>
+      ) : (
+        <EnvelopeHotspot onOpen={onOpenLetters} />
+      )}
     </div>
   );
 });
@@ -1794,8 +1829,8 @@ export function JournalFlipbook({ onClose, shared = false, shareLetters = false 
   // Share dialog (owner view only): pick whether to include the private letters,
   // then copy a hashed public link that encodes the choice.
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  // Fixed image pages: cover, enlistment L/R, BMT L/R, field camp L/R,
-  // POP L/R, new posting L/R, ORD L/R, last page.
+  // Page composition (14 leaves): cover, BMT L/R, enlistment L/R, field camp
+  // L/R, POP L/R, letters + clean, memories L/R, last page.
   const totalPages = 14;
 
   const onFlip = useCallback(function (e) { setCurrentPage(e.data); }, []);
@@ -1936,19 +1971,19 @@ export function JournalFlipbook({ onClose, shared = false, shareLetters = false 
           <FieldCampRight buddyNote={null} />
           <PopLeft />
           <PopRight commanderNote={null} />
-          {/* Blank clean spreads — placeholders for future content (these used to
-              be the New Posting and ORD spreads). */}
-          <CleanLeftPage />
-          <CleanRightPage />
-          {/* 2nd-to-last clean page: the envelope opens a focal letters overlay
-              (the cue-card stack) above the book. */}
-          {/* In a shared view, letters are hidden UNLESS the owner opted to
-              include them (shareLetters). Owner's own view always shows them. */}
+          {/* LETTERS spread: letters_left.png (envelope) opens a focal letters
+              overlay (the cue-card stack) above the book; the right page is a
+              clean parchment. In a shared view, letters are hidden UNLESS the
+              owner opted to include them (shareLetters). The owner's own view
+              always shows them. */}
           <LettersPage
             shared={shared && !shareLetters}
             onOpenLetters={function () { setLettersOpen(true); }}
           />
           <CleanRightPage />
+          {/* MEMORIES spread — the final content spread before the back cover. */}
+          <MemoriesLeft />
+          <MemoriesRight />
           <LastPage />
         </HTMLFlipBook>
       </div>
