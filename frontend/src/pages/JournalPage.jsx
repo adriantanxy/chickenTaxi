@@ -19,8 +19,9 @@ import {
   BookOpen, Plus, Image, FileText, Mic, Star, Mail, Lock,
   ChevronRight, ChevronLeft, Camera, X,
   Users as UsersIcon, Pen, Award, Sparkles,
+  Check, CheckCircle2, Clock, Flag, Square,
 } from "lucide-react";
-import { AppShell, ActionButton, Ribbon, Frame } from "../ui";
+import { AppShell, ActionButton, Ribbon } from "../ui";
 import { ASSETS } from "../assets";
 import { ROUTES } from "../routes";
 import { C, pixel, M, USER as user } from "../theme";
@@ -75,29 +76,77 @@ const data = {
       { label: "MILESTONES", value: 8, art: "milestone" },
     ],
   },
-  // The soldier's own captures — live, viewable any time (the book itself stays
-  // sealed until ORD). Newest first. `ago` is a pre-baked relative time so the
-  // mock feed reads naturally without date math.
-  recentEntries: [
-    { id: "e1", type: "photo", title: "Bunk after stand-by-bed", ago: "2d", date: "29 MAY 2024", text: "Finally passed inspection. Took a shot before the SGT could mess it up again." },
-    { id: "e2", type: "note", title: "Note to Hao Jie", ago: "3d", date: "28 MAY 2024", text: "Bro thanks for covering my guard duty when I was down with fever. I owe you one." },
-    { id: "e3", type: "voice", title: "Voice memo · 0:42", ago: "5d", date: "26 MAY 2024", text: "Recorded my thoughts after the 8km route march. Legs gone but feeling good." },
-    { id: "e4", type: "milestone", title: "First live firing", ago: "1w", date: "22 MAY 2024", text: "Range day. Hit marksman on the first try. Didn't expect that at all." },
-  ],
-  // Photos the COMMANDER assigned to this soldier's SECTION — scoped to the
-  // section (ALPHA 3-1), never the whole unit. The hook is "new from CMD".
-  sectionGallery: {
-    section: "ALPHA 3-1",
-    newCount: 12,
-    photos: [
-      { id: "g1", label: "Section photo", by: "2SG Faizal", date: "20 MAY 2024", glyph: "\u{1F4F8}" },
-      { id: "g2", label: "Route march start", by: "2SG Faizal", date: "17 MAY 2024", glyph: "\u{1F6A9}" },
-      { id: "g3", label: "Field camp brief", by: "3SG Lim", date: "25 JUN 2024", glyph: "\u{1F3D5}️" },
-      { id: "g4", label: "Range day", by: "2SG Faizal", date: "22 MAY 2024", glyph: "\u{1F3AF}" },
-      { id: "g5", label: "Cohesion BBQ", by: "3SG Lim", date: "30 MAY 2024", glyph: "\u{1F356}" },
-      { id: "g6", label: "Morning PT", by: "2SG Faizal", date: "15 MAY 2024", glyph: "\u{1F3C3}" },
+};
+
+/* ─────────────────────── key events ───────────────────────
+   The soldier's NS journey as a checklist of milestone EVENTS. Each event
+   carries a small set of TASKS (upload a photo, write a reflection/letter/note)
+   that, once done, feed the keepsake book. Status drives the UI:
+     done   — completed, dimmed, tasks shown as ✓ chips
+     active — current event: live countdown + clickable task rows
+     locked — upcoming: dimmed, not yet workable
+   Only the ACTIVE event shows a countdown (deadlineDays out from when it opened).
+   State is session-only — completing a task updates React state, no backend. */
+const KEY_EVENTS_SEED = [
+  {
+    id: "enlistment",
+    title: "ENLISTMENT",
+    status: "done",
+    deadlineDays: 5,
+    tasks: [
+      { id: "enlist-photo", type: "photo", label: "Upload photos", done: true, value: null },
+      { id: "enlist-reflect", type: "reflection", label: "Write a reflection", done: true, value: null },
     ],
   },
+  {
+    id: "field-camp",
+    title: "FIELD CAMP",
+    status: "active",
+    deadlineDays: 5,
+    tasks: [
+      { id: "fc-buddy", type: "buddy-note", label: "Write a note to your buddy", done: false, value: null },
+      { id: "fc-reflect", type: "reflection", label: "Write a reflection", done: false, value: null },
+    ],
+  },
+  {
+    id: "pop",
+    title: "POP",
+    status: "locked",
+    deadlineDays: 5,
+    tasks: [
+      { id: "pop-photo", type: "photo", label: "Upload a photo", done: false, value: null },
+    ],
+  },
+  {
+    id: "atec-1",
+    title: "ATEC 1",
+    status: "locked",
+    deadlineDays: 5,
+    tasks: [
+      { id: "atec-photo", type: "photo", label: "Upload a photo", done: false, value: null },
+      { id: "atec-reflect", type: "reflection", label: "Write a reflection", done: false, value: null },
+    ],
+  },
+  {
+    // Special "always open" event: a time-capsule of 10 letters to your future
+    // self. No deadline; it stays workable until all 10 are written. Rendered by
+    // a dedicated LettersEventCard (one row + an X/10 counter), not the normal
+    // task list — its `kind: "letters"` flags that.
+    id: "letters",
+    title: "LETTERS TO YOURSELF",
+    status: "letters",
+    kind: "letters",
+  },
+];
+
+// How many letters the soldier gets to write to their future self.
+const LETTERS_TOTAL = 10;
+
+// Map a text task type → the editor `kind` the shared editor expects.
+const TEXT_TASK_KINDS = {
+  reflection: "reflection",
+  "buddy-note": "note",
+  letter: "letter",
 };
 
 // Rotating one-liners the mascot "types out" in the right rail. Short so they
@@ -116,17 +165,6 @@ const PEP_LINES = [
   "Memories now, medals later.",
   "Hooyah! Another day conquered.",
 ];
-
-// Per-capture-type icon for the recent-entries feed. photo/milestone have pixel
-// art; note/voice fall back to emoji until art exists (🖉 note, 🎙 voice).
-const ENTRY_ART = {
-  photo: JOURNAL_ART.icons.photo,
-  milestone: JOURNAL_ART.icons.milestone,
-};
-const ENTRY_GLYPH = {
-  note: "\u{1F4DD}",
-  voice: "\u{1F399}️",
-};
 
 /* ── fake journal entries that the flipbook will render ── */
 const journalEntries = [
@@ -1113,28 +1151,6 @@ function CaptureButton({ icon, label, onClick }) {
    generated pixel art (flagged in the asset list returned to the user).
    ═══════════════════════════════════════════════════════════ */
 
-// A tilted polaroid with a pixel-art photo well. `glyph` is a placeholder for
-// art-to-be-generated; pass `tilt` (deg) and `tape` to taste.
-function Polaroid({ glyph, caption, h = 64, tilt = 0, tape = false, className = "", onClick }) {
-  const El = onClick ? "button" : "div";
-  return (
-    <El
-      onClick={onClick}
-      className={"wgt-polaroid " + (onClick ? "wgt-press " : "") + className}
-      style={{ transform: "rotate(" + tilt + "deg)", border: 0 }}
-      title={caption}
-    >
-      {tape && <span className="wgt-tape" style={{ top: -8, left: "50%", marginLeft: -28, transform: "rotate(-4deg)" }} />}
-      <div className="wgt-photo-well flex items-center justify-center" style={{ height: h }}>
-        <span style={{ fontSize: Math.min(h * 0.5, 34), filter: "drop-shadow(0 1px 2px #0006)" }}>{glyph}</span>
-      </div>
-      {caption && (
-        <p style={{ ...pixel, color: C.inkSoft }} className="mt-1 truncate text-center text-[11px]">{caption}</p>
-      )}
-    </El>
-  );
-}
-
 // Typewriter that cycles a list of lines: type out → hold → erase → next.
 // Returns the currently-visible substring. Pure timers, cleaned up on unmount.
 function useTypewriter(lines, { typeMs = 55, eraseMs = 28, holdMs = 1600 } = {}) {
@@ -1215,13 +1231,25 @@ function StarTitle({ children, right }) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   MODALS — capture (photo/note/voice/milestone), read view, lightbox.
-   All share ModalShell: a centered sepia card over a dim backdrop. These are
-   prototype interfaces — Save pushes a mock entry into session state; there is
-   no backend, so entries reset on refresh.
+   KEEPSAKE MODALS — the journal's ONE dialog language.
+   Every capture / task / AI-memory modal is a parchment page torn from the book
+   and taped onto the dark desk: washi-tape pin, deckled top edge, a typed VT323
+   header, an optional rubber-stamp context badge, and lined-paper fields.
+   ModalShell is the shared shell; fieldStyle / FieldLabel / SaveButton / the
+   StampBadgePill keep the form pieces consistent across all of them.
    ═══════════════════════════════════════════════════════════ */
 
-function ModalShell({ title, icon, onClose, children, footer, maxWidth = 460 }) {
+// The inked rubber-stamp pill used under a modal title to mark its context
+// (the event, the capture type, "TIME CAPSULE", etc.). Pairs with .wgt-stamp.
+function StampPill({ children }) {
+  return (
+    <span className="wgt-stamp" style={{ ...pixel, fontSize: 12 }}>
+      {children}
+    </span>
+  );
+}
+
+function ModalShell({ title, icon, stamp, onClose, children, footer }) {
   // Esc closes; the backdrop is a click target. Body content scrolls if tall.
   React.useEffect(function () {
     function onKey(e) { if (e.key === "Escape") onClose(); }
@@ -1230,57 +1258,61 @@ function ModalShell({ title, icon, onClose, children, footer, maxWidth = 460 }) 
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title}>
+    <div className="wgt-keepsake-overlay" role="dialog" aria-modal="true" aria-label={title}>
       <button
         type="button"
         aria-label="Close"
         onClick={onClose}
         className="absolute inset-0 h-full w-full cursor-default"
-        style={{ background: "#11100bcc" }}
+        style={{ background: "transparent" }}
       />
-      <Frame
-        frame="card"
-        className="relative flex max-h-[88vh] w-full flex-col overflow-hidden p-4"
-        style={{ maxWidth }}
-      >
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <Ribbon size={15}>
-            <span className="inline-flex items-center gap-2">{icon}{title}</span>
-          </Ribbon>
+      <div className="wgt-keepsake relative flex flex-col">
+        {/* brass file tab on the panel's top-left corner */}
+        <span className="wgt-keepsake-tab" aria-hidden="true">
+          <span style={{ ...pixel, fontSize: 12, letterSpacing: "0.14em" }}>JOURNAL</span>
+        </span>
+
+        {/* ── header band: gilt title + wax-seal close ── */}
+        <div className="wgt-keepsake-head flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2.5">
+              <span style={{ color: C.gold }}>{icon}</span>
+              <h2 style={{ ...pixel, color: C.gold, letterSpacing: "0.04em", textShadow: "0 1px 0 #0007" }} className="truncate text-[30px] leading-none">{title}</h2>
+            </div>
+            {stamp && <div className="mt-2.5"><StampPill>{stamp}</StampPill></div>}
+          </div>
           <button
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className="wgt-press flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-            style={{ background: C.green, color: C.textGold }}
+            className="wgt-keepsake-seal shrink-0"
           >
-            <X size={16} />
+            <X size={17} />
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
-        {footer && <div className="mt-3 flex justify-end gap-2">{footer}</div>}
-      </Frame>
+
+        {/* ── body: the form, centered in a content column ── */}
+        <div className="wgt-keepsake-doc">
+          <div className="wgt-keepsake-inner">
+            {children}
+            {footer && <div className="mt-6 flex justify-end gap-2">{footer}</div>}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-// Shared field styling for the capture forms.
+// Shared field styling for the capture forms — the dark sunken well.
 const fieldStyle = {
   ...pixel,
-  width: "100%",
-  background: "#f3e8d0",
-  border: "2px solid " + C.line,
-  borderRadius: 8,
-  padding: "8px 10px",
-  color: C.ink,
-  fontSize: 16,
-  boxSizing: "border-box",
+  fontSize: 18,
 };
 
 function FieldLabel({ children }) {
   return (
-    <p style={{ ...pixel, ...M }} className="mb-1 mt-3 text-[14px] uppercase tracking-wide first:mt-0">
-      {children}
+    <p style={{ ...pixel, color: C.gold }} className="mb-1.5 mt-5 flex items-center gap-1.5 text-[16px] uppercase tracking-[0.14em] first:mt-0">
+      <span style={{ color: C.gold, opacity: 0.7 }}>▸</span>{children}
     </p>
   );
 }
@@ -1290,11 +1322,16 @@ function SaveButton({ onClick, children = "SAVE TO JOURNAL" }) {
     <button
       type="button"
       onClick={onClick}
-      className="wgt-press flex items-center gap-2 rounded-lg border-2 px-4 py-2"
-      style={{ borderColor: C.gold + "99", background: C.green, color: C.textGold }}
+      className="wgt-press flex items-center gap-2 rounded-md border-2 px-5 py-2"
+      style={{
+        borderColor: C.gold,
+        background: "linear-gradient(180deg," + C.greenLit + "," + C.green + ")",
+        color: C.textGold,
+        boxShadow: "inset 0 1px 0 #fff2, 0 2px 5px #0004",
+      }}
     >
-      <Plus size={16} />
-      <span style={pixel} className="text-[16px]">{children}</span>
+      <Plus size={16} style={{ color: C.gold }} />
+      <span style={pixel} className="text-[17px]">{children}</span>
     </button>
   );
 }
@@ -1387,7 +1424,7 @@ function CaptureModal({ type, onClose, onSave }) {
   }
 
   return (
-    <ModalShell title={meta.label} icon={meta.icon} onClose={onClose}
+    <ModalShell title={meta.label} icon={meta.icon} stamp="QUICK CAPTURE" onClose={onClose}
       footer={
         <SaveButton onClick={handleSave}>
           {uploading ? "UPLOADING..." : "SAVE TO JOURNAL"}
@@ -1397,19 +1434,12 @@ function CaptureModal({ type, onClose, onSave }) {
       {type === "photo" && (
         <>
           <FieldLabel>Photo</FieldLabel>
-          {/* Clickable upload zone */}
+          {/* Clickable upload zone — a film-negative slot a polaroid drops into */}
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex w-full items-center justify-center rounded-lg"
-            style={{
-              height: 150,
-              background: "#2a3320",
-              border: "3px solid #4a4a28",
-              borderRadius: 4,
-              cursor: "pointer",
-              overflow: "hidden",
-            }}
+            className="wgt-photo-slot"
+            style={{ height: 160, cursor: "pointer" }}
           >
             {photoPreview ? (
               <img
@@ -1418,10 +1448,10 @@ function CaptureModal({ type, onClose, onSave }) {
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
             ) : (
-              <span style={{ ...pixel, color: C.textGold, opacity: 0.7, fontSize: 14 }}>
+              <span style={{ ...pixel, color: C.textGold, opacity: 0.85, fontSize: 16, textAlign: "center" }}>
                 Tap to add photo
                 <br />
-                <Camera size={16} style={{ display: "inline", marginTop: 4 }} />
+                <Camera size={18} style={{ display: "inline", marginTop: 6 }} />
               </span>
             )}
           </button>
@@ -1433,9 +1463,9 @@ function CaptureModal({ type, onClose, onSave }) {
             onChange={handlePhotoSelect}
           />
           <FieldLabel>Caption</FieldLabel>
-          <input style={fieldStyle} value={title} onChange={function (e) { setTitle(e.target.value); }} placeholder="What's happening?" />
+          <input className="wgt-field" style={fieldStyle} value={title} onChange={function (e) { setTitle(e.target.value); }} placeholder="What's happening?" />
           <FieldLabel>Tag mates (optional)</FieldLabel>
-          <input style={fieldStyle} value={text} onChange={function (e) { setText(e.target.value); }} placeholder="e.g. Hao Jie, Rafiq" />
+          <input className="wgt-field" style={fieldStyle} value={text} onChange={function (e) { setText(e.target.value); }} placeholder="e.g. Hao Jie, Rafiq" />
         </>
       )}
 
@@ -1453,33 +1483,28 @@ function EntryReadModal({ entry, onClose }) {
     milestone: { label: "MILESTONE", icon: <Star size={16} /> },
   }[entry.type] || { label: "ENTRY", icon: <FileText size={16} /> };
 
+  const stamp = entry.date + (entry.ago ? " · " + entry.ago + " AGO" : "");
   return (
-    <ModalShell title={meta.label} icon={meta.icon} onClose={onClose}>
-      <div className="mb-2 flex items-center gap-2">
-        <span style={{ ...pixel, ...M }} className="text-[13px]">{entry.date}</span>
-        {entry.ago && <span style={{ ...pixel, ...M }} className="text-[13px]">· {entry.ago} ago</span>}
-      </div>
-      <h2 style={{ ...pixel, color: C.ink }} className="text-[26px] leading-tight">{entry.title}</h2>
-
+    <ModalShell title={entry.title || meta.label} icon={meta.icon} stamp={stamp} onClose={onClose}>
       {entry.type === "photo" && (
-        <div className="mt-3">
+        <div className="wgt-photo-slot mb-1" style={{ height: 210 }}>
           {entry.photoURL
-            ? <img src={entry.photoURL} alt={entry.title} style={{ width: "100%", height: 200, objectFit: "cover", borderRadius: 4 }} />
-            : <PlaceholderImg label={entry.title} h={200} />
+            ? <img src={entry.photoURL} alt={entry.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            : <span style={{ ...pixel, color: C.textGold, opacity: 0.85, fontSize: 16 }}>{entry.title}</span>
           }
         </div>
       )}
       {entry.type === "voice" && (
-        <div className="mt-3 flex items-center gap-3 rounded-lg px-3 py-3" style={{ background: C.cardInner }}>
-          <span className="flex h-11 w-11 items-center justify-center rounded-full" style={{ background: C.green, color: C.textGold }}>
+        <div className="mb-1 flex items-center gap-3 rounded-md px-3 py-3" style={{ background: "#0000002e", boxShadow: "inset 0 2px 6px #00000055" }}>
+          <span className="flex h-11 w-11 items-center justify-center rounded-full" style={{ background: C.greenLit, color: C.gold, boxShadow: "inset 0 1px 0 #fff2" }}>
             <Mic size={20} />
           </span>
-          <div className="h-2 flex-1 rounded-full" style={{ background: "linear-gradient(90deg," + C.green + " 40%, #00000020 40%)" }} />
+          <div className="h-2 flex-1 rounded-full" style={{ background: "linear-gradient(90deg," + C.gold + " 40%, #00000040 40%)" }} />
         </div>
       )}
 
       {entry.text && (
-        <p style={{ fontFamily: "'VT323', monospace", color: C.ink }} className="mt-3 whitespace-pre-wrap text-[16px] leading-relaxed">
+        <p style={{ fontFamily: "'VT323', monospace", color: C.textGold }} className="mt-3 whitespace-pre-wrap text-[18px] leading-relaxed">
           {entry.text}
         </p>
       )}
@@ -1487,20 +1512,287 @@ function EntryReadModal({ entry, onClose }) {
   );
 }
 
-// Enlarged view of a commander-assigned section photo.
-function GalleryLightbox({ photo, section, onClose }) {
+/* ═══════════════════════════════════════════════════════════
+   KEY EVENTS COLUMN — the soldier's NS journey as a task checklist.
+   One continuous, scrollable card. Each event is a row; the ACTIVE event
+   expands its tasks as clickable rows with a live countdown. Done events
+   show ✓ chips; locked events are dimmed and not workable.
+   ═══════════════════════════════════════════════════════════ */
+
+// Per-task-type icon for the task rows.
+const TASK_ICON = {
+  photo: Image,
+  reflection: Pen,
+  letter: Mail,
+  "buddy-note": FileText,
+};
+
+// Live "X DAYS LEFT" chip for the active event. `deadline` is a timestamp (ms).
+// Counts down once a minute; amber at the 1-day mark, red once overdue.
+function CountdownChip({ deadline }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(function () {
+    const id = setInterval(function () { setNow(Date.now()); }, 60000);
+    return function () { clearInterval(id); };
+  }, []);
+
+  const msLeft = deadline - now;
+  const overdue = msLeft <= 0;
+  const daysLeft = Math.ceil(msLeft / 86400000);
+  const tone = overdue ? "#7a3a2a" : daysLeft <= 1 ? "#9a6a1a" : C.green;
+  const label = overdue
+    ? "OVERDUE"
+    : daysLeft + (daysLeft === 1 ? " DAY LEFT" : " DAYS LEFT");
+
   return (
-    <ModalShell title="SECTION PHOTO" icon={<Camera size={16} />} onClose={onClose} maxWidth={520}>
-      <PlaceholderImg label={photo.label} h={260} />
-      <h2 style={{ ...pixel, color: C.ink }} className="mt-3 text-[24px] leading-tight">{photo.label}</h2>
-      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span style={{ ...pixel, ...M }} className="text-[14px]">{photo.date}</span>
-        <span style={{ ...pixel, ...M }} className="text-[14px]">· {section}</span>
+    <span
+      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
+      style={{ ...pixel, fontSize: 11, color: C.textGold, background: tone, boxShadow: "inset 0 1px 0 #fff3" }}
+    >
+      <Clock size={11} /> {label}
+    </span>
+  );
+}
+
+// One task row. Active+incomplete rows are clickable (open the modal); done rows
+// show a filled check; locked rows are inert.
+function TaskRow({ task, locked, onOpen }) {
+  const Icon = TASK_ICON[task.type] || FileText;
+  const clickable = !locked && !task.done;
+  return (
+    <button
+      type="button"
+      onClick={clickable ? onOpen : undefined}
+      disabled={!clickable}
+      className={(clickable ? "wgt-press " : "") + "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left"}
+      style={{
+        background: task.done ? "transparent" : "#00000010",
+        cursor: clickable ? "pointer" : "default",
+        opacity: locked ? 0.6 : 1,
+      }}
+    >
+      {task.done
+        ? <CheckCircle2 size={16} style={{ color: C.green, flexShrink: 0 }} />
+        : <Square size={16} style={{ color: C.inkSoft, flexShrink: 0 }} />}
+      <Icon size={13} style={{ color: C.inkSoft, flexShrink: 0 }} />
+      <span
+        style={{ ...pixel, color: C.ink, textDecoration: task.done ? "line-through" : "none", opacity: task.done ? 0.65 : 1 }}
+        className="flex-1 truncate text-[14px]"
+      >
+        {task.label}
+      </span>
+      {clickable && <ChevronRight size={14} style={{ color: C.inkSoft, flexShrink: 0 }} />}
+    </button>
+  );
+}
+
+// One event block: header (status badge + title + countdown) and its task list.
+function EventCard({ event, deadline, onOpenTask }) {
+  const isDone = event.status === "done";
+  const isActive = event.status === "active";
+  const isLocked = event.status === "locked";
+
+  return (
+    <div
+      className="rounded-lg p-2.5"
+      style={{
+        background: C.cardInner,
+        border: isActive ? "2px solid " + C.gold : "2px solid transparent",
+        boxShadow: isActive
+          ? "0 0 0 1px " + C.gold + "44, inset 0 1px 0 #fff4, 0 2px 6px #0003"
+          : "inset 0 1px 0 #fff4, 0 1px 2px #0002",
+        opacity: isLocked ? 0.7 : 1,
+      }}
+    >
+      <div className="mb-1.5 flex items-center gap-2">
+        {/* status badge */}
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full" style={{ background: isDone ? C.green : isActive ? C.gold : "#0000001f" }}>
+          {isDone ? <Check size={14} style={{ color: C.textGold }} />
+            : isLocked ? <Lock size={13} style={{ color: C.inkSoft }} />
+            : <Flag size={13} style={{ color: C.bgHeader }} />}
+        </span>
+        <span style={{ ...pixel, color: C.ink }} className="flex-1 truncate text-[17px]">{event.title}</span>
+        {isActive && <CountdownChip deadline={deadline} />}
+        {isDone && <span style={{ ...pixel, ...M }} className="text-[11px]">DONE</span>}
+        {isLocked && <span style={{ ...pixel, ...M }} className="text-[11px]">LOCKED</span>}
       </div>
-      <div className="mt-3 inline-flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: C.cardInner }}>
-        <UsersIcon size={16} style={{ color: C.green }} />
-        <span style={{ ...pixel, color: C.ink }} className="text-[15px]">Assigned by {photo.by}</span>
+      <div className="space-y-1">
+        {event.tasks.map(function (t) {
+          return (
+            <TaskRow
+              key={t.id}
+              task={t}
+              locked={isLocked}
+              onOpen={function () { onOpenTask(event, t); }}
+            />
+          );
+        })}
       </div>
+    </div>
+  );
+}
+
+// The "LETTERS TO YOURSELF" event — always open until all 10 are written. Shows
+// a counter instead of a countdown, one "Write a letter" row, and the letters
+// written so far (click one to re-open/edit it).
+function LettersEventCard({ event, letters, onWriteLetter, onOpenLetter }) {
+  const done = letters.length;
+  const complete = done >= LETTERS_TOTAL;
+  return (
+    <div
+      className="rounded-lg p-2.5"
+      style={{
+        background: C.cardInner,
+        border: "2px solid " + (complete ? C.green : C.gold),
+        boxShadow: complete
+          ? "inset 0 1px 0 #fff4, 0 1px 2px #0002"
+          : "0 0 0 1px " + C.gold + "44, inset 0 1px 0 #fff4, 0 2px 6px #0003",
+      }}
+    >
+      <div className="mb-1.5 flex items-center gap-2">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full" style={{ background: complete ? C.green : C.gold }}>
+          {complete ? <Check size={14} style={{ color: C.textGold }} /> : <Mail size={13} style={{ color: C.bgHeader }} />}
+        </span>
+        <span style={{ ...pixel, color: C.ink }} className="flex-1 truncate text-[17px]">{event.title}</span>
+        {/* counter chip — X/10 written */}
+        <span
+          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
+          style={{ ...pixel, fontSize: 11, color: C.textGold, background: complete ? C.green : C.bgHeader, border: "1px solid " + C.gold + "66" }}
+        >
+          {done}/{LETTERS_TOTAL} WRITTEN
+        </span>
+      </div>
+
+      {/* progress bar */}
+      <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full" style={{ background: "#0000002a" }}>
+        <div className="h-full rounded-full" style={{ width: (done / LETTERS_TOTAL) * 100 + "%", background: "linear-gradient(90deg," + C.gold + "," + C.greenLit + ")" }} />
+      </div>
+
+      {/* write-a-letter row (disabled once 10 are done) */}
+      <button
+        type="button"
+        onClick={complete ? undefined : onWriteLetter}
+        disabled={complete}
+        className={(complete ? "" : "wgt-press ") + "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left"}
+        style={{ background: complete ? "transparent" : "#00000010", cursor: complete ? "default" : "pointer", opacity: complete ? 0.6 : 1 }}
+      >
+        <Plus size={16} style={{ color: complete ? C.inkSoft : C.green, flexShrink: 0 }} />
+        <span style={{ ...pixel, color: C.ink }} className="flex-1 text-[14px]">
+          {complete ? "All 10 letters written" : "Write a letter to yourself"}
+        </span>
+        {!complete && <ChevronRight size={14} style={{ color: C.inkSoft, flexShrink: 0 }} />}
+      </button>
+
+      {/* letters written so far */}
+      {letters.length > 0 && (
+        <div className="mt-1.5 space-y-1">
+          {letters.map(function (lt, i) {
+            return (
+              <button
+                key={lt.id}
+                type="button"
+                onClick={function () { onOpenLetter(lt); }}
+                className="wgt-press flex w-full items-center gap-2 rounded-md px-2 py-1 text-left"
+                style={{ background: "#0000000d" }}
+              >
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full" style={{ background: C.green }}>
+                  <span style={{ ...pixel, fontSize: 11, color: C.textGold }}>{i + 1}</span>
+                </span>
+                <span style={{ ...pixel, color: C.ink }} className="flex-1 truncate text-[13px]">{lt.title}</span>
+                {lt.isDraft && <span style={{ ...pixel, ...M }} className="text-[10px]">DRAFT</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// The whole KEY EVENTS card: ribbon header + scrollable list of EventCards.
+function KeyEventsColumn({ events, deadlines, letters, onOpenTask, onWriteLetter, onOpenLetter }) {
+  return (
+    <div className="wgt-paper flex min-h-0 flex-1 flex-col p-3">
+      <StarTitle>KEY EVENTS</StarTitle>
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+        {events.map(function (ev) {
+          if (ev.kind === "letters") {
+            return (
+              <LettersEventCard
+                key={ev.id}
+                event={ev}
+                letters={letters}
+                onWriteLetter={onWriteLetter}
+                onOpenLetter={onOpenLetter}
+              />
+            );
+          }
+          return (
+            <EventCard
+              key={ev.id}
+              event={ev}
+              deadline={deadlines[ev.id]}
+              onOpenTask={onOpenTask}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   KEY-EVENT TASK MODAL — photo upload tasks (the only non-text task type).
+   Text tasks (reflection / buddy-note / letter) use the shared AIMemoryModal
+   editor instead. On Save it hands the photo preview back; the parent flips
+   task.done. Session-only — nothing is uploaded to a backend here.
+   ═══════════════════════════════════════════════════════════ */
+function KeyEventTaskModal({ eventTitle, task, onClose, onSave }) {
+  const [photoPreview, setPhotoPreview] = useState(task.value || null);
+  const fileInputRef = useRef(null);
+
+  function handlePhotoSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setPhotoPreview(URL.createObjectURL(file));
+  }
+
+  function handleSave() {
+    if (!photoPreview) return;
+    onSave(photoPreview);
+    onClose();
+  }
+
+  return (
+    <ModalShell
+      title="UPLOAD PHOTO"
+      icon={<Image size={16} />}
+      stamp={eventTitle}
+      onClose={onClose}
+      footer={
+        <SaveButton onClick={handleSave}>
+          {task.done ? "UPDATE" : "MARK DONE"}
+        </SaveButton>
+      }
+    >
+      <FieldLabel>Photo</FieldLabel>
+      <button
+        type="button"
+        onClick={function () { fileInputRef.current?.click(); }}
+        className="wgt-photo-slot"
+        style={{ height: 200, cursor: "pointer" }}
+      >
+        {photoPreview ? (
+          <img src={photoPreview} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        ) : (
+          <span style={{ ...pixel, color: C.textGold, opacity: 0.85, fontSize: 16, textAlign: "center" }}>
+            Tap to add photo
+            <br />
+            <Camera size={18} style={{ display: "inline", marginTop: 6 }} />
+          </span>
+        )}
+      </button>
+      <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhotoSelect} />
     </ModalShell>
   );
 }
@@ -1566,11 +1858,88 @@ export default function JournalPage({ onNavigate }) {
 
   const [captureType, setCaptureType] = useState(null); // photo|note|voice|milestone
   const [readEntry, setReadEntry] = useState(null);
-  const [lightboxPhoto, setLightboxPhoto] = useState(null);
+
+  // KEY EVENTS — the NS-journey task checklist. Session-only: completing a task
+  // updates this state (no backend), so progress resets on refresh.
+  const [keyEvents, setKeyEvents] = useState(KEY_EVENTS_SEED);
+  // { event, task } currently open in the task modal, or null.
+  const [activeTask, setActiveTask] = useState(null);
+
+  // LETTERS TO YOURSELF — up to 10 letters, session-only (frontend demo). Each:
+  // { id, title, text, tagText, taggedMate, isDraft }. `activeLetter` is the one
+  // open in the editor: an existing letter (edit) or null (a brand-new letter).
+  const [letters, setLetters] = useState([]);
+  const [letterOpen, setLetterOpen] = useState(false);
+  const [activeLetter, setActiveLetter] = useState(null);
+
+  // Deadlines for ACTIVE events: deadlineDays out from first mount. Memoised so
+  // the countdown has a stable target across renders.
+  const eventDeadlines = React.useMemo(function () {
+    const base = Date.now();
+    const map = {};
+    KEY_EVENTS_SEED.forEach(function (ev) {
+      if (ev.deadlineDays) map[ev.id] = base + ev.deadlineDays * 86400000;
+    });
+    return map;
+  }, []);
+
+  // Save a letter — update in place if it already has an id, else append a new
+  // one (respecting the 10-letter cap).
+  function saveLetter(payload) {
+    setLetters(function (prev) {
+      const editingId = activeLetter && activeLetter.id;
+      if (editingId) {
+        return prev.map(function (lt) {
+          return lt.id === editingId
+            ? { ...lt, title: payload.title, text: payload.text, tagText: payload.tagText, taggedMate: payload.taggedMate, isDraft: payload.isDraft }
+            : lt;
+        });
+      }
+      if (prev.length >= LETTERS_TOTAL) return prev;
+      return prev.concat([{
+        id: "letter-" + Date.now(),
+        title: payload.title,
+        text: payload.text,
+        tagText: payload.tagText,
+        taggedMate: payload.taggedMate,
+        isDraft: payload.isDraft,
+      }]);
+    });
+  }
+
+  // Flip a task to done (and stash what they wrote / the photo preview).
+  function completeTask(eventId, taskId, value) {
+    setKeyEvents(function (prev) {
+      return prev.map(function (ev) {
+        if (ev.id !== eventId) return ev;
+        return {
+          ...ev,
+          tasks: ev.tasks.map(function (t) {
+            return t.id === taskId ? { ...t, done: true, value } : t;
+          }),
+        };
+      });
+    });
+  }
 
   const handleSaveEntry = async (payload) => {
     try {
       if (!payload) return;
+
+      // 0. Handle text REFLECTIONS from the reflection modal (title + body + tags,
+      //    no image). Drafts and final saves both land here; isDraft flags state.
+      if (payload.type === "reflection") {
+        await addDoc(collection(db, "journalEntries"), {
+          userId: auth.currentUser?.uid || "anonymous",
+          type: "note", // renders in feeds like a written note
+          caption: payload.title || "Untitled reflection",
+          text: payload.text || "",
+          taggedMates: payload.taggedMate || "",
+          isDraft: !!payload.isDraft,
+          createdAt: serverTimestamp(),
+        });
+        return;
+      }
 
       // 1. Handle AI Memory Engine Saves (Check for explicit payload properties)
       if (payload.promptDescription || payload.rawBlobUrl) {
@@ -1592,7 +1961,7 @@ export default function JournalPage({ onNavigate }) {
             caption: payload.caption || "AI Rendered Memory",
             photoURL: downloadURL, // ✅ Fixed: uses the actual download URL string variable
             createdAt: serverTimestamp(),
-            taggedMates: "Generated by AI",
+            taggedMates: payload.taggedMate || "Generated by AI",
             aiPromptDescription: payload.promptDescription || ""
           });
 
@@ -1783,78 +2152,16 @@ export default function JournalPage({ onNavigate }) {
             </div>
           </section>
 
-          {/* ═══════════════ RIGHT — live content ═══════════════ */}
+          {/* ═══════════════ RIGHT — key events checklist ═══════════════ */}
           <section className="flex min-h-0 flex-col gap-4 lg:col-span-5">
-
-            {/* ---- MY RECENT ENTRIES (live; the book stays sealed) ---- */}
-            <div className="wgt-paper flex min-h-0 flex-1 flex-col p-3">
-              <StarTitle right={<span style={{ ...pixel, ...M }} className="text-[11px]">LIVE</span>}>MY RECENT ENTRIES</StarTitle>
-              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
-                {entries.map(function (e) {
-                  return (
-                    <button
-                      key={e.id}
-                      onClick={function () { setReadEntry(e); }}
-                      className="wgt-press flex w-full items-center gap-3 rounded-lg p-2 text-left"
-                      style={{ background: C.cardInner, boxShadow: "inset 0 1px 0 #fff4, 0 1px 2px #0002" }}
-                    >
-                      {/* Mini-polaroid thumbnail. photo/milestone use pixel art;
-                          note/voice fall back to emoji until art exists. */}
-                      <div className="wgt-polaroid shrink-0" style={{ transform: "rotate(-3deg)", padding: "3px 3px 9px" }}>
-                        <div className="wgt-photo-well flex h-10 w-12 items-center justify-center overflow-hidden">
-                          {e.type === "photo" && e.photoURL
-                            ? <img src={e.photoURL} alt={e.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                            : ENTRY_ART[e.type]
-                              ? <PixIcon src={ENTRY_ART[e.type]} size={22} />
-                              : <span style={{ fontSize: 18 }}>{ENTRY_GLYPH[e.type] || ENTRY_GLYPH.note}</span>}
-                        </div>
-                      </div>
-                      <div className="min-w-0 flex-1 leading-tight">
-                        <p style={{ ...pixel, color: C.ink }} className="truncate text-[16px]">{e.title}</p>
-                        {e.text && <p style={{ ...pixel, ...M }} className="truncate text-[12px]">{e.text}</p>}
-                        <p style={{ ...pixel, ...M }} className="text-[11px]">{e.date}</p>
-                      </div>
-                      <span style={{ ...pixel, ...M }} className="shrink-0 text-[12px]">{e.ago}</span>
-                    </button>
-                  );
-                })}
-              </div>
-              <button className="wgt-press mt-2 flex shrink-0 w-full items-center justify-center gap-2 rounded-lg py-2" style={{ background: C.green, color: C.textGold, boxShadow: "inset 0 1px 0 #fff2, 0 1px 3px #0004" }}>
-                <span style={pixel} className="text-[15px]">VIEW ALL ENTRIES</span>
-                <ChevronRight size={15} />
-              </button>
-            </div>
-
-            {/* ---- SECTION GALLERY (commander-assigned, section-scoped) ---- */}
-            <div className="wgt-paper flex shrink-0 flex-col p-3">
-              <StarTitle
-                right={
-                  <span style={{ ...pixel, ...M }} className="flex items-center gap-1 text-[11px]">
-                    <UsersIcon size={10} /> {data.sectionGallery.section}
-                  </span>
-                }
-              >
-                SECTION GALLERY
-              </StarTitle>
-              <p style={{ ...pixel, ...M }} className="mb-2 flex items-center gap-1 text-[12px]">
-                <Camera size={12} />
-                <span style={{ color: C.green }}>{data.sectionGallery.newCount} new</span> from your commander
-              </p>
-              <div className="grid grid-cols-3 gap-2.5">
-                {data.sectionGallery.photos.map(function (p, i) {
-                  return (
-                    <Polaroid
-                      key={p.id}
-                      glyph={p.glyph}
-                      caption={p.label}
-                      h={62}
-                      tilt={[-3, 2, -1, 1, -2, 3][i % 6]}
-                      onClick={function () { setLightboxPhoto(p); }}
-                    />
-                  );
-                })}
-              </div>
-            </div>
+            <KeyEventsColumn
+              events={keyEvents}
+              deadlines={eventDeadlines}
+              letters={letters}
+              onOpenTask={function (event, task) { setActiveTask({ event, task }); }}
+              onWriteLetter={function () { setActiveLetter(null); setLetterOpen(true); }}
+              onOpenLetter={function (lt) { setActiveLetter(lt); setLetterOpen(true); }}
+            />
           </section>
         </div>
       </div>
@@ -1875,11 +2182,36 @@ export default function JournalPage({ onNavigate }) {
       {readEntry && (
         <EntryReadModal entry={readEntry} onClose={function () { setReadEntry(null); }} />
       )}
-      {lightboxPhoto && (
-        <GalleryLightbox
-          photo={lightboxPhoto}
-          section={data.sectionGallery.section}
-          onClose={function () { setLightboxPhoto(null); }}
+      {activeTask && TEXT_TASK_KINDS[activeTask.task.type] ? (
+        // Text tasks (reflection / buddy-note / letter) open the shared editor.
+        // Save draft / final save both persist via handleSaveEntry; a final save
+        // also marks the task done.
+        <AIMemoryModal
+          kind={TEXT_TASK_KINDS[activeTask.task.type]}
+          onClose={function () { setActiveTask(null); }}
+          onSave={function (payload) {
+            handleSaveEntry(payload);
+            if (!payload.isDraft) {
+              completeTask(activeTask.event.id, activeTask.task.id, payload.title || "Saved");
+            }
+          }}
+        />
+      ) : activeTask ? (
+        <KeyEventTaskModal
+          eventTitle={activeTask.event.title}
+          task={activeTask.task}
+          onClose={function () { setActiveTask(null); }}
+          onSave={function (value) { completeTask(activeTask.event.id, activeTask.task.id, value); }}
+        />
+      ) : null}
+      {letterOpen && (
+        // Letters-to-yourself editor — same editor as reflections, worded as a
+        // "letter". Frontend-only: saving appends/updates the session letters.
+        <AIMemoryModal
+          kind="letter"
+          initial={activeLetter}
+          onClose={function () { setLetterOpen(false); setActiveLetter(null); }}
+          onSave={function (payload) { saveLetter(payload); }}
         />
       )}
     </AppShell>

@@ -404,6 +404,252 @@ button {
 /* Month/year picker popover shares the modal's spring-in. */
 .wgt-pop { animation: wgt-pop 0.14s cubic-bezier(0.2, 0.8, 0.3, 1); transform-origin: top left; }
 
+/* ---- Field Dossier modal --------------------------------------------------
+   The journal's ONE modal language: one large, fully-green leather surface that
+   fills most of the screen. Gilt + light text on green, dark sunken wells for
+   fields. No inner cream panel — a single continuous surface. Used by every
+   capture / task / AI-memory dialog so they all read identically. */
+
+/* Backdrop: the darkened, blurred desk behind the full-size panel. */
+.wgt-keepsake-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.75rem, 3vh, 2.5rem);
+  background:
+    radial-gradient(80% 70% at 50% 40%, #2a311b66 0%, transparent 72%),
+    #0a0905e0;
+  backdrop-filter: blur(6px);
+  animation: wgt-fade 0.16s ease;
+}
+
+/* The green leather panel — fills the viewport (capped) and is ONE surface. */
+.wgt-keepsake {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  max-width: 980px;
+  max-height: 920px;
+  padding: 0;
+  background:
+    radial-gradient(120% 80% at 82% 0%, #4d5c3433 0%, transparent 55%),
+    linear-gradient(158deg, #45522f 0%, #3d4a2a 48%, #313c22 100%);
+  border: 1px solid #cca66166;
+  border-radius: 14px;
+  box-shadow:
+    inset 0 1px 0 #cca66130,
+    inset 0 0 0 1px #00000055,
+    inset 0 0 60px #00000035,
+    0 30px 80px -16px #000000cc,
+    0 10px 22px #00000080;
+  animation: wgt-keepsake-pop 0.24s cubic-bezier(0.18, 0.86, 0.24, 1);
+}
+/* Stitched dashed gilt seam just inside the leather edge. */
+.wgt-keepsake::before {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border: 1px dashed #cca66138;
+  border-radius: 8px;
+  pointer-events: none;
+}
+@keyframes wgt-keepsake-pop {
+  from { opacity: 0; transform: translateY(18px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* HEADER band — gilt type on green, separated by a gilt hairline. */
+.wgt-keepsake-head {
+  position: relative;
+  padding: 24px 30px 18px;
+  border-radius: 13px 13px 0 0;
+  border-bottom: 1px solid #cca66130;
+  box-shadow: inset 0 -1px 0 #00000040;
+}
+
+/* BODY — the form scrolls here. Same green surface, generous padding. */
+.wgt-keepsake-doc {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px 30px 28px;
+}
+/* Inner content column so fields don't stretch absurdly wide on the big panel.
+   It also fills the doc height (flex column) so a flex-1 textarea inside can
+   grow to consume the whole modal. */
+.wgt-keepsake-inner {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Brass-riveted file TAB on the panel's top-left corner. */
+.wgt-keepsake-tab {
+  position: absolute;
+  top: -13px; left: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 18px 6px;
+  background: linear-gradient(180deg, #d8b56a 0%, #b8924a 100%);
+  color: #2a2616;
+  border-radius: 7px 7px 2px 2px;
+  box-shadow: inset 0 1px 0 #fff5, inset 0 -2px 4px #00000035, 0 3px 6px #00000055;
+  z-index: 5;
+}
+.wgt-keepsake-tab::after {
+  content: "";
+  position: absolute;
+  right: 7px; top: 50%;
+  width: 4px; height: 4px;
+  margin-top: -2px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff7d8, #8a6a30);
+  box-shadow: 0 0 0 1px #00000033;
+}
+
+/* Wax-seal close button in the header corner. */
+.wgt-keepsake-seal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 30%, #9a3f2c, #5e2218);
+  color: #f0d6b8;
+  border: 1px solid #cca66166;
+  box-shadow: inset 0 1px 2px #ffffff35, inset 0 -2px 4px #00000060, 0 2px 5px #00000070;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+.wgt-keepsake-seal:hover { transform: rotate(-8deg) scale(1.06); filter: brightness(1.12); }
+.wgt-keepsake-seal:active { transform: scale(0.94); }
+
+/* Gilt section badge under the title — sits on the green, gilt outline. */
+.wgt-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 11px;
+  background: #ffffff0e;
+  border: 1px solid #cca66166;
+  border-radius: 4px;
+  color: #cca661;
+  letter-spacing: 0.12em;
+  box-shadow: inset 0 1px 0 #ffffff14;
+}
+
+/* Dark sunken WELL field — recessed into the green leather, gilt underline,
+   light text. Reads as a slot pressed into the surface. */
+.wgt-field {
+  width: 100%;
+  box-sizing: border-box;
+  background:
+    linear-gradient(180deg, #1f2715 0%, #283019 100%);
+  border: 1px solid #00000055;
+  border-bottom: 2px solid #cca66188;
+  border-radius: 5px;
+  padding: 10px 12px;
+  color: #ecdcb8;
+  box-shadow: inset 0 2px 6px #00000060, inset 0 -1px 0 #ffffff0c;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+}
+.wgt-field::placeholder { color: #9aa17f99; }
+.wgt-field:focus {
+  border-color: #cca66166;
+  border-bottom-color: #cca661;
+  box-shadow: inset 0 2px 6px #00000060, 0 0 0 3px #cca66133;
+}
+/* Lined textarea: faint ruled lines on the dark well. */
+.wgt-field-lined {
+  background-image:
+    linear-gradient(180deg, #1f2715, #283019),
+    repeating-linear-gradient(#0000 0 27px, #cca66124 27px 28px);
+  background-clip: padding-box;
+  line-height: 28px;
+}
+.wgt-field-lined:focus {
+  background-image:
+    linear-gradient(180deg, #1f2715, #283019),
+    repeating-linear-gradient(#0000 0 27px, #cca66144 27px 28px);
+}
+
+/* @-mention popover — the section-mate picker that drops under the textarea
+   while typing "@". A dark gilt-edged list of names. */
+.wgt-mention-pop {
+  position: absolute;
+  z-index: 70;
+  min-width: 220px;
+  max-height: 232px;
+  overflow-y: auto;
+  padding: 5px;
+  background: linear-gradient(180deg, #2a3219 0%, #222a14 100%);
+  border: 1px solid #cca66188;
+  border-radius: 8px;
+  box-shadow: 0 12px 30px #000000aa, inset 0 1px 0 #ffffff14;
+  animation: wgt-pop 0.12s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.wgt-mention-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 6px;
+  color: #ecdcb8;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+.wgt-mention-item:hover,
+.wgt-mention-item.is-active {
+  background: linear-gradient(180deg, #4d5c34, #3d4a2a);
+  color: #fff3d6;
+}
+.wgt-mention-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px; height: 26px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #5b6b3c, #313c22);
+  border: 1px solid #cca66155;
+  color: #cca661;
+}
+.wgt-mention-empty {
+  padding: 8px 10px;
+  color: #9aa17f;
+}
+
+/* Photo drop-slot: a film-negative well that reads as a place a polaroid goes.
+   White polaroid frame around a dark olive striped well. */
+.wgt-photo-slot {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 3px;
+  background:
+    repeating-linear-gradient(135deg, #2f3a20 0 10px, #28331c 10px 20px);
+  box-shadow: inset 0 0 0 1px #00000040, inset 0 2px 14px #00000055, 0 2px 6px #00000040;
+  border: 6px solid #fffdf6;
+  transition: filter 0.15s ease, transform 0.13s ease;
+}
+.wgt-photo-slot:hover { filter: brightness(1.08); transform: translateY(-1px); }
+
 /* Pixel-styled form inputs that sit on the sepia card. */
 .wgt-input {
   width: 100%;
