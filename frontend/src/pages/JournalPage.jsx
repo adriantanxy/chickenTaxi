@@ -823,6 +823,652 @@ const LastPage = forwardRef(function LastPage(_props, ref) {
   );
 });
 
+/* ═══════════════════════════════════════════════════════════
+   LETTER STACK — "cue card" letter viewer
+   A face-up pile of letters. The front letter flicks UP, scales toward you,
+   then tucks DOWN-AND-BACK behind the pile; the next letter rises into focus.
+   Loops forever. Driven by: click the stack, ← → arrows (when focused), or
+   drag the front card up. Pure GPU transforms (translate3d/rotateX/scale) on a
+   perspective stage, so it stays smooth. Placeholder letters now; swap `text`
+   (and later a background image) for real assets.
+
+   The math: each visible card gets a "slot" 0..N-1 where 0 = front. We render
+   them by slot with depth styling (deeper = smaller, dimmer, nudged up so you
+   see stacked edges). Advancing just rotates which letter sits in slot 0; the
+   leaving card animates along the toss arc before re-seating at the back.
+   ═══════════════════════════════════════════════════════════ */
+
+// Placeholder letters — the soldier writing to their FUTURE self at different
+// points across the two years. Replace text (and later art) with real entries.
+const STACK_LETTERS = [
+  {
+    id: "L1",
+    from: "TO FUTURE ME",
+    date: "WEEK 1",
+    text: "Dear me,\n\nFirst night here and my hands won't stop shaking. I don't know anyone. I keep getting everything wrong.\n\nIf you're reading this — I hope you stopped being so scared. I hope you made it.\n\n— Day 1",
+  },
+  {
+    id: "L2",
+    from: "TO FUTURE ME",
+    date: "WEEK 4",
+    text: "Hey,\n\nFirst route march done. Legs gone, but the whole section finished together and I've never felt anything like it.\n\nMaybe I belong here after all. Don't forget this feeling.\n\n— Still standing",
+  },
+  {
+    id: "L3",
+    from: "TO FUTURE ME",
+    date: "WEEK 9",
+    text: "Me again,\n\nField camp. Mud everywhere, slept in a shellscrape, ate cold rations. Somehow I loved it.\n\nWho even am I now? Whoever you are reading this — I think we turned out okay.\n\n— From the jungle",
+  },
+  {
+    id: "L4",
+    from: "TO FUTURE ME",
+    date: "WEEK 13",
+    text: "Halfway through BMT.\n\nThe guy who cried at the ferry feels like a stranger. I carried someone's pack today without being asked. I'd never have done that before.\n\nKeep going. We're closer than we think.\n\n— Getting there",
+  },
+  {
+    id: "L5",
+    from: "TO FUTURE ME",
+    date: "WEEK 17",
+    text: "POP soon.\n\nI passed. Actually passed. The commander said he was proud and I had to look away.\n\nRemember this when civilian life gets soft — you did the thing you swore you couldn't.\n\n— Almost a soldier",
+  },
+  {
+    id: "L6",
+    from: "TO FUTURE ME",
+    date: "ORD",
+    text: "Last one.\n\nTwo years. Done. If you're reading this as a civilian — don't let it fade. The brothers, the tiredness, the small proud moments.\n\nWe grew up here. Don't forget us.\n\n— Me, at the end",
+  },
+];
+
+// One letter sheet. The card art (card.png — a postcard back, 2032x1347) is the
+// background; the same image is shared by every letter, with each letter's own
+// text laid over the LEFT message area of the postcard. The right half (divider,
+// "POSTCARD" header, stamp box, address lines) is part of the art.
+function LetterSheet({ letter }) {
+  return (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        position: "relative",
+        borderRadius: 6,
+        boxShadow: "0 10px 24px #0006",
+        overflow: "hidden",
+      }}
+    >
+      <img
+        src="/assets/journal/card.png"
+        alt=""
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "fill", display: "block" }}
+      />
+      {/* Message area — left half of the postcard. */}
+      <div
+        style={{
+          position: "absolute",
+          top: "16%",
+          left: "7%",
+          width: "40%",
+          height: "74%",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
+        <div className="flex items-baseline justify-between" style={{ marginBottom: 8 }}>
+          <span style={{ ...pixel, fontSize: 20, color: C.ink }}>{letter.from}</span>
+          <span style={{ ...pixel, fontSize: 16, color: C.inkSoft }}>{letter.date}</span>
+        </div>
+        <p
+          style={{
+            fontFamily: "'VT323', monospace",
+            fontSize: 19,
+            lineHeight: "21px",
+            color: C.ink,
+            whiteSpace: "pre-wrap",
+            margin: 0,
+            flex: 1,
+            overflow: "hidden",
+          }}
+        >
+          {letter.text}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// Card matches the postcard art aspect (2032 x 1347 ≈ 1.508), landscape.
+const CARD_W = 700;
+const CARD_H = 464;
+
+// Resting placement for a card at depth `slot` in the pile (0 = front, facing
+// you). Deeper cards sit DOWN-and-RIGHT so their edges peek out from under the
+// front card — a visible, physical stack. Fully opaque (paper occludes); depth
+// reads from the offset, never transparency. Returns raw numbers so the render
+// loop can INTERPOLATE between slots as the user scrolls.
+function pileSlot(slot, count) {
+  const depth = Math.min(slot, count - 1);
+  return {
+    x: depth * 12,            // peek to the right
+    y: depth * 14,            // and down
+    z: -depth * 40,           // slight recede
+    s: 1 - depth * 0.035,     // barely shrink
+  };
+}
+
+// The front card's STRAIGHT UP-AND-OVER path, sampled at t∈[0,1]. t=0 = front
+// slot; t=1 lands exactly on the rear slot. It rises straight up (no sideways
+// swing), lifts toward you over the top of the pile, then comes down onto the
+// back. `rear` = rear slot numbers. Returns transform + a 0..1 `lift` (height
+// off the pile) for the contact shadow.
+const LIFT_UP = 150;     // px the card rises above the pile at the peak
+const LIFT_TOWARD = 140; // px it comes toward you (Z) at the peak
+function frontPath(t, rear) {
+  const e = t * t * (3 - 2 * t);                  // smoothstep along the slot lerp
+  const lift = Math.sin(Math.min(Math.max(t, 0), 1) * Math.PI); // 0→1→0 bump
+  const x = e * rear.x;                            // no swing — straight over
+  const y = e * rear.y - lift * LIFT_UP;           // up and over, then settle
+  const z = e * rear.z + lift * LIFT_TOWARD;       // toward you, then back
+  const s = (1 - e) + e * rear.s + lift * 0.06;    // grow slightly at the peak
+  const rotX = lift * 8;                            // gentle tilt as it lifts
+  return {
+    transform:
+      "translate3d(calc(-50% + " + x.toFixed(2) + "px), calc(-50% + " + y.toFixed(2) + "px), " + z.toFixed(2) + "px) rotateX(" + rotX.toFixed(2) + "deg) scale(" + s.toFixed(4) + ")",
+    lift,
+  };
+}
+
+function slotTransform(p) {
+  return (
+    "translate3d(calc(-50% + " + p.x.toFixed(2) + "px), calc(-50% + " + p.y.toFixed(2) + "px), " + p.z.toFixed(2) + "px) scale(" + p.s.toFixed(4) + ")"
+  );
+}
+
+// How much wheel delta equals one full card transition. Higher = scroll more.
+const WHEEL_PER_CARD = 360;
+
+export function LetterStack({ letters = STACK_LETTERS, onClose }) {
+  void onClose; // reserved: e.g. close overlay after the last letter (future)
+  const count = letters.length;
+  // `front` = index of the letter on top (React state — only changes on commit,
+  // so re-renders are rare). Everything in-flight is driven imperatively below.
+  const [front, setFront] = useState(0);
+  const frontRef = useRef(0);
+  React.useEffect(function () { frontRef.current = front; }, [front]);
+
+  // `prog` = signed scroll progress of the in-flight transition, kept in a REF
+  // (never state) so wheel ticks don't trigger React renders. 0 = settled;
+  // 0→1 = front going to the back (scroll down); 0→-1 = rear coming forward.
+  const progRef = useRef(0);    // the RENDERED progress (eased toward target)
+  const targetRef = useRef(0);  // where the wheel WANTS prog to be (accumulates)
+  const runningRef = useRef(false);
+  const stageRef = useRef(null);
+  const cardRefs = useRef([]);     // DOM nodes per letter, by index
+  const shadowRef = useRef(null);  // single contact-shadow node
+  const rafRef = useRef(0);
+  const snapRaf = useRef(0);
+  const idleTimer = useRef(0);
+  const counterRef = useRef(null); // the big "N" number node
+  const tickRefs = useRef([]);     // the 6 side ticks
+
+  // Paint the current prog directly onto the DOM. One pass, no React. Called
+  // from a single rAF so multiple wheel ticks in a frame coalesce into one paint
+  // → buttery 1:1 tracking.
+  const paint = useCallback(function paint() {
+    rafRef.current = 0;
+    const f = frontRef.current;
+    const prog = progRef.current;
+    const goingBack = prog >= 0;
+    const t = Math.min(1, Math.abs(prog));
+    const travellerSlot = goingBack ? 0 : (count - 1);
+    const rear = pileSlot(count - 1, count);
+
+    let travellerLift = 0;
+    let travellerNode = null;
+
+    for (let i = 0; i < count; i++) {
+      const node = cardRefs.current[i];
+      if (!node) continue;
+      const slot = (i - f + count) % count;
+      const isTraveller = slot === travellerSlot && t > 0.0001;
+
+      if (isTraveller) {
+        const pt = frontPath(goingBack ? t : 1 - t, rear);
+        node.style.transform = pt.transform;
+        // Float above the pile near the top of the arc; drop behind past the
+        // peak so it tucks UNDER as it lands.
+        const overPile = goingBack ? t < 0.7 : t > 0.3;
+        node.style.zIndex = overPile ? count + 5 : 0;
+        travellerLift = pt.lift;
+        travellerNode = node;
+      } else {
+        const from = pileSlot(slot, count);
+        const toSlot = (goingBack ? slot - 1 : slot + 1 + count) % count;
+        const to = pileSlot(toSlot, count);
+        const k = t;
+        const p = {
+          x: from.x + (to.x - from.x) * k,
+          y: from.y + (to.y - from.y) * k,
+          z: from.z + (to.z - from.z) * k,
+          s: from.s + (to.s - from.s) * k,
+        };
+        node.style.transform = slotTransform(p);
+        node.style.zIndex = String(count - Math.min(slot, count - 1));
+      }
+    }
+
+    // Contact shadow follows the traveller's lift.
+    const sh = shadowRef.current;
+    if (sh) {
+      if (travellerNode && travellerLift > 0.001) {
+        sh.style.opacity = String(0.34 * (1 - travellerLift * 0.8));
+        sh.style.width = CARD_W * (0.86 + travellerLift * 0.22) + "px";
+        sh.style.filter = "blur(" + (6 + travellerLift * 16) + "px)";
+        sh.style.transform = "translate(-50%, " + (CARD_H * 0.16 - travellerLift * 10) + "px)";
+      } else {
+        sh.style.opacity = "0";
+      }
+    }
+  }, [count]);
+
+  // Update the side indicator (counter + ticks) imperatively — never via React,
+  // so card boundaries don't trigger re-renders mid-scroll.
+  const paintIndicator = useCallback(function paintIndicator(nf) {
+    if (counterRef.current) counterRef.current.textContent = String(nf + 1);
+    for (let i = 0; i < count; i++) {
+      const tk = tickRefs.current[i];
+      if (tk) {
+        const on = i === nf;
+        tk.style.background = on ? C.gold : C.textGold;
+        tk.style.opacity = on ? "1" : "0.35";
+        tk.style.height = on ? "22px" : "10px";
+      }
+    }
+  }, [count]);
+
+  // Commit a whole step: advance/retreat the VISUAL front (ref only). The side
+  // indicator updates imperatively. `front` React state is synced lazily (not on
+  // the hot path) just so a remount/key change stays consistent — it does NOT
+  // drive the cards, so this never stalls the scroll.
+  const commit = useCallback(function commit(dir) {
+    const nf = (frontRef.current + dir + count) % count;
+    frontRef.current = nf;
+    paintIndicator(nf);
+    setFront(nf);
+  }, [count, paintIndicator]);
+
+  // The single persistent animation loop. Every frame it eases the RENDERED
+  // `prog` a fraction of the way toward `target`, commits whole-card rollovers,
+  // paints, and — when the wheel has gone quiet — pulls `target` to the nearest
+  // resting point (snap). This decouples steppy wheel notches from the motion:
+  // notches just bump `target`; the card always glides smoothly toward it.
+  const idleSinceRef = useRef(0);
+  const tick = useCallback(function tick() {
+    const now = performance.now();
+    // If the wheel's been quiet a moment, snap the TARGET to nearest rest.
+    if (now - idleSinceRef.current > 90) {
+      const tg = targetRef.current;
+      if (tg > 0.25) targetRef.current = 1;
+      else if (tg < -0.25) targetRef.current = -1;
+      else targetRef.current = 0;
+    }
+    // Ease rendered prog toward target (smoothing factor → higher = snappier).
+    const cur = progRef.current;
+    const tgt = targetRef.current;
+    let v = cur + (tgt - cur) * 0.18;
+    if (Math.abs(tgt - v) < 0.0015) v = tgt; // settle exactly
+    // Roll whole cards on BOTH prog and target together so indices stay aligned.
+    while (v >= 1) { commit(1); v -= 1; targetRef.current -= 1; }
+    while (v <= -1) { commit(-1); v += 1; targetRef.current += 1; }
+    progRef.current = v;
+    paint();
+    // Keep running until fully settled (prog == target == 0/at rest).
+    if (v !== targetRef.current || targetRef.current !== 0) {
+      rafRef.current = requestAnimationFrame(tick);
+    } else {
+      runningRef.current = false;
+    }
+  }, [paint, commit]);
+
+  const kick = useCallback(function kick() {
+    if (!runningRef.current) {
+      runningRef.current = true;
+      rafRef.current = requestAnimationFrame(tick);
+    }
+  }, [tick]);
+
+  function onWheel(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    // Accumulate intent into target; clamp so one flick can't overshoot wildly.
+    let tg = targetRef.current + e.deltaY / WHEEL_PER_CARD;
+    tg = Math.max(-2, Math.min(2, tg));
+    targetRef.current = tg;
+    idleSinceRef.current = performance.now();
+    kick();
+  }
+
+  // Arrow keys nudge the target by a whole card (smoothly eased by the loop).
+  function onKeyDown(e) {
+    if (e.key === "ArrowDown" || e.key === "ArrowRight" || e.key === " ") {
+      e.preventDefault(); targetRef.current = Math.round(targetRef.current) + 1; idleSinceRef.current = 0; kick();
+    } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+      e.preventDefault(); targetRef.current = Math.round(targetRef.current) - 1; idleSinceRef.current = 0; kick();
+    }
+  }
+
+  // Jump straight to a letter (tick click): set front, reset motion.
+  const jumpTo = useCallback(function jumpTo(i) {
+    cancelAnimationFrame(rafRef.current);
+    runningRef.current = false;
+    progRef.current = 0; targetRef.current = 0;
+    const dir = ((i - frontRef.current) % count + count) % count;
+    commit(dir);
+    paint();
+  }, [commit, paint, count]);
+
+  // Initial paint + cleanup.
+  React.useEffect(function () {
+    paint();
+    return function () {
+      cancelAnimationFrame(rafRef.current);
+      cancelAnimationFrame(snapRaf.current);
+      clearTimeout(idleTimer.current);
+    };
+  }, [paint]);
+
+  return (
+    <div
+      className="flex items-center"
+      style={{ width: "100%", justifyContent: "center", gap: 0, position: "relative" }}
+    >
+      <div className="flex flex-col items-center">
+        {/* Perspective stage. Scroll to move letters; arrow keys also work.
+            stopPropagation here keeps clicks/scroll on the cards from bubbling
+            up to the overlay backdrop (which would close it) — but clicks in the
+            empty margins around the stack DO bubble, so clicking outside closes. */}
+        <div
+          ref={stageRef}
+          role="button"
+          tabIndex={0}
+          aria-label="Letters — scroll to move the top letter up and over to the back"
+          onWheel={onWheel}
+          onClick={function (e) { e.stopPropagation(); }}
+          onKeyDown={function (e) { e.stopPropagation(); onKeyDown(e); }}
+          style={{
+            position: "relative",
+            width: 820,
+            height: 600,
+            perspective: 1900,
+            outline: "none",
+            touchAction: "none",
+            cursor: "ns-resize",
+          }}
+        >
+          {/* Single contact shadow, positioned by the paint loop. */}
+          <div
+            ref={shadowRef}
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              width: CARD_W * 0.86,
+              height: 26,
+              borderRadius: "50%",
+              background: "#000",
+              opacity: 0,
+              zIndex: 0,
+              pointerEvents: "none",
+              transform: "translate(-50%, " + CARD_H * 0.16 + "px)",
+            }}
+          />
+          {letters.map(function (letter, i) {
+            return (
+              <div
+                key={letter.id}
+                ref={function (el) { cardRefs.current[i] = el; }}
+                style={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  width: CARD_W,
+                  height: CARD_H,
+                  transformStyle: "preserve-3d",
+                  backfaceVisibility: "hidden",
+                  opacity: 1,
+                  willChange: "transform",
+                }}
+              >
+                <LetterSheet letter={letter} />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* SIDE INDICATOR — pinned to the far RIGHT of the overlay: a big
+          "N / total" counter over a vertical strip of ticks (one per letter).
+          Updated imperatively on commit, so it never re-renders the cards.
+          Click a tick to jump straight to that letter. */}
+      <div
+        className="flex flex-col items-center"
+        style={{ position: "absolute", right: -96, top: "50%", transform: "translateY(-50%)", gap: 16, userSelect: "none" }}
+        onClick={function (e) { e.stopPropagation(); }}
+      >
+        <div className="flex items-baseline" style={{ ...pixel, color: C.textGold }}>
+          <span ref={counterRef} style={{ fontSize: 44, color: C.gold, lineHeight: 1 }}>{front + 1}</span>
+          <span style={{ fontSize: 22, opacity: 0.7 }}>&nbsp;/&nbsp;{count}</span>
+        </div>
+        <div className="flex flex-col items-center" style={{ gap: 10 }}>
+          {letters.map(function (letter, i) {
+            const isFront = i === front;
+            return (
+              <button
+                key={letter.id}
+                type="button"
+                aria-label={"Go to letter " + (i + 1)}
+                ref={function (el) { tickRefs.current[i] = el; }}
+                onClick={function (e) { e.stopPropagation(); jumpTo(i); }}
+                style={{
+                  width: 7,
+                  height: isFront ? 26 : 12,
+                  padding: 0,
+                  border: "none",
+                  borderRadius: 4,
+                  cursor: "pointer",
+                  background: isFront ? C.gold : C.textGold,
+                  opacity: isFront ? 1 : 0.35,
+                  transition: "height 0.25s ease, background 0.25s ease, opacity 0.25s ease",
+                }}
+              />
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── ENVELOPE PLACEHOLDER — the on-page trigger that opens the letters overlay.
+// A simple closed-envelope box for now; later this becomes the real envelope
+// (flap-open animation, wax seal, etc.). Clicking it opens the focal overlay.
+function EnvelopePlaceholder({ onOpen }) {
+  const btnRef = useRef(null);
+
+  // StPageFlip binds NATIVE mousedown/touchstart listeners on its own wrapper and
+  // flips the page based on where you click (left side → previous page). React's
+  // synthetic stopPropagation can't reliably stop a native listener on a parent,
+  // so we attach our own NATIVE capture-phase listeners on the envelope and stop
+  // the event there — before it ever reaches StPageFlip's handler.
+  React.useEffect(function () {
+    const el = btnRef.current;
+    if (!el) return undefined;
+    function swallow(e) { e.stopPropagation(); }
+    const opts = { capture: true };
+    el.addEventListener("mousedown", swallow, opts);
+    el.addEventListener("touchstart", swallow, opts);
+    el.addEventListener("pointerdown", swallow, opts);
+    el.addEventListener("mouseup", swallow, opts);
+    el.addEventListener("touchend", swallow, opts);
+    return function () {
+      el.removeEventListener("mousedown", swallow, opts);
+      el.removeEventListener("touchstart", swallow, opts);
+      el.removeEventListener("pointerdown", swallow, opts);
+      el.removeEventListener("mouseup", swallow, opts);
+      el.removeEventListener("touchend", swallow, opts);
+    };
+  }, []);
+
+  return (
+    <button
+      type="button"
+      ref={btnRef}
+      onClick={function (e) { e.stopPropagation(); onOpen(); }}
+      className="wgt-press"
+      aria-label="Open letters to yourself"
+      style={{
+        position: "relative",
+        width: 220,
+        height: 150,
+        background: "linear-gradient(#e8d6ac,#dcc491)",
+        border: "2px solid " + C.line,
+        borderRadius: 8,
+        boxShadow: "0 8px 22px #0005, inset 0 1px 0 #fff8",
+        cursor: "pointer",
+      }}
+    >
+      {/* Flap — a triangle folded down over the top half. */}
+      <span
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: 0,
+          height: 0,
+          borderLeft: "110px solid transparent",
+          borderRight: "110px solid transparent",
+          borderTop: "76px solid #d8c39a",
+          filter: "drop-shadow(0 2px 2px #0003)",
+        }}
+      />
+      {/* Wax seal — placeholder dot where the flap meets. */}
+      <span
+        style={{
+          position: "absolute",
+          top: 56,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: 34,
+          height: 34,
+          borderRadius: "50%",
+          background: "radial-gradient(circle at 38% 32%, #7a3a2a, #4a1f16)",
+          border: "2px solid " + C.gold,
+          boxShadow: "0 3px 8px #0007, inset 0 2px 3px #fff3",
+          zIndex: 2,
+        }}
+      />
+      <span
+        style={{
+          position: "absolute",
+          bottom: 14,
+          left: 0,
+          right: 0,
+          ...pixel,
+          fontSize: 15,
+          color: C.ink,
+          textAlign: "center",
+        }}
+      >
+        TAP TO OPEN
+      </span>
+    </button>
+  );
+}
+
+// ── LETTERS OVERLAY — dims the whole book and centers the cue-card stack as the
+// focal point. Close via backdrop, X, or Esc. Rendered above the flipbook.
+function LettersOverlay({ onClose }) {
+  React.useEffect(function () {
+    function onKey(e) { if (e.key === "Escape") onClose(); }
+    document.addEventListener("keydown", onKey);
+    return function () { document.removeEventListener("keydown", onKey); };
+  }, [onClose]);
+
+  // react-pageflip binds mousemove/touchmove on WINDOW (not its wrapper) and
+  // peels the page toward the cursor on EVERY move (hover preview) — a window
+  // listener isn't blocked by the overlay being on top. While the overlay is
+  // open we intercept just the MOVE events in the window CAPTURE phase and
+  // stopPropagation, which prevents StPageFlip's (bubble-phase) window listeners
+  // from running, so the book stays still. We deliberately do NOT block
+  // mousedown/up/click — those still reach React, so the overlay's click-to-
+  // close and the letter cards keep working (the cards don't use move events).
+  React.useEffect(function () {
+    function block(e) { e.stopPropagation(); }
+    const types = ["mousemove", "touchmove", "pointermove"];
+    types.forEach(function (t) { window.addEventListener(t, block, true); });
+    return function () {
+      types.forEach(function (t) { window.removeEventListener(t, block, true); });
+    };
+  }, []);
+
+  return (
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Letters to yourself"
+      style={{ animation: "wgt-fade 0.25s ease", background: "#11100bd9" }}
+      // Click ANYWHERE in the overlay closes it. The letters area below calls
+      // stopPropagation so clicks on the cards/ticks don't bubble here. All
+      // pointer events are captured by this fixed layer, so the book underneath
+      // never receives them while the overlay is open.
+      onClick={onClose}
+      onPointerDown={function (e) { e.stopPropagation(); }}
+      onWheel={function (e) { e.stopPropagation(); }}
+    >
+      {/* Focal content — title + subtitle + the letter stack. */}
+      <div className="relative flex flex-col items-center" style={{ animation: "wgt-pop 0.3s ease" }}>
+        <p style={{ ...pixel, fontSize: 26, color: C.textGold, letterSpacing: 1, textShadow: "0 2px 4px #000", marginBottom: 2 }}>
+          LETTERS FROM YOURSELF
+        </p>
+        <p style={{ ...pixel, fontSize: 14, color: C.textGold, opacity: 0.7, marginBottom: 18, letterSpacing: 1 }}>
+          SCROLL TO LOOK THROUGH YOUR LETTERS
+        </p>
+        <LetterStack onClose={onClose} />
+      </div>
+    </div>
+  );
+}
+
+// ── LETTERS PAGE — clean parchment page holding the envelope trigger. ──
+const LettersPage = forwardRef(function LettersPage({ onOpenLetters }, ref) {
+  return (
+    <div ref={ref} style={{ ...pageBase }}>
+      <img
+        src="/assets/journal/left_clean.png"
+        alt=""
+        style={{ position: "absolute", top: 0, left: SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 24,
+          boxSizing: "border-box",
+        }}
+      >
+        <p style={{ ...pixel, fontSize: 22, color: C.ink, marginBottom: 22, letterSpacing: 1 }}>
+          LETTERS FROM YOURSELF
+        </p>
+        <EnvelopePlaceholder onOpen={onOpenLetters} />
+      </div>
+    </div>
+  );
+});
+
 // ── MILESTONE ──
 const MilestonePage = forwardRef(function MilestonePage({ entry }, ref) {
   return (
@@ -999,6 +1645,9 @@ function renderPage(entry) {
 function JournalFlipbook({ onClose }) {
   const bookRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(0);
+  // Letters overlay — opened by the envelope on the LettersPage, rendered above
+  // the whole book so the book greys out behind it.
+  const [lettersOpen, setLettersOpen] = useState(false);
   // Fixed image pages: cover, enlistment L/R, BMT L/R, field camp L/R,
   // POP L/R, new posting L/R, ORD L/R, last page.
   const totalPages = 14;
@@ -1073,11 +1722,16 @@ function JournalFlipbook({ onClose }) {
               be the New Posting and ORD spreads). */}
           <CleanLeftPage />
           <CleanRightPage />
-          <CleanLeftPage />
+          {/* 2nd-to-last clean page: the envelope opens a focal letters overlay
+              (the cue-card stack) above the book. */}
+          <LettersPage onOpenLetters={function () { setLettersOpen(true); }} />
           <CleanRightPage />
           <LastPage />
         </HTMLFlipBook>
       </div>
+
+      {/* Focal letters overlay — greys out the book; close via backdrop/X/Esc. */}
+      {lettersOpen && <LettersOverlay onClose={function () { setLettersOpen(false); }} />}
     </div>
   );
 }
