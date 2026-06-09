@@ -17,11 +17,11 @@ import HTMLFlipBook from "react-pageflip";
 import AIMemoryModal from "./AIMemoryModal";
 import {
   BookOpen, Plus, Image, FileText, Mic, Star, Mail, Lock,
-  ChevronRight, ChevronLeft, Camera, X, Share2, Check,
+  ChevronRight, ChevronLeft, Camera, X, Share2,
   Users as UsersIcon, Pen, Award, Sparkles,
   Check, CheckCircle2, Clock, Flag, Square,
 } from "lucide-react";
-import { AppShell, Ribbon } from "../ui";
+import { AppShell, Frame, Ribbon } from "../ui";
 import { ASSETS } from "../assets";
 import { ROUTES } from "../routes";
 import { C, pixel, M, USER as user } from "../theme";
@@ -1248,6 +1248,15 @@ export function LetterStack({ letters = STACK_LETTERS, onClose }) {
     kick();
   }
 
+  React.useEffect(function () {
+    const el = stageRef.current;
+    if (!el) return undefined;
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return function () {
+      el.removeEventListener("wheel", onWheel);
+    };
+  }, [kick]);
+
   // Arrow keys nudge the target by a whole card (smoothly eased by the loop).
   function onKeyDown(e) {
     if (e.key === "ArrowDown" || e.key === "ArrowRight" || e.key === " ") {
@@ -1292,7 +1301,6 @@ export function LetterStack({ letters = STACK_LETTERS, onClose }) {
           role="button"
           tabIndex={0}
           aria-label="Letters — scroll to move the top letter up and over to the back"
-          onWheel={onWheel}
           onClick={function (e) { e.stopPropagation(); }}
           onKeyDown={function (e) { e.stopPropagation(); onKeyDown(e); }}
           style={{
