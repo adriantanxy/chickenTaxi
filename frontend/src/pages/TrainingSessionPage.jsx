@@ -509,11 +509,11 @@ function ActiveView({ videoRef, canvasRef, stats, elapsed, onPause, onEnd, isPau
             <div style={{ backgroundImage: "url('/assets/training/training_overview/card_background.png')", backgroundPosition: "center", backgroundSize: "130% 115%", backgroundRepeat: "no-repeat", borderRadius: 3, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
               <div className="flex items-center gap-1 mb-1">
                 <PushUpIcon size={25} color="black" />
-                <span style={{ ...pixel, ...M, fontSize: 25, letterSpacing: 1 }}>PUSH-UPS</span>
+                <span style={{ ...pixel, ...D, fontSize: 25, letterSpacing: 1 }}>PUSH-UPS</span>
               </div>
-              <p style={{ ...pixel, ...D, fontSize: 58, lineHeight: 1 }}>{stats.reps}</p>
+              <p style={{ ...pixel, ...D, fontSize: 100, lineHeight: 1 }}>{stats.reps}</p>
               <div className="flex items-center gap-1 mt-1">
-                <span style={{ ...pixel, ...D, fontSize: 13 }}>REPS</span>
+                <span style={{ ...pixel, ...M, fontSize: 20 }}>REPS</span>
               </div>
             </div>
           </div>
@@ -523,7 +523,7 @@ function ActiveView({ videoRef, canvasRef, stats, elapsed, onPause, onEnd, isPau
             <div style={{ backgroundImage: "url('/assets/squad/rectangle_board.png')", backgroundPosition: "center", backgroundSize: "110% 160%", backgroundRepeat: "no-repeat", borderRadius: 10, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
               <div className="flex items-center gap-1 mb-1">
                 <AccuracyIcon size={25} color="black" />
-                <span style={{ ...pixel, ...M, fontSize: 15, letterSpacing: 1 }}>FORM ACCURACY</span>
+                <span style={{ ...pixel, ...D, fontSize: 18, letterSpacing: 1 }}>FORM ACCURACY</span>
               </div>
               <p style={{ ...pixel, ...D, fontSize: 38, lineHeight: 1 }}>{stats.accuracy}%</p>
             </div>
@@ -534,7 +534,7 @@ function ActiveView({ videoRef, canvasRef, stats, elapsed, onPause, onEnd, isPau
             <div style={{ backgroundImage: "url('/assets/squad/rectangle_board.png')", backgroundPosition: "center", backgroundSize: "110% 160%", backgroundRepeat: "no-repeat", borderRadius: 10, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
               <div className="flex items-center gap-1 mb-1">
                 <DurationIcon size={25} color="black" />
-                <span style={{ ...pixel, ...M, fontSize: 15, letterSpacing: 1 }}>SESSION DURATION</span>
+                <span style={{ ...pixel, ...D, fontSize: 18, letterSpacing: 1 }}>SESSION DURATION</span>
               </div>
               <p style={{ ...pixel, ...D, fontSize: 34, lineHeight: 1 }}>{mm}:{ss}</p>
             </div>
@@ -670,16 +670,16 @@ function ActiveView({ videoRef, canvasRef, stats, elapsed, onPause, onEnd, isPau
               {/* Track info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1 mb-0.5">
-                  <span style={{ ...pixel, fontSize: 10, color: C.green, letterSpacing: 1 }}>NOW PLAYING</span>
+                  <span style={{ ...pixel, fontSize: 12, color: C.green, letterSpacing: 1 }}>NOW PLAYING</span>
                   <span style={{ fontSize: 9, color: C.green }}>★</span>
                 </div>
-                <p style={{ ...pixel, ...D, fontSize: 13, lineHeight: 1.2 }}>{track.title}</p>
-                <p style={{ ...pixel, color: C.inkSoft, fontSize: 10 }}>{track.sub}</p>
+                <p style={{ ...pixel, ...D, fontSize: 18, lineHeight: 1.2 }}>{track.title}</p>
+                <p style={{ ...pixel, color: C.inkSoft, fontSize: 14 }}>{track.sub}</p>
               </div>
               {/* Current / total time */}
               <div className="shrink-0 text-right">
-                <p style={{ ...pixel, color: C.green, fontSize: 12 }}>{fmtTime(currentSecs)}</p>
-                <p style={{ ...pixel, color: C.inkSoft, fontSize: 12 }}>{fmtTime(duration)}</p>
+                <p style={{ ...pixel, color: C.green, fontSize: 14 }}>{fmtTime(currentSecs)}</p>
+                <p style={{ ...pixel, color: C.inkSoft, fontSize: 14 }}>{fmtTime(duration)}</p>
               </div>
             </div>
 
@@ -695,21 +695,21 @@ function ActiveView({ videoRef, canvasRef, stats, elapsed, onPause, onEnd, isPau
                 style={{ color: C.green, background: "none", border: "none", cursor: "pointer", padding: 2 }}
                 onClick={() => setTrackIdx((i) => (i - 1 + TRACKS.length) % TRACKS.length)}
               >
-                <SkipBack size={14} />
+                <SkipBack size={20} />
               </button>
               <button
                 className="wgt-press rounded-full flex items-center justify-center"
-                style={{ width: 28, height: 28, border: `2px solid ${C.greenLit}90`, color: C.green, cursor: "pointer" }}
+                style={{ width: 35, height: 35, border: `2px solid ${C.greenLit}90`, color: C.green, cursor: "pointer" }}
                 onClick={() => setMusicPlaying((p) => !p)}
               >
-                {musicPlaying ? <Pause size={12} /> : <Play size={12} />}
+                {musicPlaying ? <Pause size={23} /> : <Play size={23} />}
               </button>
               <button
                 className="wgt-press"
                 style={{ color: C.green, background: "none", border: "none", cursor: "pointer", padding: 2 }}
                 onClick={() => setTrackIdx((i) => (i + 1) % TRACKS.length)}
               >
-                <SkipForward size={14} />
+                <SkipForward size={20} />
               </button>
             </div>
           </div>
