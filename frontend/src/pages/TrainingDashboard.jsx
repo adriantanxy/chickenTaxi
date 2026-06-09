@@ -250,7 +250,7 @@ export default function TrainingDashboard({ onNavigate, onStartTraining = () => 
             mode: data.mode || "pushup",
             duration: data.duration || 0,
             reps: reps,
-            accuracy: data.stats?.accuracy || 100,
+            accuracy: data.stats?.accuracy || 0,
           });
         });
 
