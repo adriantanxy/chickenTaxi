@@ -4,15 +4,19 @@
     "/assets/avatar/components/top/red%20tank%20top.png"
   ],
   "bottom": [
-    "/assets/avatar/components/bottom/bottom.png"
+    "/assets/avatar/components/bottom/bottom.png",
+    "/assets/avatar/components/bottom/pt%20shorts.png"
   ],
   "shoe": [
-    "/assets/avatar/components/shoe/shoe.png"
+    "/assets/avatar/components/shoe/shoe.png",
+    "/assets/avatar/components/shoe/slipper.png"
   ],
   "accessory": [
     "/assets/avatar/components/accessory/accessory.png",
     "/assets/avatar/components/accessory/bottle.png",
     "/assets/avatar/components/accessory/green%20bottle.png",
+    "/assets/avatar/components/accessory/bunk%20bed.png",
+    "/assets/avatar/components/accessory/single%20bunk.png",
     "/assets/avatar/components/accessory/hat.png"
   ]
 }

@@ -9,12 +9,12 @@ import { C, pixel, USER as user } from "../theme";
 
 function Slot({ s, active, onClick, previewSrc }) {
   return (
-    <button onClick={onClick} className="wgt-press w-full">
-      <p style={pixel} className="mb-1 text-[14px]">
+    <button onClick={onClick} className="w-full flex flex-col items-center gap-1 wgt-press">
+      <p style={pixel} className="mb-0 text-[14px] text-center w-full">
         <span style={{ color: C.textGold }}>{s.label}</span>
       </p>
       <div
-        className="flex h-16 items-center justify-center rounded-lg"
+        className="flex h-16 w-20 items-center justify-center rounded-lg"
         style={{
           background: "#23241a",
           outline: active ? `2px solid ${C.gold}` : `1px solid ${C.line}66`,
@@ -98,7 +98,13 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
                   <Slot
                     key={s.key}
                     s={s}
-                    previewSrc={selectedOptions[s.key] !== undefined ? selectedOptions[s.key] : loadoutComponents[s.key]}
+                    previewSrc={
+                      selectedOptions[s.key] !== undefined
+                        ? selectedOptions[s.key] === null
+                          ? ASSETS.avatar.none
+                          : selectedOptions[s.key]
+                        : loadoutComponents[s.key]
+                    }
                     active={slot === s.key}
                     onClick={() => setSlot(s.key)}
                   />
@@ -140,7 +146,13 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
                   <Slot
                     key={s.key}
                     s={s}
-                    previewSrc={selectedOptions[s.key] !== undefined ? selectedOptions[s.key] : loadoutComponents[s.key]}
+                    previewSrc={
+                      selectedOptions[s.key] !== undefined
+                        ? selectedOptions[s.key] === null
+                          ? ASSETS.avatar.none
+                          : selectedOptions[s.key]
+                        : loadoutComponents[s.key]
+                    }
                     active={slot === s.key}
                     onClick={() => setSlot(s.key)}
                   />
@@ -194,19 +206,22 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
             <p style={pixel} className="text-[16px] mb-2">
               <span style={{ color: C.textDark }}>Options</span>
             </p>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-4 gap-x-1 gap-y-2">
               <button
                 key="none"
                 onClick={() => setSelectedOptions((prev) => ({ ...prev, [slot]: null }))}
-                className="wgt-press rounded-md p-3"
+                className="wgt-press rounded-[10px] p-0 h-20 w-20 overflow-hidden"
                 style={{
                   outline: selectedOptions[slot] === null ? `2px solid ${C.gold}` : `1px solid ${C.line}66`,
                   background: selectedOptions[slot] === null ? '#2a2a26' : '#21221a',
-                  color: '#999',
                 }}
               >
-                <span style={pixel} className="text-[26px]">Ø</span>
-                <div style={pixel} className="text-[12px] mt-1">NONE</div>
+                <img
+                  src={ASSETS.avatar.none}
+                  alt="Remove"
+                  className="h-full w-full object-cover"
+                  style={{ imageRendering: 'pixelated' }}
+                />
               </button>
               {((slot.startsWith("accessory") ? AVATAR_MANIFEST.accessory : AVATAR_MANIFEST[slot]) || []).map((opt) => {
                 const otherAccessory = slot === "accessory1" ? "accessory2" : "accessory1";
@@ -221,7 +236,7 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
                       setSelectedOptions((prev) => ({ ...prev, [slot]: opt }));
                     }}
                     disabled={disabled}
-                    className="wgt-press rounded-md p-1"
+                    className="wgt-press rounded-[10px] p-0 h-20 w-20 overflow-hidden"
                     style={{
                       outline: active ? `2px solid ${C.gold}` : `1px solid ${C.line}66`,
                       background: disabled ? '#1a1b17' : '#21221a',
@@ -229,7 +244,12 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
                       cursor: disabled ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    <img src={opt} alt={opt} className="h-20 w-20 object-contain" style={{ imageRendering: 'pixelated' }} />
+                    <img
+                      src={opt}
+                      alt={opt}
+                      className="h-full w-full object-cover"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
                   </button>
                 );
               })}

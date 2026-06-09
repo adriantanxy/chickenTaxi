@@ -207,6 +207,7 @@ export const ASSETS = {
   // Avatar paper-doll layers. Keep every PNG on the same canvas size.
   avatar: {
     base: "/assets/avatar/army_profile_picture.jpg",
+    none: "/assets/avatar/components/none.png",
     loadouts: Object.freeze({ loadout1 }),
     rotations: loadout1.rotations,
   },
