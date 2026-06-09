@@ -5,6 +5,7 @@ import TrainingDashboard from "./pages/TrainingDashboard";
 import TrainingSessionPage from "./pages/TrainingSessionPage";
 import CalendarPage from "./pages/CalendarPage";
 import JournalPage from "./pages/JournalPage";
+import SharedBookPage from "./pages/SharedBookPage";
 import SquadPage from "./pages/SquadPage";
 import ShopPage from "./pages/ShopPage";
 import ProfileMain from "./pages/ProfileMain";
@@ -64,6 +65,14 @@ export default function App() {
     <Routes>
       {/* Public: the combined login / sign-up screen. */}
       <Route path={routeToPath(ROUTES.LOGIN)} element={<RootPage />} />
+
+      {/* Public: a shared, read-only journal. Openable by anyone (incognito, no
+          login). The hashed id makes the link look realistic; for the POC it's
+          decorative (no backend lookup) and the book is the baked-in mock. The
+          `?letters=1` query flag controls whether the private letters are shown,
+          so the owner's "include letters" choice actually travels in the link. */}
+      <Route path="/shared/:shareId" element={<SharedBookPage />} />
+      <Route path="/shared" element={<SharedBookPage />} />
 
       {/* `/` just sends signed-in users into the app (and signed-out users to
           login, via the guard). */}
