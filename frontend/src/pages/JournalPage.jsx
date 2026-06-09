@@ -17,7 +17,7 @@ import HTMLFlipBook from "react-pageflip";
 import AIMemoryModal from "./AIMemoryModal";
 import {
   BookOpen, Plus, Image, FileText, Mic, Star, Mail, Lock,
-  ChevronRight, ChevronLeft, Camera, X,
+  ChevronRight, ChevronLeft, Camera, X, Share2, Check,
   Users as UsersIcon, Pen, Award, Sparkles,
 } from "lucide-react";
 import { AppShell, ActionButton, Ribbon, Frame } from "../ui";
@@ -1439,8 +1439,10 @@ function LettersOverlay({ onClose }) {
   );
 }
 
-// ── LETTERS PAGE — clean parchment page holding the envelope trigger. ──
-const LettersPage = forwardRef(function LettersPage({ onOpenLetters }, ref) {
+// ── LETTERS PAGE — clean parchment page holding the envelope trigger. In a
+// SHARED (public) view the letters-to-yourself are private, so the envelope is
+// replaced with a small "kept private" note instead of being openable. ──
+const LettersPage = forwardRef(function LettersPage({ onOpenLetters, shared = false }, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
@@ -1463,7 +1465,16 @@ const LettersPage = forwardRef(function LettersPage({ onOpenLetters }, ref) {
         <p style={{ ...pixel, fontSize: 22, color: C.ink, marginBottom: 22, letterSpacing: 1 }}>
           LETTERS FROM YOURSELF
         </p>
-        <EnvelopePlaceholder onOpen={onOpenLetters} />
+        {shared ? (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, opacity: 0.7 }}>
+            <Lock size={34} style={{ color: C.inkSoft }} />
+            <p style={{ ...pixel, fontSize: 16, color: C.inkSoft, textAlign: "center", maxWidth: 220 }}>
+              These letters are private to the writer.
+            </p>
+          </div>
+        ) : (
+          <EnvelopePlaceholder onOpen={onOpenLetters} />
+        )}
       </div>
     </div>
   );
@@ -1640,14 +1651,149 @@ function renderPage(entry) {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   SHARE DIALOG — owner picks whether to include the private letters, then
+   copies a hashed public link that encodes the choice. POC: the hash is a
+   random id (decorative, no backend lookup); the `?letters=` flag is what
+   actually changes what the viewer sees.
+   ═══════════════════════════════════════════════════════════ */
+function makeShareHash() {
+  // Short random base36 id, e.g. "k3f9q2za" — looks like a real share token.
+  return (
+    Math.random().toString(36).slice(2, 8) + Math.random().toString(36).slice(2, 6)
+  );
+}
+
+function ShareDialog({ onClose }) {
+  // Hash is generated once per dialog open (stable while the toggle changes).
+  const [hash] = useState(makeShareHash);
+  const [includeLetters, setIncludeLetters] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const link =
+    window.location.origin + "/shared/" + hash + (includeLetters ? "?letters=1" : "");
+
+  // Re-flipping the toggle invalidates a prior "copied" confirmation.
+  React.useEffect(function () { setCopied(false); }, [includeLetters]);
+
+  React.useEffect(function () {
+    function onKey(e) { if (e.key === "Escape") onClose(); }
+    document.addEventListener("keydown", onKey);
+    return function () { document.removeEventListener("keydown", onKey); };
+  }, [onClose]);
+
+  function copy() {
+    function done() { setCopied(true); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link).then(done, done);
+    } else {
+      const ta = document.createElement("textarea");
+      ta.value = link; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) { /* ignore */ }
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[80] flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Share book"
+      onClick={onClose}
+      style={{ background: "#11100bcc" }}
+    >
+      <div
+        className="relative w-full"
+        style={{ maxWidth: 440 }}
+        onClick={function (e) { e.stopPropagation(); }}
+      >
+      <Frame
+        frame="card"
+        className="relative flex w-full flex-col p-5"
+      >
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <Ribbon size={15}>
+            <span className="inline-flex items-center gap-2"><Share2 size={16} />SHARE BOOK</span>
+          </Ribbon>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            className="wgt-press flex h-8 w-8 items-center justify-center rounded-lg"
+            style={{ background: C.green, color: C.textGold }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <p style={{ ...pixel, color: C.ink }} className="mb-4 text-[16px] leading-snug">
+          Anyone with this link can flip through your book — no login needed.
+        </p>
+
+        {/* Include-letters toggle. */}
+        <button
+          type="button"
+          onClick={function () { setIncludeLetters(function (v) { return !v; }); }}
+          className="wgt-press mb-4 flex items-center justify-between gap-3 rounded-lg p-3 text-left"
+          style={{ background: C.cardInner, border: "2px solid " + C.line }}
+        >
+          <span className="flex items-center gap-2">
+            {includeLetters ? <Mail size={18} style={{ color: C.green }} /> : <Lock size={18} style={{ color: C.inkSoft }} />}
+            <span className="leading-tight">
+              <span style={{ ...pixel, color: C.ink }} className="block text-[16px]">Include my private letters</span>
+              <span style={{ ...pixel, color: C.inkSoft }} className="block text-[12px]">
+                {includeLetters ? "Friends will be able to read them" : "Kept private (hidden in the shared book)"}
+              </span>
+            </span>
+          </span>
+          {/* Pill switch. */}
+          <span
+            className="relative shrink-0 rounded-full"
+            style={{ width: 42, height: 24, background: includeLetters ? C.green : "#0003", transition: "background 0.2s ease" }}
+          >
+            <span
+              className="absolute top-[3px] rounded-full"
+              style={{ width: 18, height: 18, background: C.textGold, left: includeLetters ? 21 : 3, transition: "left 0.2s ease" }}
+            />
+          </span>
+        </button>
+
+        {/* Link preview. */}
+        <div
+          className="mb-3 truncate rounded-lg px-3 py-2"
+          style={{ ...pixel, color: C.inkSoft, background: "#0000000d", border: "1px solid " + C.line, fontSize: 14 }}
+          title={link}
+        >
+          {link}
+        </div>
+
+        <button
+          type="button"
+          onClick={copy}
+          className="wgt-press flex items-center justify-center gap-2 rounded-lg border-2 px-4 py-2"
+          style={{ borderColor: C.gold + "99", background: C.green, color: C.textGold }}
+        >
+          {copied ? <Check size={16} /> : <Share2 size={16} />}
+          <span style={pixel} className="text-[16px]">{copied ? "LINK COPIED!" : "COPY LINK"}</span>
+        </button>
+      </Frame>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
    FLIPBOOK VIEW
    ═══════════════════════════════════════════════════════════ */
-function JournalFlipbook({ onClose }) {
+export function JournalFlipbook({ onClose, shared = false, shareLetters = false }) {
   const bookRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(0);
   // Letters overlay — opened by the envelope on the LettersPage, rendered above
   // the whole book so the book greys out behind it.
   const [lettersOpen, setLettersOpen] = useState(false);
+  // Share dialog (owner view only): pick whether to include the private letters,
+  // then copy a hashed public link that encodes the choice.
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   // Fixed image pages: cover, enlistment L/R, BMT L/R, field camp L/R,
   // POP L/R, new posting L/R, ORD L/R, last page.
   const totalPages = 14;
@@ -1655,35 +1801,107 @@ function JournalFlipbook({ onClose }) {
   const onFlip = useCallback(function (e) { setCurrentPage(e.data); }, []);
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", backgroundImage: "url(/assets/journal/table.png)", backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed" }}>
-      {/* Back tab — a scrapbook-style tag pinned to the table, styled like the
-          rest of the journal (pixel font, gold-on-dark) so it reads as part of
-          the keepsake rather than a generic browser chrome button. */}
-      <button
-        onClick={onClose}
-        className="wgt-press"
+    <div style={{ position: "relative", width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+      {/* Table background on its OWN compositor layer (absolute + translateZ) so
+          flipping pages never force a repaint of the wood texture. Using
+          background-attachment:fixed previously isolated it too, but `fixed`
+          repaints every frame (flicker); this gives the same layer isolation
+          without the per-frame repaint. */}
+      <div
+        aria-hidden="true"
         style={{
           position: "absolute",
-          top: 20,
-          left: 20,
-          zIndex: 10,
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "8px 14px 8px 12px",
-          background: C.bgHeader,
-          color: C.textGold,
-          border: "2px solid " + C.gold,
-          borderRadius: 8,
-          boxShadow: "2px 3px 10px #00000055",
-          transform: "rotate(-2deg)",
+          inset: 0,
+          backgroundImage: "url(/assets/journal/table.png)",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          transform: "translateZ(0)",
+          willChange: "transform",
+          zIndex: 0,
         }}
-      >
-        <ChevronLeft size={18} style={{ color: C.gold }} />
-        <span style={{ ...pixel, fontSize: 16 }}>CLOSE BOOK</span>
-      </button>
+      />
+      {/* Back tab — a scrapbook-style tag pinned to the table. In the OWNER's
+          view it's a "CLOSE BOOK" button; in a SHARED (public link) view there's
+          nothing to close back to, so it becomes a non-interactive keepsake tag. */}
+      {shared ? (
+        <div
+          style={{
+            position: "absolute",
+            top: 20,
+            left: 20,
+            zIndex: 10,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 14px",
+            background: C.bgHeader,
+            color: C.textGold,
+            border: "2px solid " + C.gold,
+            borderRadius: 8,
+            boxShadow: "2px 3px 10px #00000055",
+            transform: "rotate(-2deg)",
+          }}
+        >
+          <BookOpen size={18} style={{ color: C.gold }} />
+          <span style={{ ...pixel, fontSize: 16 }}>Alex's NS experience</span>
+        </div>
+      ) : (
+        <button
+          onClick={onClose}
+          className="wgt-press"
+          style={{
+            position: "absolute",
+            top: 20,
+            left: 20,
+            zIndex: 10,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 14px 8px 12px",
+            background: C.bgHeader,
+            color: C.textGold,
+            border: "2px solid " + C.gold,
+            borderRadius: 8,
+            boxShadow: "2px 3px 10px #00000055",
+            transform: "rotate(-2deg)",
+          }}
+        >
+          <ChevronLeft size={18} style={{ color: C.gold }} />
+          <span style={{ ...pixel, fontSize: 16 }}>CLOSE BOOK</span>
+        </button>
+      )}
 
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
+      {/* SHARE BOOK — owner view only (a shared view has nothing to re-share).
+          Top-right tag, mirroring the CLOSE BOOK tag on the left. */}
+      {!shared && (
+        <button
+          onClick={function () { setShareDialogOpen(true); }}
+          className="wgt-press"
+          style={{
+            position: "absolute",
+            top: 20,
+            right: 20,
+            zIndex: 10,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 14px",
+            background: C.green,
+            color: C.textGold,
+            border: "2px solid " + C.gold,
+            borderRadius: 8,
+            boxShadow: "2px 3px 10px #00000055",
+            transform: "rotate(2deg)",
+          }}
+        >
+          <Share2 size={18} style={{ color: C.gold }} />
+          <span style={{ ...pixel, fontSize: 16 }}>SHARE BOOK</span>
+        </button>
+      )}
+
+      {shareDialogOpen && <ShareDialog onClose={function () { setShareDialogOpen(false); }} />}
+
+      <div style={{ position: "relative", zIndex: 1, flex: 1, display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
         <HTMLFlipBook
           ref={bookRef}
           width={PAGE_W}
@@ -1724,7 +1942,12 @@ function JournalFlipbook({ onClose }) {
           <CleanRightPage />
           {/* 2nd-to-last clean page: the envelope opens a focal letters overlay
               (the cue-card stack) above the book. */}
-          <LettersPage onOpenLetters={function () { setLettersOpen(true); }} />
+          {/* In a shared view, letters are hidden UNLESS the owner opted to
+              include them (shareLetters). Owner's own view always shows them. */}
+          <LettersPage
+            shared={shared && !shareLetters}
+            onOpenLetters={function () { setLettersOpen(true); }}
+          />
           <CleanRightPage />
           <LastPage />
         </HTMLFlipBook>
