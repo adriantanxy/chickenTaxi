@@ -151,7 +151,7 @@ export default function ProfileMain({ onNavigate, onInspect = () => {}, equipped
               <div className="shrink-0 -rotate-1 rounded-sm bg-white p-2 pb-6 shadow-md">
                 <div className="flex h-40 w-36 items-center justify-center" style={{ background: C.green }}>
                   {ASSETS.avatar.base
-                    ? <img src={ASSETS.avatar.base} alt="portrait" className="h-full w-full object-contain" style={{ imageRendering: "pixelated" }} />
+                    ? <img src={ASSETS.avatar.base} alt="portrait" className="h-full w-full object-cover" style={{ imageRendering: "pixelated" }} />
                     : <span className="text-6xl">🧑‍✈️</span>}
                 </div>
                 <span style={{ color: C.gold }} className="absolute">★</span>
