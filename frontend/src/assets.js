@@ -4,7 +4,7 @@ const loadout1 = Object.freeze({
     bottom: "/assets/avatar/loadout1/components/bottom.png",
     shoe: "/assets/avatar/loadout1/components/shoe.png",
     accessory1: "/assets/avatar/loadout1/components/accessory.png",
-    accessory2: null,
+    accessory2: "/assets/avatar/components/accessory/hat.png",
   }),
   rotations: Object.freeze([
     "/assets/avatar/loadout1/rotations/north.png",

@@ -50,8 +50,6 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
     AVATAR_LAYER_ORDER.forEach((k) => {
       if (Object.prototype.hasOwnProperty.call(equipped, k)) {
         initial[k] = equipped[k];
-      } else if (k === "accessory2") {
-        initial[k] = null;
       }
     });
     return initial;
@@ -225,7 +223,7 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
             </span>
           </p>
           <p style={pixel} className="mt-4 text-[16px]">
-            <span style={{ color: "#6b5c3e" }}>Editing slot: {slot}</span>
+            {/* <span style={{ color: "#6b5c3e" }}>Editing slot: {slot}</span> */}
           </p>
           <div className="mt-4">
             <p style={pixel} className="text-[16px] mb-2">
@@ -237,7 +235,7 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
                 onClick={() => setSelectedOptions((prev) => ({ ...prev, [slot]: null }))}
                 className="wgt-press rounded-[10px] p-0 h-20 w-20 overflow-hidden"
                 style={{
-                  outline: selectedOptions[slot] === null ? `2px solid ${C.gold}` : `1px solid ${C.line}66`,
+                  outline: selectedOptions[slot] === null ? `4px solid ${C.gold}` : `1px solid ${C.line}66`,
                   background: selectedOptions[slot] === null ? '#2a2a26' : '#21221a',
                 }}
               >
@@ -263,7 +261,7 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
                     disabled={disabled}
                     className="wgt-press rounded-[10px] p-0 h-20 w-20 overflow-hidden"
                     style={{
-                      outline: active ? `2px solid ${C.gold}` : `1px solid ${C.line}66`,
+                      outline: active ? `4px solid ${C.gold}` : `1px solid ${C.line}66`,
                       background: disabled ? '#1a1b17' : '#21221a',
                       opacity: disabled ? 0.45 : 1,
                       cursor: disabled ? 'not-allowed' : 'pointer',
