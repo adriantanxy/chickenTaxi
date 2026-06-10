@@ -18,6 +18,21 @@ const loadout1 = Object.freeze({
   ]),
 });
 
+// Pre-rendered red-tank-top look. Only the rotation sprites are used (the
+// customiser swaps to these when the red tank top option is selected).
+const loadout2 = Object.freeze({
+  rotations: Object.freeze([
+    "/assets/avatar/loadout2/rotations/north.png",
+    "/assets/avatar/loadout2/rotations/north-east.png",
+    "/assets/avatar/loadout2/rotations/east.png",
+    "/assets/avatar/loadout2/rotations/south-east.png",
+    "/assets/avatar/loadout2/rotations/south.png",
+    "/assets/avatar/loadout2/rotations/south-west.png",
+    "/assets/avatar/loadout2/rotations/west.png",
+    "/assets/avatar/loadout2/rotations/north-west.png",
+  ]),
+});
+
 export const ASSETS = {
   brand: {
     logo: "/assets/brand/logo_cleaned.png",
@@ -208,7 +223,7 @@ export const ASSETS = {
   avatar: {
     base: "/assets/avatar/army_profile_picture.jpg",
     none: "/assets/avatar/components/none.png",
-    loadouts: Object.freeze({ loadout1 }),
+    loadouts: Object.freeze({ loadout1, loadout2 }),
     rotations: loadout1.rotations,
   },
 };

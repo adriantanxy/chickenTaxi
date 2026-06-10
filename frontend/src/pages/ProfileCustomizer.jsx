@@ -37,7 +37,12 @@ function Slot({ s, active, onClick, previewSrc }) {
 
 export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, setEquipped = () => {} }) {
   const [slot, setSlot] = useState("top");
-  const [loadout, setLoadout] = useState(equipped.loadout ?? "loadout1");
+  // loadout2 is not a base loadout — it's the red-tank-top rotation override,
+  // derived from the selected top (see `activeLoadout`). The base is always
+  // loadout1, so reverting the top correctly drops back to loadout1.
+  const [loadout, setLoadout] = useState(
+    equipped.loadout && equipped.loadout !== "loadout2" ? equipped.loadout : "loadout1",
+  );
   const [rotationIndex, setRotationIndex] = useState(0);
   const [isRotating, setIsRotating] = useState(true);
   const [selectedOptions, setSelectedOptions] = useState(() => {
@@ -54,7 +59,18 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
 
   const loadoutData = ASSETS.avatar.loadouts?.[loadout] ?? {};
   const loadoutComponents = loadoutData.components ?? {};
-  const rotationFrames = loadoutData.rotations ?? ASSETS.avatar.rotations ?? [];
+
+  // The red tank top is a pre-rendered look: selecting it swaps the rotating
+  // avatar to the loadout2 sprite set. Any other top falls back to loadout1.
+  // `activeLoadout` is the loadout the current top implies — used for both the
+  // live preview and what SAVE persists, so the main page matches the preview.
+  const RED_TANK_TOP = "/assets/avatar/components/top/red%20tank%20top.png";
+  const activeLoadout = selectedOptions.top === RED_TANK_TOP ? "loadout2" : loadout;
+  const rotationFrames =
+    ASSETS.avatar.loadouts?.[activeLoadout]?.rotations ??
+    loadoutData.rotations ??
+    ASSETS.avatar.rotations ??
+    [];
   const hasRotationFrames = rotationFrames.length > 0;
 
   const resolveAvatarLayerSrc = (layerKey) => {
@@ -68,6 +84,13 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
     }
     return configuredValue || loadoutComponents[layerKey] || null;
   };
+
+  // Restart the spin from the first frame whenever the rotation set swaps
+  // (e.g. selecting the red tank top), so we never render a stale/out-of-range
+  // frame from the previous set.
+  useEffect(() => {
+    setRotationIndex(0);
+  }, [rotationFrames[0]]);
 
   useEffect(() => {
     if (!isRotating || !hasRotationFrames) return;
@@ -183,7 +206,9 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
                   AVATAR_LAYER_ORDER.forEach((k) => {
                     toSave[k] = selectedOptions[k] || loadoutComponents[k] || null;
                   });
-                  setEquipped((prev) => ({ ...prev, loadout, ...toSave }));
+                  // persist the loadout the current selection implies (e.g.
+                  // loadout2 for the red tank top) so the main page matches.
+                  setEquipped((prev) => ({ ...prev, loadout: activeLoadout, ...toSave }));
                 }}
               >
                 <span style={pixel} className="text-[18px]">

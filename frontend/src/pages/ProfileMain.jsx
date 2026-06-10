@@ -98,7 +98,10 @@ export default function ProfileMain({ onNavigate, onInspect = () => {}, equipped
 
   const selectedLoadout = equipped.loadout ?? "loadout1";
   const loadoutComponents = ASSETS.avatar.loadouts?.[selectedLoadout]?.components ?? {};
-  const rotationFrames = ASSETS.avatar.rotations ?? [];
+  // Spin the saved loadout's sprites (e.g. loadout2 for the red tank top),
+  // not the global default, so the main page matches the saved look.
+  const rotationFrames =
+    ASSETS.avatar.loadouts?.[selectedLoadout]?.rotations ?? ASSETS.avatar.rotations ?? [];
   const hasRotationFrames = rotationFrames.length > 0;
 
   const getAvatarLayerSrc = (layerKey) => {
