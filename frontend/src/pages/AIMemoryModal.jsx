@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import { X, Pen, Mail, FileText, AtSign, User, Save, Check } from "lucide-react";
+import { X, Pen, Mail, FileText, AtSign, User, Save, Check, Sparkles } from "lucide-react";
 import { C, pixel } from "../theme";
+import { IMAGE_STYLES, DEFAULT_IMAGE_STYLE } from "../lib/aiMemoryImage";
 
 // Section mates that can be @-tagged.
 const SECTION_MATES = ["Hao Jie", "Wei Ming", "Rafiq", "Kavin", "Zafir", "Marcus", "Daniel", "Imran"];
@@ -41,6 +42,7 @@ const EDITOR_KINDS = {
     bodyPlaceholder: "Take your time. What happened, how did it feel, and what will you carry forward from it?",
     saveLabel: "SAVE REFLECTION",
     fallbackTitle: "Untitled reflection",
+    image: true, // offers an AI memory illustration generated on save
   },
   note: {
     title: "WRITE A NOTE",
@@ -60,6 +62,7 @@ const EDITOR_KINDS = {
     bodyPlaceholder: "Write about a moment you want to remember — what happened, who was there, and how it felt.",
     saveLabel: "SAVE LETTER",
     fallbackTitle: "Untitled letter",
+    image: true, // offers an AI memory illustration generated on save
   },
 };
 
@@ -73,6 +76,7 @@ export default function AIMemoryModal({ onClose, onSave, kind = "reflection", in
   const [title, setTitle] = useState(initial?.title || "");
   const [reflection, setReflection] = useState(initial?.text || "");
   const [tagText, setTagText] = useState(initial?.tagText || "");
+  const [imageStyle, setImageStyle] = useState(initial?.imageStyle || DEFAULT_IMAGE_STYLE);
   const [saving, setSaving] = useState(false);
 
   // @-mention picker state for the TAG field.
@@ -139,26 +143,35 @@ export default function AIMemoryModal({ onClose, onSave, kind = "reflection", in
     }
   }
 
-  async function commit(isDraft) {
+  function commit(isDraft) {
     if (saving) return;
     if (!isDraft && !reflection.trim()) return; // need body text for a real save
     setSaving(true);
+
+    const payload = {
+      type: "reflection", // shared Firestore note path for all text editors
+      kind,               // reflection | note | letter (for the caller)
+      title: title.trim() || (isDraft ? "Untitled draft" : cfg.fallbackTitle),
+      text: reflection,
+      tagText,
+      taggedMate: taggedMates.join(", "),
+      isDraft,
+      // Chosen art style for the AI memory image. The save handler generates
+      // and uploads the image (best-effort, final saves only); no preview here.
+      imageStyle: cfg.image ? imageStyle : undefined,
+    };
+
+    // Close the modal FIRST so it disappears the instant Save is clicked; the
+    // parent then persists the text and (for memory kinds) generates the image
+    // in the background, reporting progress via its own toast. We don't await
+    // here — the modal is already unmounting, so no post-close state updates.
+    onClose();
     try {
-      const payload = {
-        type: "reflection", // shared Firestore note path for all text editors
-        kind,               // reflection | note | letter (for the caller)
-        title: title.trim() || (isDraft ? "Untitled draft" : cfg.fallbackTitle),
-        text: reflection,
-        tagText,
-        taggedMate: taggedMates.join(", "),
-        isDraft,
-      };
-      if (onSave) await onSave(payload);
-      onClose();
+      if (onSave) Promise.resolve(onSave(payload)).catch(function (err) {
+        console.error("Save Error:", err);
+      });
     } catch (err) {
       console.error("Save Error:", err);
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -265,6 +278,29 @@ export default function AIMemoryModal({ onClose, onSave, kind = "reflection", in
                     ))}
                   </div>
                 )}
+              </>
+            )}
+
+            {/* Memory image style — picks the art direction for the AI image
+                generated on save. Only the kinds that opt in (reflection,
+                letter) show this; no preview is rendered in the modal. */}
+            {cfg.image && (
+              <>
+                <FieldLabel hint="generated on save">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Sparkles size={14} style={{ color: C.gold }} />Memory image style
+                  </span>
+                </FieldLabel>
+                <select
+                  value={imageStyle}
+                  onChange={(e) => setImageStyle(e.target.value)}
+                  className="wgt-field"
+                  style={{ ...pixel, fontSize: 18 }}
+                >
+                  {Object.entries(IMAGE_STYLES).map(([key, s]) => (
+                    <option key={key} value={key}>{s.label}</option>
+                  ))}
+                </select>
               </>
             )}
 

@@ -12,9 +12,10 @@
 import React, { useState, useRef, forwardRef, useCallback, useEffect } from "react";
 import { storage, auth, db } from "../auth/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "firebase/firestore";
 import HTMLFlipBook from "react-pageflip";
 import AIMemoryModal from "./AIMemoryModal";
+import { generateAndUploadMemoryImage } from "../lib/aiMemoryImage";
 import {
   BookOpen, Plus, Image, FileText, Mic, Star, Mail, Lock,
   ChevronRight, ChevronLeft, Camera, X, Share2,
@@ -2715,6 +2716,19 @@ export default function JournalPage({ onNavigate }) {
   // these are the soldier's day-to-day captures, viewable any time.
   const [entries, setEntries] = useState([]);
 
+  // Transient toast for background saves (e.g. generating the AI memory image
+  // after the editor has already closed). { text, tone: "info"|"ok"|"warn" }.
+  const [toast, setToast] = useState(null);
+  const toastTimer = useRef(0);
+  const showToast = useCallback(function (text, tone, autoHideMs) {
+    setToast({ text, tone: tone || "info" });
+    window.clearTimeout(toastTimer.current);
+    if (autoHideMs !== 0) {
+      toastTimer.current = window.setTimeout(function () { setToast(null); }, autoHideMs || 3500);
+    }
+  }, []);
+  useEffect(function () { return function () { window.clearTimeout(toastTimer.current); }; }, []);
+
   // Replace the entire useEffect (lines 1410-1437) with this:
   useEffect(function () {
     const unsubscribeAuth = auth.onAuthStateChanged(function (currentUser) {
@@ -2790,25 +2804,47 @@ export default function JournalPage({ onNavigate }) {
   // Save a letter — update in place if it already has an id, else append a new
   // one (respecting the 10-letter cap).
   function saveLetter(payload) {
+    // Save the text immediately so the editor can close right away. The id is
+    // resolved up-front so the background image task can patch this letter later.
+    const editingId = activeLetter && activeLetter.id;
+    const letterId = editingId || "letter-" + Date.now();
+    let added = true; // false if we hit the letter cap and skipped the insert
+
     setLetters(function (prev) {
-      const editingId = activeLetter && activeLetter.id;
       if (editingId) {
         return prev.map(function (lt) {
           return lt.id === editingId
-            ? { ...lt, title: payload.title, text: payload.text, tagText: payload.tagText, taggedMate: payload.taggedMate, isDraft: payload.isDraft }
+            ? { ...lt, title: payload.title, text: payload.text, tagText: payload.tagText, taggedMate: payload.taggedMate, isDraft: payload.isDraft, imageStyle: payload.imageStyle }
             : lt;
         });
       }
-      if (prev.length >= LETTERS_TOTAL) return prev;
+      if (prev.length >= LETTERS_TOTAL) { added = false; return prev; }
       return prev.concat([{
-        id: "letter-" + Date.now(),
+        id: letterId,
         title: payload.title,
         text: payload.text,
         tagText: payload.tagText,
         taggedMate: payload.taggedMate,
         isDraft: payload.isDraft,
+        imageStyle: payload.imageStyle,
+        photoURL: null, // filled in by the background image task below
       }]);
     });
+
+    if (added && !payload.isDraft && payload.imageStyle) {
+      generateMemoryImageInBackground({
+        text: payload.text || payload.title || "",
+        styleKey: payload.imageStyle,
+        userId: auth.currentUser?.uid || "anonymous",
+        onDone: function (photoURL) {
+          setLetters(function (prev) {
+            return prev.map(function (lt) {
+              return lt.id === letterId ? { ...lt, photoURL } : lt;
+            });
+          });
+        },
+      });
+    }
   }
 
   // Flip a task to done (and stash what they wrote / the photo preview).
@@ -2826,22 +2862,57 @@ export default function JournalPage({ onNavigate }) {
     });
   }
 
+  // Generate the AI memory image AFTER the editor has closed, reporting progress
+  // through the toast. `onDone(photoURL)` persists the URL (Firestore patch or
+  // session-state update). Best-effort: a failure shows a warn toast, never throws.
+  function generateMemoryImageInBackground({ text, styleKey, userId, onDone }) {
+    showToast("Saving your memory… painting the picture", "info", 0); // sticky until done
+    generateAndUploadMemoryImage({ text, styleKey, userId })
+      .then(function (photoURL) {
+        return Promise.resolve(onDone && onDone(photoURL)).then(function () {
+          showToast("Memory saved ✓", "ok");
+        });
+      })
+      .catch(function (err) {
+        console.error("AI memory image failed (text already saved):", err);
+        showToast("Saved — but the image couldn't be generated", "warn");
+      });
+  }
+
   const handleSaveEntry = async (payload) => {
     try {
       if (!payload) return;
 
-      // 0. Handle text REFLECTIONS from the reflection modal (title + body + tags,
-      //    no image). Drafts and final saves both land here; isDraft flags state.
+      // 0. Handle text REFLECTIONS from the reflection modal (title + body + tags).
+      //    The text saves immediately and the editor closes; on a final save the
+      //    AI memory image is generated in the BACKGROUND and patched onto this
+      //    doc afterwards, driven by a toast. Image failure leaves the text intact.
       if (payload.type === "reflection") {
-        await addDoc(collection(db, "journalEntries"), {
-          userId: auth.currentUser?.uid || "anonymous",
+        const userId = auth.currentUser?.uid || "anonymous";
+
+        const docRef = await addDoc(collection(db, "journalEntries"), {
+          userId,
           type: "note", // renders in feeds like a written note
           caption: payload.title || "Untitled reflection",
           text: payload.text || "",
           taggedMates: payload.taggedMate || "",
           isDraft: !!payload.isDraft,
+          photoURL: null, // filled in by the background image task below
+          imageStyle: payload.imageStyle || null,
           createdAt: serverTimestamp(),
         });
+
+        if (!payload.isDraft && payload.imageStyle) {
+          // Fire-and-forget: the editor is already closed; the toast reports it.
+          generateMemoryImageInBackground({
+            text: payload.text || payload.title || "",
+            styleKey: payload.imageStyle,
+            userId,
+            onDone: function (photoURL) {
+              return updateDoc(doc(db, "journalEntries", docRef.id), { photoURL });
+            },
+          });
+        }
         return;
       }
 
@@ -3068,8 +3139,8 @@ export default function JournalPage({ onNavigate }) {
         <AIMemoryModal
           kind={TEXT_TASK_KINDS[activeTask.task.type]}
           onClose={function () { setActiveTask(null); }}
-          onSave={function (payload) {
-            handleSaveEntry(payload);
+          onSave={async function (payload) {
+            await handleSaveEntry(payload);
             if (!payload.isDraft) {
               completeTask(activeTask.event.id, activeTask.task.id, payload.title || "Saved");
             }
@@ -3092,6 +3163,34 @@ export default function JournalPage({ onNavigate }) {
           onClose={function () { setLetterOpen(false); setActiveLetter(null); }}
           onSave={function (payload) { saveLetter(payload); }}
         />
+      )}
+
+      {/* Background-save toast (e.g. generating the AI memory image after the
+          editor closed). Click to dismiss. */}
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          onClick={function () { setToast(null); }}
+          className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 cursor-pointer"
+        >
+          <div
+            className="flex items-center gap-3 rounded-xl px-5 py-3 shadow-2xl"
+            style={{
+              animation: "wgt-toast-in .25s ease-out",
+              background: "#1c2214",
+              border: "2px solid " + (toast.tone === "ok" ? C.gold : toast.tone === "warn" ? "#c98a3a" : C.line),
+              boxShadow: "0 8px 24px #0008, inset 0 1px 0 #ffffff14",
+            }}
+          >
+            {toast.tone === "info" && (
+              <Sparkles size={18} className="animate-pulse" style={{ color: C.gold }} />
+            )}
+            {toast.tone === "ok" && <Check size={18} style={{ color: C.gold }} />}
+            {toast.tone === "warn" && <X size={18} style={{ color: "#e0a857" }} />}
+            <span style={{ ...pixel, fontSize: 17, color: C.textGold }}>{toast.text}</span>
+          </div>
+        </div>
       )}
     </AppShell>
   );
