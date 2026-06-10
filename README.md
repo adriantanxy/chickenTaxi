@@ -21,13 +21,13 @@ At a high level:
 - **Firebase Authentication** owns the signed-in session (email/password and Google sign-in).
 - **Firestore** stores user data — profiles, journal entries, training stats, avatar state.
 - **Cloud Storage** holds journal media and AI-generated memory images.
-- **Cloud Functions** run trusted server-side work. The key one today is `generateMemoryImage`, which calls the Pollinations image API using a secret API key that never reaches the browser.
+- **AI memory images** are generated from the diary text the user writes. The original pipeline drives a **local ComfyUI** install (Stable Diffusion) directly from the browser; a later variant offloads this to a **Cloud Function** that calls a hosted image API (Pollinations). See [AI memory images](#ai-memory-images) for both.
 - **Firebase Cloud Messaging + a PWA service worker** deliver reminders and notifications.
 - Training **form analysis runs locally** in the browser through MediaPipe using the webcam stream — no video leaves the device.
 
 ## Quick Start — run it yourself
 
-You'll need [Node.js](https://nodejs.org/) (v18+) and access to a Firebase project. If you just want to see the UI, you only need steps 1–4 (the frontend). Steps 5–6 are for the AI image feature, which needs Cloud Functions deployed.
+You'll need [Node.js](https://nodejs.org/) (v18+) and access to a Firebase project. If you just want to see the UI, you only need steps 1–4 (the frontend). Step 5 sets up the AI memory image feature, which in its original form runs against a local ComfyUI install on your own machine.
 
 ### 1. Clone and install
 
@@ -78,36 +78,16 @@ npm run dev
 
 Open the URL Vite prints (usually <http://localhost:5173/>). You can now sign up, log in, and explore Training, Journal, and Profile.
 
-> **Note:** the AI "generate a memory image" button in the Journal only works once the Cloud Function is deployed (steps 5–6). Everything else works against your Firebase project right away.
+> **Note:** the AI "generate a memory image" button in the Journal needs an image generator running (step 5). Everything else works against your Firebase project right away.
 
-### 5. (Optional) Set up Cloud Functions for AI images
+### 5. (Optional) Set up AI memory image generation
 
-The AI memory image feature is powered by the `generateMemoryImage` Cloud Function in [`functions/`](./functions). It calls the [Pollinations](https://pollinations.ai/) image API server-side so the API key stays off the client.
+See [AI memory images](#ai-memory-images) below for the full explanation of both approaches. In short:
 
-> Cloud Functions require the Firebase **Blaze (pay-as-you-go)** plan. The function caps its own scaling (`maxInstances: 3`) as a cost guardrail.
+- **Original — local ComfyUI** (no backend, no API key): run ComfyUI on your own machine and the browser talks to it directly. This is the default the project was built and demoed on.
+- **Alternative — Cloud Function** (Pollinations API): offloads generation to a deployed Firebase Function so it works without a local GPU. Requires the Blaze plan.
 
-Install the [Firebase CLI](https://firebase.google.com/docs/cli) and log in:
-
-```cmd
-npm install -g firebase-tools
-firebase login
-```
-
-Point the repo at your project (edit [`.firebaserc`](./.firebaserc) or run `firebase use --add`), install function deps, and set the Pollinations key as a secret:
-
-```cmd
-cd functions
-npm install
-firebase functions:secrets:set POLLINATIONS_API_KEY
-```
-
-### 6. (Optional) Deploy the functions
-
-```cmd
-firebase deploy --only functions
-```
-
-Once deployed, the **generate image** button in the Journal will call this function and save the result to Cloud Storage.
+Pick whichever fits your setup; the rest of the app is identical either way.
 
 ## Build & Deploy (Hosting)
 
@@ -153,16 +133,17 @@ frontend/                 the React app — most work lives here
       ProtectedRoute.jsx  route guard for signed-in-only pages
       notifications.js    FCM web push enable/disable/state helpers
     lib/
-      aiMemoryImage.js    client wrapper that calls the generateMemoryImage function
+      aiMemoryImage.js    client wrapper for the Cloud Function image approach
     pages/
       RootPage.jsx        login / sign-up
       TrainingDashboard.jsx, TrainingSessionPage.jsx
-      JournalPage.jsx, AIMemoryModal.jsx, SharedBookPage.jsx
+      JournalPage.jsx, JournalLab.jsx     journal + the ComfyUI image POC (/journal/lab)
+      AIMemoryModal.jsx, SharedBookPage.jsx
       ProfileMain.jsx, ProfileCustomizer.jsx, ShopPage.jsx
       CalendarPage.jsx, SquadPage.jsx   (in code, hidden from sidebar)
 
-functions/                Cloud Functions (Node.js)
-  index.js                generateMemoryImage — server-side AI image generation
+functions/                Cloud Functions (Node.js) — alternative image backend
+  index.js                generateMemoryImage — Pollinations API, server-side
 
 firebase.json             Hosting + Functions config
 .firebaserc               Firebase project alias
@@ -181,6 +162,59 @@ backend/                  legacy placeholder (superseded by functions/)
 
   `user` is `null` when signed out, the Firebase User when signed in. Every route except `/login` and the public `/shared/...` link is wrapped in `ProtectedRoute`.
 
-- **AI memory images** flow: the Journal calls `generateAndUploadMemoryImage()` in [`src/lib/aiMemoryImage.js`](./frontend/src/lib/aiMemoryImage.js), which invokes the `generateMemoryImage` callable function. The function builds a prompt, calls Pollinations with the secret key, uploads the PNG to Cloud Storage, and returns a download URL. Art styles (storybook, watercolour, pixel, comic) are chosen in the UI.
+- **AI memory images**: the Journal turns a written memory into an illustration. There are two interchangeable backends — see [AI memory images](#ai-memory-images) for the full story.
 
 - **Notifications & PWA**: the app ships a PWA manifest and an FCM service worker, so it can be installed to the home screen and receive web push. Helpers live in [`src/auth/notifications.js`](./frontend/src/auth/notifications.js); enabling push requires `VITE_FIREBASE_VAPID_KEY`.
+
+## AI memory images
+
+The signature feature of the Journal: you write a short memory ("6 of my buddies in my section drove a tank today, so cool!") and the app generates a matching illustration to paste into the polaroid frame on the journal page.
+
+The project has gone through **two implementations of this**. They are interchangeable — the journal UI is the same either way; only what sits behind the "generate" button changes.
+
+### Original approach — local ComfyUI (the default it was built on)
+
+The original pipeline ([`src/pages/JournalLab.jsx`](./frontend/src/pages/JournalLab.jsx), route `/journal/lab`) drives a **ComfyUI** install running on your own machine, directly from the browser — **no backend and no API key**. This is how the app was developed and demoed.
+
+How it works:
+
+1. You type a diary line in the Journal Lab.
+2. *(Optional)* A **local Ollama LLM** (`llama3.2`) rewrites the diary slang into a plain visual scene description ("shellscrape" → "muddy water-filled foxhole pit", etc.). If Ollama isn't running, it falls back to your raw text — the app never breaks.
+3. `buildPrompt()` wraps that into a styled prompt (your text leads; a fixed anime/cinematic style and per-mood cues trail).
+4. The app clones an **embedded ComfyUI workflow** (SDXL base + the `illustrious_flat_color` LoRA), injects the prompt and a random seed, and `POST`s it to ComfyUI's `/prompt` endpoint.
+5. It polls `/history/{id}` until the job finishes, reads the `SaveImage` output, fetches it via `/view`, and drops it into the journal frame.
+
+**To run it**, you need ComfyUI installed locally with the right model files, started with CORS enabled so the browser can call it:
+
+```cmd
+python main.py --enable-cors-header "*"
+```
+
+It serves at `http://127.0.0.1:8188` by default (the `COMFY` constant in `JournalLab.jsx` if yours differs). You'll need:
+
+- **ComfyUI** — <https://github.com/comfyanonymous/ComfyUI>
+- Checkpoint: `sd_xl_base_1.0.safetensors`
+- LoRA: `illustrious_flat_color_v2.safetensors`
+- *(Optional)* **Ollama** with `llama3.2` for the diary-to-scene rewrite — <https://ollama.com> (`ollama pull llama3.2`)
+
+> **Trade-off:** this needs a capable local GPU and a running ComfyUI, so it can't be used by visitors of the deployed site — it's a developer/demo setup.
+
+### Alternative approach — Cloud Function + Pollinations (deployable)
+
+To make image generation work without every user running ComfyUI, a later variant moves generation **server-side** into the `generateMemoryImage` Cloud Function ([`functions/index.js`](./functions/index.js)). The browser calls it via `generateAndUploadMemoryImage()` in [`src/lib/aiMemoryImage.js`](./frontend/src/lib/aiMemoryImage.js).
+
+The function builds a prompt, calls the hosted [Pollinations](https://pollinations.ai/) image API with a secret API key (so the key never ships to the browser), uploads the PNG to Cloud Storage, and returns a download URL. Art styles (storybook, watercolour, pixel, comic) are chosen in the UI.
+
+**To run it**, install the [Firebase CLI](https://firebase.google.com/docs/cli), then set the secret and deploy:
+
+```cmd
+npm install -g firebase-tools
+firebase login
+
+cd functions
+npm install
+firebase functions:secrets:set POLLINATIONS_API_KEY
+firebase deploy --only functions
+```
+
+> Cloud Functions require the Firebase **Blaze (pay-as-you-go)** plan. The function caps its own scaling (`maxInstances: 3`) as a cost guardrail.
