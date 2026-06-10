@@ -398,7 +398,7 @@ function ActiveView({ videoRef, canvasRef, stats, elapsed, onPause, onEnd, isPau
   };
   const innerBox = {
     // background: C.cardInner,
-    backgroundImage: "url('/assets/squad/bigger_board.png')",
+    backgroundImage: "url('/assets/squad/bigger_board.webp')",
     backgroundPosition: "center",
     backgroundSize: "auto",
     backgroundRepeat: "no-repeat",
@@ -506,7 +506,7 @@ function ActiveView({ videoRef, canvasRef, stats, elapsed, onPause, onEnd, isPau
 
           {/* PUSH-UPS card */}
           <div style={outerCard} className="col-span-2 lg:col-span-1">
-            <div style={{ backgroundImage: "url('/assets/training/training_overview/card_background.png')", backgroundPosition: "center", backgroundSize: "130% 115%", backgroundRepeat: "no-repeat", borderRadius: 3, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
+            <div style={{ backgroundImage: "url('/assets/training/training_overview/card_background.webp')", backgroundPosition: "center", backgroundSize: "130% 115%", backgroundRepeat: "no-repeat", borderRadius: 3, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
               <div className="flex items-center gap-1 mb-1">
                 <PushUpIcon size={25} color="black" />
                 <span style={{ ...pixel, ...D, fontSize: 25, letterSpacing: 1 }}>PUSH-UPS</span>
@@ -520,7 +520,7 @@ function ActiveView({ videoRef, canvasRef, stats, elapsed, onPause, onEnd, isPau
 
           {/* FORM ACCURACY card */}
           <div style={outerCard}>
-            <div style={{ backgroundImage: "url('/assets/squad/rectangle_board.png')", backgroundPosition: "center", backgroundSize: "110% 160%", backgroundRepeat: "no-repeat", borderRadius: 10, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
+            <div style={{ backgroundImage: "url('/assets/squad/rectangle_board.webp')", backgroundPosition: "center", backgroundSize: "110% 160%", backgroundRepeat: "no-repeat", borderRadius: 10, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
               <div className="flex items-center gap-1 mb-1">
                 <AccuracyIcon size={25} color="black" />
                 <span style={{ ...pixel, ...D, fontSize: 18, letterSpacing: 1 }}>FORM ACCURACY</span>
@@ -531,7 +531,7 @@ function ActiveView({ videoRef, canvasRef, stats, elapsed, onPause, onEnd, isPau
 
           {/* SESSION DURATION card */}
           <div style={outerCard}>
-            <div style={{ backgroundImage: "url('/assets/squad/rectangle_board.png')", backgroundPosition: "center", backgroundSize: "110% 160%", backgroundRepeat: "no-repeat", borderRadius: 10, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
+            <div style={{ backgroundImage: "url('/assets/squad/rectangle_board.webp')", backgroundPosition: "center", backgroundSize: "110% 160%", backgroundRepeat: "no-repeat", borderRadius: 10, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
               <div className="flex items-center gap-1 mb-1">
                 <DurationIcon size={25} color="black" />
                 <span style={{ ...pixel, ...D, fontSize: 18, letterSpacing: 1 }}>SESSION DURATION</span>
@@ -657,7 +657,7 @@ function ActiveView({ videoRef, canvasRef, stats, elapsed, onPause, onEnd, isPau
 
         {/* Music Player */}
         <div style={{ ...outerCard }}>
-          <div style={{ backgroundImage: "url('/assets/sidebar/profile_backdrop.png')", backgroundPosition: "center", backgroundSize: "123% 155%", backgroundRepeat: "no-repeat", borderRadius: 4, padding: "10px 12px", height: "100%", padding: "8px 12px" }}>
+          <div style={{ backgroundImage: "url('/assets/sidebar/profile_backdrop.webp')", backgroundPosition: "center", backgroundSize: "123% 155%", backgroundRepeat: "no-repeat", borderRadius: 4, padding: "10px 12px", height: "100%", padding: "8px 12px" }}>
             <div className="flex items-center gap-3">
               {/* Album art thumbnail */}
               <div className="shrink-0 rounded overflow-hidden" style={{ width: 44, height: 44, background: "#1a1a0e", border: `1px solid ${C.border}` }}>
@@ -748,7 +748,7 @@ function SummaryView({ stats, elapsed, onNavigate }) {
   // const [reflection, setReflection] = useState("");
 
   const oc = { background: C.card, border: `2px solid ${C.border}`, borderRadius: 6, padding: "5px" };
-  const ib = { backgroundImage: "url('/assets/squad/bigger_board.png')", backgroundPosition: "center", backgroundSize: "auto", backgroundRepeat: "no-repeat", borderRadius: 4, padding: "10px 12px", height: "100%" };
+  const ib = { backgroundImage: "url('/assets/squad/bigger_board.webp')", backgroundPosition: "center", backgroundSize: "auto", backgroundRepeat: "no-repeat", borderRadius: 4, padding: "10px 12px", height: "100%" };
 
   return (
     <div className="mx-auto w-full max-w-[1400px] p-3 sm:p-4" style={{
@@ -766,7 +766,7 @@ function SummaryView({ stats, elapsed, onNavigate }) {
 
       {/* PUSH-UPS */}
       <div style={{ gridArea: "pushups", ...oc }}>
-        <div style={{ backgroundImage: "url('/assets/training/training_overview/card_background.png')", backgroundPosition: "center", backgroundSize: "120% 110%", backgroundRepeat: "no-repeat", borderRadius: 4, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+        <div style={{ backgroundImage: "url('/assets/training/training_overview/card_background.webp')", backgroundPosition: "center", backgroundSize: "120% 110%", backgroundRepeat: "no-repeat", borderRadius: 4, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
           <div className="flex items-center gap-1 mb-1">
             <PushUpIcon size={30} color="black" />
             <span style={{ ...pixel, ...D, fontSize: 25 }}>PUSH-UPS</span>
@@ -780,7 +780,7 @@ function SummaryView({ stats, elapsed, onNavigate }) {
 
       {/* FORM ACCURACY */}
       <div style={{ gridArea: "accuracy", ...oc }}>
-        <div style={{ backgroundImage: "url('/assets/squad/rectangle_board.png')", backgroundPosition: "center", backgroundSize: "120% 150%", backgroundRepeat: "no-repeat", borderRadius: 4, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+        <div style={{ backgroundImage: "url('/assets/squad/rectangle_board.webp')", backgroundPosition: "center", backgroundSize: "120% 150%", backgroundRepeat: "no-repeat", borderRadius: 4, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
           <div className="flex items-center gap-1 mb-1">
             <AccuracyIcon size={20} color="black" />
             <span style={{ ...pixel, ...D, fontSize: 15 }}>FORM ACCURACY</span>
@@ -791,7 +791,7 @@ function SummaryView({ stats, elapsed, onNavigate }) {
 
       {/* SESSION DURATION */}
       <div style={{ gridArea: "duration", ...oc }}>
-        <div style={{ backgroundImage: "url('/assets/squad/rectangle_board.png')", backgroundPosition: "center", backgroundSize: "120% 150%", backgroundRepeat: "no-repeat", borderRadius: 4, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+        <div style={{ backgroundImage: "url('/assets/squad/rectangle_board.webp')", backgroundPosition: "center", backgroundSize: "120% 150%", backgroundRepeat: "no-repeat", borderRadius: 4, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
           <div className="flex items-center gap-1 mb-1">
             <DurationIcon size={20} color="black" />
             <span style={{ ...pixel, ...D, fontSize: 15 }}>SESSION DURATION</span>
@@ -802,7 +802,7 @@ function SummaryView({ stats, elapsed, onNavigate }) {
 
       {/* FORM TRAINING card — spans 3 rows */}
       <div style={{ gridArea: "formcard", ...oc }}>
-        <div style={{ backgroundImage: "url('/assets/squad/bigger_board.png')", backgroundPosition: "center", backgroundSize: "110% 115%", backgroundRepeat: "no-repeat", borderRadius: 4, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", gap: 1 }}>
+        <div style={{ backgroundImage: "url('/assets/squad/bigger_board.webp')", backgroundPosition: "center", backgroundSize: "110% 115%", backgroundRepeat: "no-repeat", borderRadius: 4, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", gap: 1 }}>
           <div className="text-center">
             <p style={{ ...pixel, ...D, fontSize: 30 }}>FORM TRAINING</p>
             <p style={{ ...pixel, color: C.inkSoft, fontSize: 17 }}>FORM CHECK SESSION</p>
@@ -841,7 +841,7 @@ function SummaryView({ stats, elapsed, onNavigate }) {
 
       {/* FORM CONSISTENCY CHART */}
       <div style={{ gridArea: "chart", ...oc }}>
-        <div style={{ backgroundImage: "url('/assets/squad/rectangle_board.png')", backgroundPosition: "center", backgroundSize: "110% 160%", backgroundRepeat: "no-repeat", borderRadius: 4, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ backgroundImage: "url('/assets/squad/rectangle_board.webp')", backgroundPosition: "center", backgroundSize: "110% 160%", backgroundRepeat: "no-repeat", borderRadius: 4, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", gap: 4 }}>
           <p style={{ ...pixel, ...D, fontSize: 20, textAlign: "center" }}>FORM CONSISTENCY (%)</p>
           <div style={{ display: "flex", alignItems: "stretch", gap: 6 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -858,7 +858,7 @@ function SummaryView({ stats, elapsed, onNavigate }) {
 
       {/* SESSION SUMMARY — spans 2 rows */}
       <div style={{ gridArea: "summary", ...oc }}>
-        <div style={{ backgroundImage: "url('/assets/sidebar/profile_backdrop.png')", backgroundPosition: "center", backgroundSize: "120% 155%", backgroundRepeat: "no-repeat", borderRadius: 4, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ backgroundImage: "url('/assets/sidebar/profile_backdrop.webp')", backgroundPosition: "center", backgroundSize: "120% 155%", backgroundRepeat: "no-repeat", borderRadius: 4, padding: "10px 12px", height: "100%", display: "flex", flexDirection: "column", gap: 8 }}>
           <p className="text-center" style={{ ...pixel, ...D, fontSize: 20, letterSpacing: 1 }}>Session Summary</p>
           <div className="flex items-center">
             <div className="shrink-0 flex items-end justify-center" style={{ width: 50, height: 50 }}>
@@ -931,7 +931,7 @@ function SummaryView({ stats, elapsed, onNavigate }) {
 
       {/* TODAY'S REFLECTION — spans 2 cols */}
       {/* <div style={{ gridArea: "reflect", ...oc }}>
-        <div style={{ backgroundImage: "url('/assets/squad/bigger_board.png')", backgroundPosition: "center", backgroundSize: "110% 120%", backgroundRepeat: "no-repeat", borderRadius: 4, padding: "10px 12px", height: "100%", display:"flex", flexDirection:"column", gap: 8 }}>
+        <div style={{ backgroundImage: "url('/assets/squad/bigger_board.webp')", backgroundPosition: "center", backgroundSize: "110% 120%", backgroundRepeat: "no-repeat", borderRadius: 4, padding: "10px 12px", height: "100%", display:"flex", flexDirection:"column", gap: 8 }}>
           <div className="flex justify-between items-center">
             <p style={{ ...pixel, ...D, fontSize: 20 }}>TODAY'S REFLECTION</p>
             <div className="flex items-center gap-2">

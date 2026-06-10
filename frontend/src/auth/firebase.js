@@ -17,6 +17,7 @@ import {
 } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 import { getFirestore } from "firebase/firestore";
+import { getFunctions } from "firebase/functions";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -47,6 +48,10 @@ export const auth = getAuth(app);
 export const storage = getStorage(app);
 
 export const db = getFirestore(app);
+
+// Callable Cloud Functions (e.g. server-side AI image generation, which keeps
+// the Pollinations API key off the client).
+export const functions = getFunctions(app);
 
 // LOCAL persistence: the session is kept in IndexedDB across browser restarts.
 // setPersistence returns a promise; failures (e.g. private mode) are non-fatal,

@@ -62,7 +62,7 @@ export default function ProfileCustomizer({ onNavigate, onBack, equipped = {}, s
   // avatar to the loadout2 sprite set. Any other top falls back to loadout1.
   // `activeLoadout` is the loadout the current top implies — used for both the
   // live preview and what SAVE persists, so the main page matches the preview.
-  const RED_TANK_TOP = "/assets/avatar/components/top/red%20tank%20top.png";
+  const RED_TANK_TOP = "/assets/avatar/components/top/red%20tank%20top.webp";
   const activeLoadout = selectedOptions.top === RED_TANK_TOP ? "loadout2" : loadout;
   const rotationFrames =
     ASSETS.avatar.loadouts?.[activeLoadout]?.rotations ??

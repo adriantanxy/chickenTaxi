@@ -7,3 +7,7 @@ npm-debug.log*
 .env.local
 .env.*.local
 .DS_Store
+
+# Original PNGs kept as a safety net after WebP conversion (recover from here if
+# a converted image looks wrong). Not needed in the repo or the build.
+.image-backups/

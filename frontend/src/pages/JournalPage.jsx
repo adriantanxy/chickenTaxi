@@ -321,7 +321,7 @@ const CoverPage = forwardRef(function CoverPage(_props, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
-        src="/assets/journal/coverpage.png"
+        src="/assets/journal/coverpage.webp"
         alt="Journal Cover"
         /* Nudge the cover slightly LEFT: shift the image left while rendering it
            a touch wider so the box stays fully covered (no empty edge on the
@@ -347,7 +347,7 @@ const CleanRightPage = forwardRef(function CleanRightPage(_props, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
-        src="/assets/journal/right_clean.png"
+        src="/assets/journal/right_clean.webp"
         alt="Clean Right Page"
         /* shift left by SPINE_NUDGE so the inner (left) edge crosses the spine */
         style={{ position: "absolute", top: 0, left: -SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
@@ -363,7 +363,7 @@ const EnlistmentLeft = forwardRef(function EnlistmentLeft(_props, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
-        src="/assets/journal/enlistment_left.png"
+        src="/assets/journal/enlistment_left.webp"
         alt="Enlistment Left"
         style={{ position: "absolute", top: 0, left: SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
@@ -425,7 +425,7 @@ const EnlistmentRight = forwardRef(function EnlistmentRight({ userNote }, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
-        src="/assets/journal/enlistment_right.png"
+        src="/assets/journal/enlistment_right.webp"
         alt="Enlistment Right"
         /* Same setup as the BMT/clean pages: fills the page, nudged inward by
            SPINE_NUDGE so the inner (left) edge meets the left page at the spine. */
@@ -485,7 +485,7 @@ const BmtChapterLeft = forwardRef(function BmtChapterLeft(_props, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
-        src="/assets/journal/bmt_chapter_left.png"
+        src="/assets/journal/bmt_chapter_left.webp"
         alt="BMT Chapter Left"
         style={{ position: "absolute", top: 0, left: SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
@@ -504,7 +504,7 @@ const BmtChapterRight = forwardRef(function BmtChapterRight({ commanderNote }, r
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
-        src="/assets/journal/bmt_chapter_right.png"
+        src="/assets/journal/bmt_chapter_right.webp"
         alt="BMT Chapter Right"
         /* Same setup as the clean pages: fills the page and nudged inward by
            SPINE_NUDGE so the inner (left) edge meets the left page at the spine. */
@@ -525,7 +525,7 @@ const BmtChapterRight = forwardRef(function BmtChapterRight({ commanderNote }, r
         boxShadow: "1px 2px 6px #0005",
       }}>
         <img
-          src="/assets/journal/database/bmt_right_picture.png"
+          src="/assets/journal/database/bmt_right_picture.webp"
           alt="Section group photo"
           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
         />
@@ -567,7 +567,7 @@ const FieldCampLeft = forwardRef(function FieldCampLeft({ userNote }, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
-        src="/assets/journal/fieldcamp_left.png"
+        src="/assets/journal/fieldcamp_left.webp"
         alt="Field Camp Left"
         /* Same setup as the other pages: nudged inward by SPINE_NUDGE so the
            inner (right) edge meets the right page cleanly at the spine. */
@@ -587,7 +587,7 @@ const FieldCampLeft = forwardRef(function FieldCampLeft({ userNote }, ref) {
         boxShadow: "1px 2px 6px #0005",
       }}>
         <img
-          src="/assets/journal/database/fieldcamp_left_picture.png"
+          src="/assets/journal/database/fieldcamp_left_picture.webp"
           alt="Late-night campfire"
           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
         />
@@ -649,7 +649,7 @@ const FieldCampRight = forwardRef(function FieldCampRight({ buddyNote }, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
-        src="/assets/journal/fieldcamp_right.png"
+        src="/assets/journal/fieldcamp_right.webp"
         alt="Field Camp Right"
         /* Same setup as the other pages: nudged inward by SPINE_NUDGE so the
            inner (left) edge meets the left page cleanly at the spine. */
@@ -686,7 +686,7 @@ const PopLeft = forwardRef(function PopLeft(_props, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
-        src="/assets/journal/pop_left.png"
+        src="/assets/journal/pop_left.webp"
         alt="POP Left"
         /* Same setup as the other pages: nudged inward by SPINE_NUDGE so the
            inner (right) edge meets the right page cleanly at the spine. */
@@ -705,7 +705,7 @@ const PopLeft = forwardRef(function PopLeft(_props, ref) {
         boxShadow: "1px 2px 6px #0005",
       }}>
         <img
-          src="/assets/journal/database/pop_left_picture.png"
+          src="/assets/journal/database/pop_left_picture.webp"
           alt="Section on POP day"
           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
         />
@@ -748,7 +748,7 @@ const PopRight = forwardRef(function PopRight({ commanderNote }, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
-        src="/assets/journal/pop_right.png"
+        src="/assets/journal/pop_right.webp"
         alt="POP Right"
         /* Same setup as the other pages: nudged inward by SPINE_NUDGE so the
            inner (left) edge meets the left page cleanly at the spine. */
@@ -831,7 +831,7 @@ const MemoriesLeft = forwardRef(function MemoriesLeft(_props, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
-        src="/assets/journal/memories_left.png"
+        src="/assets/journal/memories_left.webp"
         alt="Memories you've been part of"
         style={{ position: "absolute", top: 0, left: SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
@@ -844,7 +844,7 @@ const MemoriesRight = forwardRef(function MemoriesRight(_props, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
-        src="/assets/journal/memories_right.png"
+        src="/assets/journal/memories_right.webp"
         alt="More memories"
         style={{ position: "absolute", top: 0, left: -SPINE_NUDGE, width: "100%", height: "100%", objectFit: "cover" }}
       />
@@ -857,7 +857,7 @@ const LastPage = forwardRef(function LastPage(_props, ref) {
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
-        src="/assets/journal/lastpage.png"
+        src="/assets/journal/lastpage.webp"
         alt="Last Page"
         style={{ position: "absolute", left: 0, right: 0, top: "1%", width: "100%", height: "99%", objectFit: "cover", objectPosition: "top" }}
       />
@@ -953,7 +953,7 @@ function LetterSheet({ letter }) {
       }}
     >
       <img
-        src="/assets/journal/card.png"
+        src="/assets/journal/card.webp"
         alt=""
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "fill", display: "block" }}
       />
@@ -1518,7 +1518,7 @@ const LettersPage = forwardRef(function LettersPage({ onOpenLetters, shared = fa
   return (
     <div ref={ref} style={{ ...pageBase }}>
       <img
-        src="/assets/journal/letters_left.png"
+        src="/assets/journal/letters_left.webp"
         alt="Letters to My Future Self"
         /* Left page: nudged inward by SPINE_NUDGE so the inner (right) edge meets
            the right page cleanly at the spine. */
@@ -1882,7 +1882,7 @@ export function JournalFlipbook({ onClose, shared = false, shareLetters = false 
         style={{
           position: "absolute",
           inset: 0,
-          backgroundImage: "url(/assets/journal/table.png)",
+          backgroundImage: "url(/assets/journal/table.webp)",
           backgroundSize: "cover",
           backgroundPosition: "center",
           transform: "translateZ(0)",
@@ -3006,7 +3006,7 @@ export default function JournalPage({ onNavigate }) {
                   style={{ background: "transparent", border: "none", padding: 0 }}
                 >
                   <img
-                    src="/assets/journal/journal_closed_image.png"
+                    src="/assets/journal/journal_closed_image.webp"
                     alt={data.cover.title + " " + data.cover.subtitle}
                     className="max-h-full w-auto max-w-full object-contain transition-all duration-300"
                     style={{

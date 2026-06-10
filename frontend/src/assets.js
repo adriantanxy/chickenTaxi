@@ -47,12 +47,12 @@ export const ASSETS = {
 
     // --- Squad page boards (aged leather / parchment plates) ---------------
     // Big parchment panels — used as the two main Card surfaces.
-    squadCard: { src: "/assets/squad/bigger_board.png", slice: 61 },     // 1448x1086
-    squadCardTall: { src: "/assets/squad/sideboard.png", slice: 143 }, // 1024x1536
+    squadCard: { src: "/assets/squad/bigger_board.webp", slice: 61 },     // 1448x1086
+    squadCardTall: { src: "/assets/squad/sideboard.webp", slice: 143 }, // 1024x1536
     // Wide leather/green plates (2172x724) — tabs, footer plates, buttons.
     leatherWide: { src: "/assets/squad/black_board.png", slice: 154 },
     greenWide: { src: "/assets/squad/green_board.png", slice: 144 },
-    parchmentWide: { src: "/assets/squad/rectangle_board.png", slice: 111 },
+    parchmentWide: { src: "/assets/squad/rectangle_board.webp", slice: 111 },
     // Dark leather search bar (2508x627).
     search: { src: "/assets/squad/search.png", slice: 143 },
     // Square dark-leather tile (1254x1254) — avatar / badge backings.
@@ -62,7 +62,7 @@ export const ASSETS = {
     // Wide beige parchment plate (2172x724) — RECENT WORKOUT rows + TODAY rows.
     beigeWide: { src: "/assets/training/recent/beige_horizontal_board.png", slice: 120 },
     // Tall dark-leather plate (1024x1536) — MISSION / CHALLENGE cards.
-    missionCard: { src: "/assets/training/mission/card_background.png", slice: 130 },
+    missionCard: { src: "/assets/training/mission/card_background.webp", slice: 130 },
     // Wide green plate (2172x724) — REWARDS shop button.
     shopWide: { src: "/assets/training/shop/shop_backboard.png", slice: 120 },
   },
@@ -72,7 +72,7 @@ export const ASSETS = {
   // border-image breaks it — paint it full-bleed and pad text into the paper.
   commonBoards: {
     tapedScrap: "/assets/common/bio.png", // 1536x1024
-    verticalBoard: "/assets/common/vertical_board.png", // 1024x1536
+    verticalBoard: "/assets/common/vertical_board.webp", // 1024x1536
   },
 
   // Square pixel icons. Example: pushups: "/assets/icons/pushups.png",
@@ -91,7 +91,7 @@ export const ASSETS = {
   // here if the export differs.
   sidebar: {
     navTabs: {
-      src: "/assets/sidebar/sidebar-tabs.png",
+      src: "/assets/sidebar/sidebar-tabs.webp",
       sheetWidth: 1211,
       sheetHeight: 825,
       tabWidth: 534,
@@ -125,14 +125,14 @@ export const ASSETS = {
       },
     },
     // Riveted plate behind the signed-in soldier's identity card.
-    profileBackdrop: "/assets/sidebar/profile_backdrop.png", // 1536x1024
+    profileBackdrop: "/assets/sidebar/profile_backdrop.webp", // 1536x1024
   },
 
   training: {
     // Stat tiles on the TRAINING OVERVIEW card. Each stat renders on the shared
     // parchment background with its own pixel-art icon. Medals map by tier.
     overview: {
-      background: "/assets/training/training_overview/card_background.png",
+      background: "/assets/training/training_overview/card_background.webp",
       icons: {
         pushups: "/assets/training/training_overview/pushup.png",
         situps: "/assets/training/training_overview/situp.png",
@@ -148,7 +148,7 @@ export const ASSETS = {
       },
     },
     sessionCards: {
-      src: "/assets/training/session/training-session.png",
+      src: "/assets/training/session/training-session.webp",
       sheetWidth: 2170,
       sheetHeight: 685,
       displayHeight: 210,
@@ -182,7 +182,7 @@ export const ASSETS = {
 
     // MISSIONS cards — dark leather card backing + per-mission art.
     missions: {
-      background: "/assets/training/mission/card_background.png",
+      background: "/assets/training/mission/card_background.webp",
       icons: {
         toFailure: "/assets/training/mission/pushup.png",
         weekly: "/assets/training/mission/calendar.png",
@@ -192,7 +192,7 @@ export const ASSETS = {
 
     // REWARDS card — XP/shop boards + medal art.
     rewards: {
-      xpBoard: "/assets/training/shop/xp_backboard.png",
+      xpBoard: "/assets/training/shop/xp_backboard.webp",
       shopBoard: "/assets/training/shop/shop_backboard.png",
       medals: {
         gold: "/assets/training/shop/gold_star_medal.png",
@@ -205,7 +205,7 @@ export const ASSETS = {
   journal: {
     // ORD countdown backdrop: a blank green leather plate with a thumbs-up
     // soldier baked into the lower-right. All count text is overlaid by us.
-    ordBackdrop: "/assets/journal/ord_backdrop.png",
+    ordBackdrop: "/assets/journal/ord_backdrop.webp",
     // Wide blank green leather plate behind the Quick Capture buttons.
     quickCaptureBoard: "/assets/journal/quick_capture_backboard.png",
     // Full-body talking soldier — the pep-talk mascot (raised finger, mouth open).
