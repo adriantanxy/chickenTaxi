@@ -13,7 +13,7 @@ It's built as a React single-page app on top of Firebase (Auth, Firestore, Cloud
 
 ## Architecture
 
-![Where Got Time architecture diagram](./chickenTaxi_WGTarchitectureDiagram.jpg)
+![Where Got Time architecture diagram](./chickenTaxi_WGTarchitectureDiagram.png)
 
 At a high level:
 
