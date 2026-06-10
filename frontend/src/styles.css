@@ -22,7 +22,9 @@ body {
 
 body {
   margin: 0;
-  background: #181911;
+  /* Follows the active theme (set by ThemeProvider); dark hex is the pre-JS
+     fallback so there's no white flash on first paint. */
+  background: var(--c-bg-dark, #181911);
 }
 
 button {

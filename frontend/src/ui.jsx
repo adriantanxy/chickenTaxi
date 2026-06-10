@@ -18,6 +18,9 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "./auth/AuthContext";
+import { ThemeToggle } from "./theme/ThemeToggle";
+import { ChatBot } from "./components/ChatBot";
+import { OnboardingTour } from "./components/OnboardingTour";
 
 const SIDEBAR_STORAGE_KEY = "wgt-sidebar-collapsed";
 const READY_IMAGES = new Set();
@@ -194,6 +197,7 @@ function NavItem({ icon, label, itemKey, active, collapsed, useArt, onClick }) {
         aria-label={label}
         title={collapsed ? label : undefined}
         onClick={onClick}
+        data-tour={`nav-${itemKey}`}
         className="wgt-sidebar-tab relative w-full overflow-hidden rounded-lg"
         style={{ width: art.width, height: art.height }}
       >
@@ -207,6 +211,7 @@ function NavItem({ icon, label, itemKey, active, collapsed, useArt, onClick }) {
       aria-label={label}
       title={collapsed ? label : undefined}
       onClick={onClick}
+      data-tour={`nav-${itemKey}`}
       className={`group flex h-11 items-center rounded-lg transition-colors duration-150 ${
         collapsed ? "w-11 justify-center px-0 md:w-full" : "w-full gap-3 px-4 text-left"
       }`}
@@ -322,7 +327,7 @@ export function Sidebar({ active, onNavigate, user }) {
         <span className="h-px flex-1" style={{ background: C.line }} />
       </button>
 
-      <nav className={`flex flex-col items-center ${collapsed ? "gap-2" : "gap-1.5"}`}>
+      <nav data-tour="sidebar-nav" className={`flex flex-col items-center ${collapsed ? "gap-2" : "gap-1.5"}`}>
         {NAV.map((n) => (
           <NavItem
             key={n.route}
@@ -546,6 +551,7 @@ const CANVAS_TEXTURE = {
 // classic behaviour where the whole main area scrolls.
 export function AppShell({ active, onNavigate, user, icon, title, subtitle, action, children, fill = false }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const { user: authUser } = useAuth();
 
   return (
     <>
@@ -576,12 +582,17 @@ export function AppShell({ active, onNavigate, user, icon, title, subtitle, acti
                 </p>
               </div>
             </div>
-            {action && <div className="flex shrink-0 flex-wrap gap-2">{action}</div>}
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              {action}
+              <ThemeToggle />
+            </div>
           </header>
           {fill ? <div className="min-h-0 flex-1">{children}</div> : children}
         </main>
       </div>
       <MobileNavDrawer open={mobileNavOpen} onClose={() => setMobileNavOpen(false)} user={user} />
+      <ChatBot />
+      <OnboardingTour uid={authUser?.uid} />
     </>
   );
 }
