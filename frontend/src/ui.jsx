@@ -24,9 +24,9 @@ const READY_IMAGES = new Set();
 
 const NAV = [
   { route: ROUTES.TRAINING, assetKey: "training", label: "TRAINING", icon: <Dumbbell size={20} /> },
-  { route: ROUTES.CALENDAR, assetKey: "calendar", label: "CALENDAR", icon: <CalIcon size={20} /> },
+  // { route: ROUTES.CALENDAR, assetKey: "calendar", label: "CALENDAR", icon: <CalIcon size={20} /> },
   { route: ROUTES.JOURNAL, assetKey: "journal", label: "JOURNAL", icon: <BookOpen size={20} /> },
-  { route: ROUTES.SQUAD, assetKey: "squad", label: "SQUAD", icon: <Users size={20} /> },
+  // { route: ROUTES.SQUAD, assetKey: "squad", label: "SQUAD", icon: <Users size={20} /> },
   { route: ROUTES.PROFILE, assetKey: "profile", label: "PROFILE", icon: <User size={20} /> },
 ];
 
