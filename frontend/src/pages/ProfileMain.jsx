@@ -43,8 +43,7 @@ const data = {
     daysIn: "20 DAYS IN",
     ordDays: 143,
     about: "Hi! I'm Alex and I'm new here. Hope we can have a good time together!!!",
-    photoCaption: "CAMPFIRE NIGHT",
-    photoGlyph: "🏕️",
+    photoImage: "../../assets/avatar/campfire.png",
   },
   tags: [
     { label: "MARKSMAN", icon: <Crosshair size={40} /> },
@@ -62,7 +61,12 @@ const data = {
       { label: "Avg. Score", value: "83 pts" },
       { label: "Best Score", value: "92 pts (Gold)" },
     ],
-    badges: ["🥇", "🎯", "🎖️", "🏆"],
+    badges: [
+      "../../assets/journal/medal.png",
+      "../../assets/training/training_overview/medal_gold.png",
+      "../../assets/training/training_overview/medal_bronze.png",
+      "../../assets/training/training_overview/medal_silver.png",
+    ],
     moreBadges: 2,
   },
   goals: [
@@ -168,11 +172,10 @@ export default function ProfileMain({ onNavigate, onInspect = () => {}, equipped
                 <div className="rounded-md border-2 px-3 py-2 text-center" style={{ borderColor: "#7a8a52", background: "#cdd2ad" }}>
                   <p style={{ ...pixel, ...M }} className="text-[14px] leading-none">ORD COUNTDOWN</p>
                   <p style={{ ...pixel, color: "#2f3a1c" }} className="text-[44px] leading-none">{data.profile.ordDays}</p>
-                  <p style={{ ...pixel, ...M }} className="flex items-center justify-center gap-1 text-[12px]">DAYS TO ORD <Heart size={10} className="fill-current text-red-700" /></p>
+                  <p style={{ ...pixel, ...M }} className="flex items-center justify-center gap-1 text-[12px]">DAYS TO ORD</p>
                 </div>
                 <div className="relative flex h-20 items-center justify-center rounded-md text-3xl" style={{ background: "#2a3320" }}>
-                  {data.profile.photoGlyph}
-                  <span style={{ ...pixel, color: C.textGold }} className="absolute bottom-1 text-[10px]">{data.profile.photoCaption}</span>
+                    <img src={data.profile.photoImage} className="h-full w-full object-cover"/>
                 </div>
               </div>
             </div>
@@ -183,7 +186,7 @@ export default function ProfileMain({ onNavigate, onInspect = () => {}, equipped
             <Card>
               <p style={{ ...pixel, ...D }} className="text-[22px] leading-none">ABOUT ME</p>
               <p style={{ ...pixel, ...D }} className="mt-1 text-[17px] leading-snug">{data.profile.about}</p>
-              <Heart size={14} className="mt-1 fill-current text-red-700" />
+              <img src="..\..\assets\journal\milestone.png" width="30"></img>
             </Card>
             {data.tags.map((t) => (
               <Card key={t.label}>
@@ -252,7 +255,9 @@ export default function ProfileMain({ onNavigate, onInspect = () => {}, equipped
                   <p style={{ ...pixel, color: C.textGold }} className="mb-2 text-[15px]">BADGES & TROPHIES</p>
                   <div className="flex items-center gap-2">
                     {data.training.badges.map((b, i) => (
-                      <div key={i} className="flex h-10 w-10 items-center justify-center rounded-md text-xl" style={{ background: C.green }}>{b}</div>
+                      <div key={i} className="flex h-10 w-10 items-center justify-center rounded-md overflow-hidden" style={{ background: C.green }}>
+                        <img src={b} alt={`badge-${i}`} style={{ width: "100%", height: "100%", objectFit: "contain", imageRendering: "pixelated" }} />
+                      </div>
                     ))}
                     <div className="flex h-10 w-10 items-center justify-center rounded-md" style={{ background: "#4a4030" }}>
                       <span style={{ ...pixel, color: C.textGold }} className="text-[16px]">+{data.training.moreBadges}</span>
